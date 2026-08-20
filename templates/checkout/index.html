@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% load static money_tags lucide %}
+
+{% block title %}Secure Checkout — Raqnith{% endblock %}
+
+{% block content %}
+<main class="checkout checkout-modern" id="checkout-index" data-cart-id="{{ cart_id }}">
+    
+    <!-- Checkout Breadcrumbs & Steps -->
+    <nav class="checkout-stepper" aria-label="Checkout Progress">
+        <ol class="stepper-list">
+            <li class="step-item step-active">
+                <span class="step-badge">1</span>
+                <span class="step-label">Information</span>
+            </li>
+            <li class="step-connector"></li>
+            <li class="step-item">
+                <span class="step-badge">2</span>
+                <span class="step-label">QR Ph Payment</span>
+            </li>
+            <li class="step-connector"></li>
+            <li class="step-item">
+                <span class="step-badge">3</span>
+                <span class="step-label">Instant Access</span>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Mobile Order Summary Collapsible Banner (Phones only) -->
+    <div class="mobile-summary-accordion">
+        <button type="button" class="mobile-summary-toggle-btn" id="mobile-summary-toggle" aria-expanded="false" aria-controls="mobile-summary-panel">
+            <div class="summary-toggle-left">
+                {% lucide "shopping-bag" size=18 class="summary-toggle-icon" %}
+                <span class="summary-toggle-title">Show order summary</span>
+                {% lucide "chevron-down" size=16 class="summary-toggle-chevron" %}
+            </div>
+            <div class="summary-toggle-right">
+                <strong class="summary-toggle-amount">{{ total_cents|centavos }}</strong>
+            </div>
+        </button>
+        <div class="mobile-summary-panel" id="mobile-summary-panel" hidden>
+            <ul class="mobile-summary-items">
+                {% for item in line_items %}
+                <li class="mobile-summary-row">
+                    <div class="mobile-item-info">
+                        <span class="mobile-item-name">{{ item.product.name }}</span>
+                        <span class="mobile-item-badge">Digital License</span>
+                    </div>
+                    <span class="mobile-item-price">{{ item.line_total_cents|centavos }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="mobile-summary-breakdown">
+                <div class="mobile-breakdown-row">
+                    <span>Subtotal</span>
+                    <span>{{ subtotal_cents|centavos }}</span>
+                </div>
+                {% if discount_cents %}
+                <div class="mobile-breakdown-row discount">
+                    <span>Discount</span>
+                    <span>-{{ discount_cents|centavos }}</span>
+                </div>
+                {% endif %}
+                <div class="mobile-breakdown-row">
+                    <span>Delivery</span>
+                    <span class="free-pill">Instant Download</span>
+                </div>
+                <div class="mobile-breakdown-row">
+                    <span>Tax</span>
+                    <span>Included</span>
+                </div>
+                <div class="mobile-breakdown-row total-row">
+                    <span>Total</span>
+                    <span>{{ total_cents|centavos }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form id="checkout-form" method="post" action="{% url 'checkout:index' %}" novalidate>
+        {% csrf_token %}
+
+        <div class="checkout-columns">
+
+            <!-- Left / Main Column: Contact & Payment Info -->
+            <div class="checkout-main-col">
+                
+                <section class="card checkout-section-card">
+                    <div class="section-card-header">
+                        <div class="header-icon-wrap">
+                            {% lucide "mail" size=20 %}
+                        </div>
+                        <div class="header-text-wrap">
+                            <h2>Email &amp; Receipt Information</h2>
+                            <p class="section-desc">Your order receipt and instant license key will be delivered to this email.</p>
+                        </div>
+                        {% if not is_authenticated %}
+                        <div class="header-login-link-wrap">
+                            <a href="{% url 'accounts:login' %}?next={% url 'checkout:index' %}" class="header-login-link">
+                                {% lucide "log-in" size=14 %}
+                                <span>Sign in</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if is_authenticated %}
+                    <div class="checkout-user-badge">
+                        <div class="user-badge-avatar">{{ user.username|slice:":1"|upper }}</div>
+                        <div class="user-badge-info">
+                            <span class="user-badge-title">Signed in as <strong>{{ user.username }}</strong></span>
+                            <span class="user-badge-email">{{ user.email }}</span>
+                        </div>
+                        <span class="verified-pill">
+                            {% lucide "circle-check" size=14 %}
+                            <span>Verified</span>
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="email" class="field-label">
+                            <span class="field-label-title">Email Address</span>
+                            <span class="required-star" title="Required">*</span>
+                            <span class="field-label-subtext">— where your digital files &amp; receipt will be sent</span>
+                        </label>
+                        <div class="input-container">
+                            {% lucide "mail" size=18 class="field-icon" %}
+                            <input id="email" name="email" type="email" autocomplete="email" required
+                                   inputmode="email"
+                                   autocapitalize="none"
+                                   autocorrect="off"
+                                   spellcheck="false"
+                                   value="{% if user.is_authenticated %}{{ checkout_contact.email|default:user.email }}{% else %}{{ checkout_contact.email|default:'' }}{% endif %}"
+                                   placeholder="e.g. mark@example.com"
+                                   class="form-input"
+                                   data-error-message="Please enter a valid email address.">
+                            <span class="input-valid-indicator" aria-hidden="true">
+                                {% lucide "check" size=16 %}
+                            </span>
+                        </div>
+                        <span class="field-error" data-error-for="email">{% if form_errors.email %}{{ form_errors.email }}{% endif %}</span>
+                    </div>
+
+                    <!-- Payment Method Preview Section -->
+                    <div class="payment-method-section">
+                        <div class="payment-section-header">
+                            <h3>Payment Method</h3>
+                            <span class="security-chip-mini">
+                                {% lucide "shield-check" size=13 %}
+                                <span>PayMongo Verified</span>
+                            </span>
+                        </div>
+
+                        <div class="qrph-badge-card">
+                            <div class="qrph-badge-header">
+                                <div class="qrph-brand-badge">
+                                    <span class="qrph-tag">QR Ph</span>
+                                    <span class="qrph-subtitle">National QR Standard</span>
+                                </div>
+                                <span class="zero-fee-pill">Zero Extra Fees</span>
+                            </div>
+                            <p class="qrph-desc">Pay instantly using <strong>GCash, Maya, BDO, BPI, UnionBank, ShopeePay</strong>, or any Philippine banking app with QR Ph support.</p>
+                            
+                            <div class="supported-wallets-grid">
+                                <span class="wallet-pill"><span class="wallet-dot gcash"></span>GCash</span>
+                                <span class="wallet-pill"><span class="wallet-dot maya"></span>Maya</span>
+                                <span class="wallet-pill"><span class="wallet-dot bpi"></span>BPI</span>
+                                <span class="wallet-pill"><span class="wallet-dot bdo"></span>BDO</span>
+                                <span class="wallet-pill"><span class="wallet-dot ub"></span>UnionBank</span>
+                                <span class="wallet-pill"><span class="wallet-dot shopee"></span>ShopeePay</span>
+                                <span class="wallet-pill"><span class="wallet-dot gotyme"></span>GoTyme</span>
+                                <span class="wallet-pill"><span class="wallet-dot seabank"></span>SeaBank</span>
+                                <span class="wallet-pill more-banks">+40 Banks</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms & Conditions with generous tap target -->
+                    <div class="terms-container">
+                        <label class="terms-touch-label" id="terms-label" for="terms">
+                            <input type="checkbox" id="terms" name="terms" checked required class="terms-checkbox">
+                            <span class="custom-checkbox-box" aria-hidden="true">
+                                {% lucide "check" size=14 class="check-icon" %}
+                            </span>
+                            <span class="terms-text">
+                                I agree to the <a href="{% url 'terms_of_service' %}" target="_blank" rel="noopener">Terms and Conditions</a> and <a href="{% url 'privacy_policy' %}" target="_blank" rel="noopener">Privacy Policy</a>.
+                            </span>
+                        </label>
+                        <span class="field-error" data-error-for="terms">{% if form_errors.terms %}{{ form_errors.terms }}{% endif %}</span>
+                    </div>
+
+                    <p class="error payment-error" id="payment-error" {% if not form_error %}hidden{% endif %}>{{ form_error|default:'' }}</p>
+                </section>
+
+                <!-- Desktop Pay Bar / Primary Submit Button -->
+                <div class="desktop-submit-wrap">
+                    <button type="submit" id="pay-button" class="btn-pay-primary">
+                        {% lucide "lock" size=18 class="btn-lock-icon" %}
+                        <span class="btn-text">Proceed to Payment — {{ total_cents|centavos }}</span>
+                    </button>
+                    <div class="checkout-trust-footer">
+                        <span class="trust-item">{% lucide "shield-check" size=14 %} 256-Bit SSL</span>
+                        <span class="trust-item">{% lucide "zap" size=14 %} Instant Digital Delivery</span>
+                        <span class="trust-item">{% lucide "circle-check" size=14 %} PayMongo Guaranteed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Desktop Order Summary Sidebar -->
+            <aside class="checkout-sidebar">
+                <div class="card order-summary-card">
+                    <div class="summary-card-header">
+                        <h2>Order Summary</h2>
+                        <span class="item-count-badge">{{ line_items|length }} item{% if line_items|length != 1 %}s{% endif %}</span>
+                    </div>
+                    
+                    <ul class="summary-lines">
+                        {% for item in line_items %}
+                        <li class="summary-product-row">
+                            <div class="product-info">
+                                <span class="product-name">{{ item.product.name }}</span>
+                                <span class="product-badge">Digital License</span>
+                            </div>
+                            <span class="product-price">{{ item.line_total_cents|centavos }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <dl class="summary-totals">
+                        <div class="totals-row">
+                            <dt>Subtotal</dt>
+                            <dd>{{ subtotal_cents|centavos }}</dd>
+                        </div>
+                        {% if discount_cents %}
+                        <div class="totals-row discount-row">
+                            <dt>Discount</dt>
+                            <dd>-{{ discount_cents|centavos }}</dd>
+                        </div>
+                        {% endif %}
+                        <div class="totals-row">
+                            <dt>Delivery</dt>
+                            <dd><span class="free-pill">Instant Download</span></dd>
+                        </div>
+                        <div class="totals-row">
+                            <dt>Tax</dt>
+                            <dd>Included</dd>
+                        </div>
+                        <div class="totals-row total-highlight">
+                            <dt class="total">Total</dt>
+                            <dd class="total" id="summary-total" data-total-cents="{{ total_cents }}">{{ total_cents|centavos }}</dd>
+                        </div>
+                    </dl>
+
+                    <div class="summary-guarantee-box">
+                        {% lucide "circle-check" size=18 class="guarantee-icon" %}
+                        <div class="guarantee-text">
+                            <strong>Instant Access Guaranteed</strong>
+                            <span>Your purchase is delivered immediately after QR Ph payment confirmation.</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
+
+        <!-- Sticky Mobile Pay Bar for Smart Phones -->
+        <div class="pay-bar mobile-pay-bar">
+            <div class="mobile-pay-inner">
+                <div class="mobile-pay-total">
+                    <span class="mobile-total-label">Total to Pay:</span>
+                    <strong class="mobile-total-value">{{ total_cents|centavos }}</strong>
+                </div>
+                <button type="submit" id="mobile-pay-button" class="btn-pay-mobile">
+                    {% lucide "lock" size=18 class="btn-lock-icon" %}
+                    <span>Proceed to Pay</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</main>
+
+{{ error_map|json_script:"paymongo-error-map" }}
+{{ error_map_default|json_script:"paymongo-error-map-default" }}
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings — Raqnith{% endblock %}
+
+{% block content %}
+<main class="dashboard-container">
+    <div class="page-header-simple">
+        <a href="{% url 'accounts:profile' %}" class="back-link">&larr; Back to Profile</a>
+        <h1>Account Settings & Security</h1>
+        <p class="section-subtext">Manage your password, account credentials, and communication preferences.</p>
+    </div>
+
+    <div class="settings-grid">
+        <!-- Change Password Card -->
+        <section class="card settings-card">
+            <div class="card-header">
+                <h2>Change Password</h2>
+                <p class="card-subtitle">Ensure your account is using a secure, unique password.</p>
+            </div>
+
+            {% if password_form.non_field_errors %}
+            <div class="auth-error-alert">
+                {% for error in password_form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'accounts:settings' %}" class="settings-form" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change_password">
+
+                <div class="form-group">
+                    <label for="{{ password_form.current_password.id_for_label }}">Current Password</label>
+                    {{ password_form.current_password }}
+                    {% if password_form.current_password.errors %}
+                    <span class="field-error">{{ password_form.current_password.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ password_form.new_password.id_for_label }}">New Password</label>
+                    {{ password_form.new_password }}
+                    {% if password_form.new_password.errors %}
+                    <span class="field-error">{{ password_form.new_password.errors.0 }}</span>
+                    {% endif %}
+                    <span class="field-hint">Must be at least 8 characters and not too common.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ password_form.confirm_password.id_for_label }}">Confirm New Password</label>
+                    {{ password_form.confirm_password }}
+                    {% if password_form.confirm_password.errors %}
+                    <span class="field-error">{{ password_form.confirm_password.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="button button-primary">Update Password</button>
+            </form>
+        </section>
+
+        <!-- Communication & Privacy Preferences -->
+        <section class="card settings-card">
+            <div class="card-header">
+                <h2>Email & Notification Preferences</h2>
+                <p class="card-subtitle">Control the transaction and product alerts you receive.</p>
+            </div>
+
+            <form method="post" action="{% url 'accounts:settings' %}" class="preferences-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_preferences">
+
+                <div class="preference-item">
+                    <label class="toggle-switch-label">
+                        <input type="checkbox" name="receipt_emails" checked disabled>
+                        <span class="preference-text">
+                            <strong>Order & Payment Receipts (Required)</strong>
+                            <small>Instant transaction confirmation and digital product access links.</small>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="preference-item">
+                    <label class="toggle-switch-label">
+                        <input type="checkbox" name="security_alerts" checked>
+                        <span class="preference-text">
+                            <strong>Security & Login Alerts</strong>
+                            <small>Notifications when a password change or sensitive account update occurs.</small>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="preference-item">
+                    <label class="toggle-switch-label">
+                        <input type="checkbox" name="product_updates" checked>
+                        <span class="preference-text">
+                            <strong>Product Releases & Special Discounts</strong>
+                            <small>Occasional updates when new curated digital items are added.</small>
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" class="button button-secondary">Save Preferences</button>
+            </form>
+        </section>
+    </div>
+
+    <!-- Account Details / Metadata Card -->
+    <section class="card settings-meta-card">
+        <div class="card-header">
+            <h2>Account Details & Data</h2>
+        </div>
+        <div class="meta-details-grid">
+            <div class="meta-row">
+                <span class="meta-key">Account UUID:</span>
+                <span class="meta-val"><code>{{ user.id }}</code></span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">Username:</span>
+                <span class="meta-val">{{ user.username }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">Registration Date:</span>
+                <span class="meta-val">{{ user.date_joined|date:"F d, Y h:i A" }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">Payment Gateway:</span>
+                <span class="meta-val">PayMongo Payment Intent Rails (PCI-DSS Scoped)</span>
+            </div>
+        </div>
+        <div class="meta-links">
+            <a href="{% url 'privacy_policy' %}" class="text-link">Review Privacy Policy</a> &bull; 
+            <a href="{% url 'terms_of_service' %}" class="text-link">Review Terms of Service</a>
+        </div>
+    </section>
+</main>
+{% endblock %}

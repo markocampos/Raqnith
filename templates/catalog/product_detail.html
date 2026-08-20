@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load money_tags %}
+{% load lucide %}
+
+{% block title %}{{ product.name }} — Raqnith{% endblock %}
+
+{% block content %}
+<main class="page-container product-detail-page">
+    <div class="product-detail-card">
+        <div class="product-detail-header">
+            <span class="product-category-tag">Digital Asset</span>
+            <h1>{{ product.name }}</h1>
+            <p class="product-detail-price price">{{ product.price_cents|centavos }}</p>
+        </div>
+
+        <div class="product-detail-body">
+            <div class="feature-item-pill">
+                {% lucide "zap" size=16 class="pill-icon" %}
+                <span>Instant Digital Delivery</span>
+            </div>
+            <div class="feature-item-pill">
+                {% lucide "shield-check" size=16 class="pill-icon" %}
+                <span>Official License & Receipt</span>
+            </div>
+        </div>
+
+        <div class="product-detail-actions">
+            {% if product.is_available %}
+            <form method="post" action="{% url 'cart:add' %}" class="add-to-cart-form">
+                {% csrf_token %}
+                <input type="hidden" name="product" value="{{ product.id }}">
+                <button type="submit" class="button button-product-add">
+                    {% lucide "shopping-cart" size=18 %}
+                    <span>Add to cart</span>
+                </button>
+            </form>
+            {% else %}
+            <p class="out-of-stock">Unavailable</p>
+            {% endif %}
+        </div>
+
+        <div class="product-detail-back">
+            <a href="{% url 'catalog:product_list' %}" class="back-products-link">
+                {% lucide "arrow-left" size=16 %}
+                <span>Back to products</span>
+            </a>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load money_tags %}
+
+{% block title %}Receipt — Raqnith{% endblock %}
+
+{% block content %}
+<main class="checkout">
+    <section class="card">
+        <h1>Order receipt</h1>
+        <p>Order #{{ order.id }}</p>
+
+        <table class="receipt-lines">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.unit_price_cents|centavos }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <dl class="summary-totals">
+            <dt>Subtotal</dt><dd>{{ order.subtotal_amount|centavos }}</dd>
+            {% if order.discount_amount %}<dt>Discount</dt><dd>-{{ order.discount_amount|centavos }}</dd>{% endif %}
+            <dt class="total">Total</dt><dd class="total">{{ order.total_amount|centavos }}</dd>
+        </dl>
+
+        {% if order.shipping_name or order.shipping_address %}
+        <h2>Shipping address</h2>
+        <address>
+            {% if order.shipping_name %}{{ order.shipping_name }}<br>{% endif %}
+            {% if order.shipping_address %}{{ order.shipping_address }}<br>{% endif %}
+            {% if order.shipping_city %}{{ order.shipping_city }}{% endif %}{% if order.shipping_postal %} {{ order.shipping_postal }}{% endif %}
+        </address>
+        {% endif %}
+
+        {% if payment_method %}<p>Paid with {{ payment_method }}.</p>{% endif %}
+        {% if order.paid_at %}<p>Paid on {{ order.paid_at }}.</p>{% endif %}
+    </section>
+</main>
+{% endblock %}

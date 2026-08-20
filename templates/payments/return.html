@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load money_tags %}
+
+{% block title %}Confirming payment — Raqnith{% endblock %}
+
+{% block content %}
+<main class="checkout">
+    <section class="card">
+        {% if state == "not_found" %}
+            <h1>Payment not found</h1>
+            <p>We couldn't find the payment you're checking. If you've just completed a
+                payment, your order may still be confirming.</p>
+            <p><a href="/">Back to the shop</a></p>
+        {% else %}
+            <h1>Confirming your payment…</h1>
+            <p>We're still checking with the payment provider. Please don't submit
+                another payment yet.</p>
+            <p class="status-dots"><span></span><span></span><span></span></p>
+            <p class="summary-totals total">Order total: {{ order.total_amount|centavos }}</p>
+            <p><a href="{% url 'orders:status' order_id=order.id %}">Check again</a></p>
+        {% endif %}
+    </section>
+</main>
+
+{% if state == "confirming" %}
+{{ poll|json_script:"return-poll" }}
+<script>
+(function () {
+    var poll = JSON.parse(document.getElementById("return-poll").textContent);
+    var attempts = 0;
+    var timer = setInterval(function () {
+        attempts += 1;
+        fetch("/payments/" + poll.attempt_id + "/status/")
+            .then(function (r) { return r.json(); })
+            .then(function (body) {
+                if (body.status === "succeeded") {
+                    window.location.href = "/orders/" + poll.order_id + "/success/";
+                } else if (body.status === "failed" || body.status === "cancelled") {
+                    window.location.href = "/orders/" + poll.order_id + "/";
+                } else if (attempts >= 20) {
+                    clearInterval(timer);
+                }
+            });
+    }, 3000);
+})();
+</script>
+{% endif %}
+{% endblock %}

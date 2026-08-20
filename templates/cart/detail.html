@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load money_tags %}
+{% load lucide %}
+
+{% block title %}Your Cart — Raqnith{% endblock %}
+
+{% block content %}
+<main class="page-container cart-page">
+    <div class="page-header">
+        <span class="section-tag">Checkout Preparation</span>
+        <h1>Your Shopping Cart</h1>
+        <p class="section-subtext">Review your selected digital assets before proceeding to checkout.</p>
+    </div>
+
+    {% if items %}
+    <div class="cart-layout">
+        <div class="cart-items-container">
+            <ul class="cart-items-list">
+                {% for item in items %}
+                <li class="cart-item-row">
+                    <div class="cart-item-info">
+                        <div class="cart-item-icon-wrap">
+                            {% lucide "package" size=20 class="cart-item-icon" %}
+                        </div>
+                        <div class="cart-item-meta">
+                            <h3 class="cart-item-name">{{ item.product.name }}</h3>
+                            <span class="cart-item-badge">Digital License</span>
+                        </div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <span class="cart-item-total">{{ item.line_total_cents|centavos }}</span>
+                        <form method="post" action="{% url 'cart:remove' item.id %}" class="cart-remove-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-cart-remove" aria-label="Remove {{ item.product.name }} from cart">
+                                {% lucide "trash-2" size=15 class="btn-remove-icon" %}
+                                <span>Remove</span>
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="cart-summary-card">
+            <h2>Order Summary</h2>
+            <div class="summary-line-item">
+                <span>Subtotal</span>
+                <span class="subtotal-val">{{ subtotal_cents|centavos }}</span>
+            </div>
+            <div class="summary-line-item">
+                <span>Delivery</span>
+                <span class="delivery-val">Instant Download</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-total-item">
+                <span>Total</span>
+                <span class="total-val subtotal">{{ subtotal_cents|centavos }}</span>
+            </div>
+            <a class="button button-checkout-action" href="{% url 'checkout:index' %}">
+                <span>Proceed to Checkout</span>
+                {% lucide "arrow-right" size=18 class="btn-arrow-icon" %}
+            </a>
+            <a class="continue-link" href="{% url 'catalog:product_list' %}">
+                {% lucide "arrow-left" size=14 %}
+                <span>Continue Shopping</span>
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="cart-empty-card">
+        <div class="empty-cart-icon-wrap">
+            {% lucide "shopping-cart" size=48 class="empty-cart-icon" %}
+        </div>
+        <h2>Your cart is empty.</h2>
+        <p>You have not added any digital items to your shopping cart yet.</p>
+        <a class="button button-empty-browse" href="{% url 'catalog:product_list' %}">
+            <span>Browse Products</span>
+            {% lucide "arrow-right" size=16 %}
+        </a>
+    </div>
+    {% endif %}
+</main>
+{% endblock %}
+

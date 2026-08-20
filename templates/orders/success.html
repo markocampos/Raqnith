@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load money_tags %}
+
+{% block title %}Payment confirmed — Raqnith{% endblock %}
+
+{% block content %}
+<main class="checkout">
+    <section class="card">
+        <h1>✓ Payment confirmed</h1>
+
+        {% if order.shipping_name %}
+            <p>Thank you, {{ order.shipping_name }}.</p>
+        {% else %}
+            <p>Thank you for your order.</p>
+        {% endif %}
+
+        <dl class="summary-totals">
+            <dt>Order</dt><dd>#{{ order.id }}</dd>
+            <dt>Amount</dt><dd>{{ order.total_amount|centavos }}</dd>
+            {% if payment_method %}<dt>Payment</dt><dd>{{ payment_method }}</dd>{% endif %}
+            {% if order.email %}<dt>Email</dt><dd>{{ order.email }}</dd>{% endif %}
+        </dl>
+
+        <p>We've sent your order confirmation.</p>
+
+        <a class="button" href="{% url 'orders:receipt' order.id %}">View Order</a>
+    </section>
+</main>
+{% endblock %}

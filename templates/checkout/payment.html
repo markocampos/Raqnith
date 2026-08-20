@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% load static money_tags lucide %}
+
+{% block title %}Pay with QR Ph — Order #{{ order_id|slice:":8" }} — Raqnith{% endblock %}
+
+{% block content %}
+<main class="checkout payment-screen checkout-modern" id="order-checkout"
+      data-order-id="{{ order_id }}"
+      data-payment-id="{{ payment_id }}"
+      data-seconds-remaining="{{ seconds_remaining }}"
+      data-is-expired="{{ is_expired|yesno:"true,false" }}"
+      data-is-paid="{{ is_paid|yesno:"true,false" }}">
+    
+    <!-- Checkout Breadcrumbs & Steps -->
+    <nav class="checkout-stepper" aria-label="Checkout Progress">
+        <ol class="stepper-list">
+            <li class="step-item step-completed">
+                <span class="step-badge">✓</span>
+                <span class="step-label">Information</span>
+            </li>
+            <li class="step-connector completed"></li>
+            <li class="step-item step-active">
+                <span class="step-badge">2</span>
+                <span class="step-label">QR Ph Payment</span>
+            </li>
+            <li class="step-connector"></li>
+            <li class="step-item">
+                <span class="step-badge">3</span>
+                <span class="step-label">Instant Access</span>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Mobile Order Summary Collapsible Banner (Phones only) -->
+    <div class="mobile-summary-accordion">
+        <button type="button" class="mobile-summary-toggle-btn" id="mobile-summary-toggle" aria-expanded="false" aria-controls="mobile-summary-panel">
+            <div class="summary-toggle-left">
+                {% lucide "shopping-bag" size=18 class="summary-toggle-icon" %}
+                <span class="summary-toggle-title">Show order summary</span>
+                {% lucide "chevron-down" size=16 class="summary-toggle-chevron" %}
+            </div>
+            <div class="summary-toggle-right">
+                <strong class="summary-toggle-amount">{{ total_cents|centavos }}</strong>
+            </div>
+        </button>
+        <div class="mobile-summary-panel" id="mobile-summary-panel" hidden>
+            <ul class="mobile-summary-items">
+                {% for item in line_items %}
+                <li class="mobile-summary-row">
+                    <div class="mobile-item-info">
+                        <span class="mobile-item-name">{{ item.product.name }}</span>
+                        <span class="mobile-item-badge">Digital License</span>
+                    </div>
+                    <span class="mobile-item-price">{{ item.line_total_cents|centavos }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="mobile-summary-breakdown">
+                <div class="mobile-breakdown-row">
+                    <span>Subtotal</span>
+                    <span>{{ subtotal_cents|centavos }}</span>
+                </div>
+                {% if discount_cents %}
+                <div class="mobile-breakdown-row discount">
+                    <span>Discount</span>
+                    <span>-{{ discount_cents|centavos }}</span>
+                </div>
+                {% endif %}
+                <div class="mobile-breakdown-row">
+                    <span>Delivery</span>
+                    <span class="free-pill">Instant Download</span>
+                </div>
+                <div class="mobile-breakdown-row">
+                    <span>Tax</span>
+                    <span>Included</span>
+                </div>
+                <div class="mobile-breakdown-row total-row">
+                    <span>Total</span>
+                    <span>{{ total_cents|centavos }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="checkout-header">
+        {% if not is_paid %}
+        <a href="{% url "cart:detail" %}" class="back-link">
+            {% lucide "arrow-left" size=14 %}
+            <span>Back to Cart</span>
+        </a>
+        {% endif %}
+        <h1 id="checkout-title">{% if is_paid %}Payment Confirmed{% else %}Scan to Pay with QR Ph{% endif %}</h1>
+        <div class="order-ref-meta">
+            <span class="order-ref-pill">
+                <span>Order #{{ order_id|slice:":8" }}</span>
+                <button type="button" class="btn-copy-mini" id="btn-copy-order" data-copy="{{ order_id }}" aria-label="Copy Order ID" title="Copy Order ID">
+                    {% lucide "copy" size=12 %}
+                </button>
+            </span>
+            <span class="order-email-meta">Receipt & access sending to <strong>{{ email }}</strong></span>
+        </div>
+    </div>
+
+    <div class="checkout-columns">
+
+        <!-- Main QR Code Column -->
+        <section class="card qr-payment-card checkout-section-card" id="qr-payment-section">
+            
+            <div class="status-indicator-bar" id="status-bar">
+                <div class="live-status">
+                    <span class="pulsing-dot {% if is_paid %}success{% endif %}" id="pulsing-dot"></span>
+                    <span class="status-text" id="status-text">{% if is_paid %}Payment Confirmed!{% else %}Waiting for payment…{% endif %}</span>
+                </div>
+                <div class="timer-countdown" id="timer-badge" {% if is_paid %}hidden{% endif %}>
+                    {% lucide "clock" size=14 class="timer-icon" %}
+                    <span id="countdown-timer">15:00</span>
+                </div>
+            </div>
+
+            <!-- QR Presentation Area -->
+            <div class="qr-display-container" id="qr-container">
+                <div class="qr-frame">
+                    <div class="qr-corner top-left"></div>
+                    <div class="qr-corner top-right"></div>
+                    <div class="qr-corner bottom-left"></div>
+                    <div class="qr-corner bottom-right"></div>
+                    
+                    <img id="qr-code-img" src="{{ qr_url }}" alt="QR Ph Payment Code" width="240" height="240" class="{% if is_expired or is_paid %}dimmed{% endif %}">
+                    
+                    <div class="qr-expired-overlay" id="qr-expired-overlay" {% if not is_expired or is_paid %}hidden{% endif %}>
+                        <div class="expired-modal">
+                            <div class="expired-icon-wrap">
+                                {% lucide "circle-alert" size=36 class="expired-icon" %}
+                            </div>
+                            <h3>QR Code Expired</h3>
+                            <p>This QR payment code has expired. Tap below to generate a fresh QR code.</p>
+                            <button type="button" id="refresh-qr-btn" class="btn-refresh-qr">
+                                {% lucide "rotate-cw" size=16 %}
+                                <span>Generate Fresh QR Code</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="qr-success-overlay" id="qr-success-overlay" {% if not is_paid %}hidden{% endif %}>
+                        <div class="success-modal">
+                            <div class="success-icon-wrap">
+                                {% lucide "circle-check" size=44 class="success-icon" %}
+                            </div>
+                            <h3>Payment Confirmed!</h3>
+                            <p>Thank you! Your payment was verified successfully and your order is complete.</p>
+                            <a href="{% url "orders:receipt" order_id %}" class="btn-view-receipt">
+                                <span>View Full Receipt & Downloads</span>
+                                {% lucide "arrow-right" size=16 %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Single-Device Mobile Helper Buttons -->
+            <div class="qr-actions-row" {% if is_paid %}hidden{% endif %}>
+                <a id="btn-download-qr" href="{{ qr_url }}" download="Raqnith-QRPh-{{ order_id|slice:':8' }}.png" target="_blank" rel="noopener" class="btn-qr-action btn-save-photo">
+                    {% lucide "download" size=16 %}
+                    <span>Save QR to Photos</span>
+                </a>
+                <button type="button" id="btn-copy-amount" class="btn-qr-action btn-copy-amt" data-copy="{{ total_cents|centavos }}">
+                    {% lucide "copy" size=16 %}
+                    <span id="copy-amt-text">Copy Amount ({{ total_cents|centavos }})</span>
+                </button>
+            </div>
+
+            <div class="qr-amount-banner" {% if is_paid %}hidden{% endif %}>
+                <div class="amount-banner-left">
+                    <span class="amount-label">Exact Amount to Pay</span>
+                    <span class="amount-note">Zero additional transaction fees</span>
+                </div>
+                <div class="amount-banner-right">
+                    <span class="amount-value" id="qr-total-amount">{{ total_cents|centavos }}</span>
+                </div>
+            </div>
+
+            <!-- Visual Payment Instructions with Phone Helper -->
+            <div class="payment-guide-card" {% if is_paid %}hidden{% endif %}>
+                <div class="guide-header">
+                    <div class="guide-icon-wrap">
+                        {% lucide "smartphone" size=18 %}
+                    </div>
+                    <h3>How to Pay using GCash, Maya, or Bank App:</h3>
+                </div>
+
+                <div class="guide-tabs">
+                    <div class="guide-tab active-tab" id="guide-phone-tab">
+                        <div class="guide-tab-title">
+                            <span class="tab-badge">On this Phone</span>
+                        </div>
+                        <ol class="guide-steps">
+                            <li>Tap <strong>"Save QR to Photos"</strong> above (or take a screenshot).</li>
+                            <li>Open <strong>GCash, Maya, BDO, BPI</strong>, or any banking app.</li>
+                            <li>Tap <strong>QR / Scan</strong> ➔ select <strong>"Upload from Gallery / Photos"</strong>.</li>
+                            <li>Select the QR image and approve payment of <strong>{{ total_cents|centavos }}</strong>.</li>
+                        </ol>
+                    </div>
+                    <div class="guide-tab alt-tab">
+                        <div class="guide-tab-title">
+                            <span class="tab-badge alt">On another Device / Laptop</span>
+                        </div>
+                        <p class="guide-alt-text">Open any Philippine e-wallet or banking app, tap <strong>Scan QR</strong>, point camera at this screen, and confirm.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="supported-wallets-footer" {% if is_paid %}hidden{% endif %}>
+                <span class="supported-title">Accepted E-Wallets & Banks:</span>
+                <div class="wallet-chips">
+                    <span class="chip"><span class="wallet-dot gcash"></span>GCash</span>
+                    <span class="chip"><span class="wallet-dot maya"></span>Maya</span>
+                    <span class="chip"><span class="wallet-dot bpi"></span>BPI</span>
+                    <span class="chip"><span class="wallet-dot bdo"></span>BDO</span>
+                    <span class="chip"><span class="wallet-dot ub"></span>UnionBank</span>
+                    <span class="chip"><span class="wallet-dot shopee"></span>ShopeePay</span>
+                    <span class="chip"><span class="wallet-dot gotyme"></span>GoTyme</span>
+                    <span class="chip"><span class="wallet-dot seabank"></span>SeaBank</span>
+                    <span class="chip more">+40 Banks</span>
+                </div>
+            </div>
+
+            <p class="error payment-error" id="payment-error-box" hidden></p>
+        </section>
+
+        <!-- Order Summary Column -->
+        <aside class="checkout-sidebar">
+            <div class="card order-summary-card">
+                <div class="summary-card-header">
+                    <h2>Order Summary</h2>
+                    <span class="item-count-badge">{{ line_items|length }} item{% if line_items|length != 1 %}s{% endif %}</span>
+                </div>
+
+                <ul class="summary-lines">
+                    {% for item in line_items %}
+                    <li class="summary-product-row">
+                        <div class="product-info">
+                            <span class="product-name">{{ item.product.name }}</span>
+                            <span class="product-badge">Digital License</span>
+                        </div>
+                        <span class="product-price">{{ item.line_total_cents|centavos }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <dl class="summary-totals">
+                    <div class="totals-row">
+                        <dt>Subtotal</dt>
+                        <dd>{{ subtotal_cents|centavos }}</dd>
+                    </div>
+                    {% if discount_cents %}
+                    <div class="totals-row discount-row">
+                        <dt>Discount</dt>
+                        <dd>-{{ discount_cents|centavos }}</dd>
+                    </div>
+                    {% endif %}
+                    <div class="totals-row">
+                        <dt>Delivery</dt>
+                        <dd><span class="free-pill">Instant Download</span></dd>
+                    </div>
+                    <div class="totals-row">
+                        <dt>Tax</dt>
+                        <dd>Included</dd>
+                    </div>
+                    <div class="totals-row total-highlight">
+                        <dt class="total">Total</dt>
+                        <dd class="total" id="summary-total">{{ total_cents|centavos }}</dd>
+                    </div>
+                </dl>
+
+                <div class="summary-contact-info">
+                    <span class="contact-label">Receipt Email:</span>
+                    <span class="contact-value">{{ email }}</span>
+                </div>
+
+                <div class="summary-guarantee-box">
+                    {% lucide "circle-check" size=18 class="guarantee-icon" %}
+                    <div class="guarantee-text">
+                        <strong>Instant Access Guaranteed</strong>
+                        <span>Automated webhook verification will activate your order immediately upon payment.</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</main>
+
+{{ error_map|json_script:"paymongo-error-map" }}
+{{ error_map_default|json_script:"paymongo-error-map-default" }}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load money_tags %}
+{% load lucide %}
+
+{% block title %}All Products — Raqnith{% endblock %}
+
+{% block content %}
+<main class="page-container">
+    <div class="page-header">
+        <span class="section-tag">Store Catalog</span>
+        <h1>All Products</h1>
+        <p class="section-subtext">Browse our complete collection of digital tools, templates, and developer kits.</p>
+    </div>
+
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card product-card-modern">
+            <div class="product-card-header">
+                <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
+                {% if product.is_available %}
+                <span class="product-status-pill">Available</span>
+                {% else %}
+                <span class="product-status-pill out-of-stock">Sold Out</span>
+                {% endif %}
+            </div>
+            <div class="product-card-body">
+                <h3 class="product-title">
+                    <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+                </h3>
+                <p class="product-desc">Instant digital delivery with automated order receipt.</p>
+            </div>
+            <div class="product-card-footer">
+                <div class="product-price-box">
+                    <span class="price-label">Price</span>
+                    <span class="price product-price">{{ product.price_cents|centavos }}</span>
+                </div>
+                <div class="product-card-buttons">
+                    {% if product.is_available %}
+                    <form method="post" action="{% url 'cart:add' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="product" value="{{ product.id }}">
+                        <button type="submit" class="btn-add-cart">
+                            {% lucide "shopping-cart" size=14 class="btn-cart-icon-inline" %}
+                            <span>Add to Cart</span>
+                        </button>
+                    </form>
+                    {% endif %}
+                    <a href="{{ product.get_absolute_url }}" class="btn-view-details">
+                        <span>Details</span>
+                        {% lucide "arrow-right" size=13 %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state-card">
+            <p>No products available right now. Please check back later!</p>
+        </div>
+        {% endfor %}
+    </div>
+</main>
+{% endblock %}
+

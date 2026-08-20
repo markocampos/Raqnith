@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service — Raqnith{% endblock %}
+
+{% block content %}
+<main class="document-page-container">
+    <article class="document-card">
+        <div class="document-header">
+            <span class="document-tag">Legal & Compliance</span>
+            <h1>Terms of Service</h1>
+            <p class="document-meta">Last Updated: August 20, 2026 &bull; Effective Immediately</p>
+        </div>
+
+        <div class="document-intro-box">
+            <p>
+                Welcome to <strong>Raqnith</strong>. By accessing our website, creating an account, or purchasing digital goods, you agree to be bound by the following terms and conditions.
+            </p>
+        </div>
+
+        <div class="document-body">
+            <section class="doc-section">
+                <h2>1. Digital Products & Licensing</h2>
+                <p>
+                    All items sold on Raqnith are digital products. Upon successful payment confirmation, you are granted a non-exclusive, non-transferable license to use the purchased digital assets according to the individual product's license tier.
+                </p>
+            </section>
+
+            <section class="doc-section">
+                <h2>2. Payments & Pricing</h2>
+                <p>
+                    All product prices are quoted in Philippine Pesos (PHP). Payments are processed through our authorized partner <strong>PayMongo Philippines, Inc.</strong> via QR Ph, GCash, Maya, and major credit/debit cards. All transactions are final upon digital fulfillment.
+                </p>
+            </section>
+
+            <section class="doc-section">
+                <h2>3. User Accounts & Security</h2>
+                <p>
+                    You are responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately if you suspect any unauthorized access to your account.
+                </p>
+            </section>
+
+            <section class="doc-section">
+                <h2>4. Refund Policy</h2>
+                <p>
+                    Due to the immediate delivery nature of digital goods, refunds are generally not offered once digital assets have been accessed or downloaded, except in cases where a product is proven to be defective and cannot be resolved by support.
+                </p>
+            </section>
+
+            <section class="doc-section">
+                <h2>5. Contact & Questions</h2>
+                <p>
+                    For inquiries regarding these Terms of Service, please reach out to us at <a href="mailto:support@raqnith.com">support@raqnith.com</a>.
+                </p>
+            </section>
+        </div>
+
+        <div class="document-footer-nav">
+            <a href="{% url 'catalog:home' %}" class="button button-secondary">&larr; Back to Home</a>
+            <a href="{% url 'privacy_policy' %}" class="button button-outline">View Privacy Policy</a>
+        </div>
+    </article>
+</main>
+{% endblock %}

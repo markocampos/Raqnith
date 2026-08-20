@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{% block title %}Raqnith — Digital Commerce & Payments{% endblock %}</title>
+    {% load static %}
+    {% load lucide %}
+    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20260820_12">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-container">
+            <div class="header-brand-wrap">
+                <a href="{% url 'catalog:home' %}" class="brand-logo" aria-label="Raqnith Home">
+                    <img src="{% static 'image/logo.svg' %}" alt="Raqnith Logo" class="brand-logo-img" width="52" height="52">
+                </a>
+            </div>
+
+            <nav class="main-nav" id="main-nav" aria-label="Main Navigation">
+                <ul class="nav-links">
+                    <li><a href="{% url 'catalog:home' %}" class="nav-link">Home</a></li>
+                    <li><a href="{% url 'catalog:product_list' %}" class="nav-link">Products</a></li>
+                </ul>
+
+                <div class="nav-actions">
+                    <!-- Revised Cart Button -->
+                    <a href="{% url 'cart:detail' %}" class="header-cart-btn" id="header-cart-button" role="button" aria-label="Shopping Cart, {{ cart_item_count|default:0 }} items">
+                        <span class="cart-btn-icon-wrapper">
+                            {% lucide "shopping-bag" size=18 class="cart-btn-icon" %}
+                        </span>
+                        <span class="cart-btn-text">Cart</span>
+                        {% if cart_item_count and cart_item_count > 0 %}
+                        <span class="cart-btn-badge animate-badge-pop" id="header-cart-badge">{{ cart_item_count }}</span>
+                        {% else %}
+                        <span class="cart-btn-badge cart-btn-badge-empty" id="header-cart-badge">0</span>
+                        {% endif %}
+                    </a>
+
+                    <!-- Auth / Profile -->
+                    <div class="nav-auth">
+                        {% if user.is_authenticated %}
+                        <div class="user-menu" id="user-menu-dropdown">
+                            <button type="button" class="user-profile-btn" id="user-menu-toggle" aria-expanded="false" aria-haspopup="true" aria-label="User account menu">
+                                <span class="user-avatar-mini">{{ user.username|slice:":1"|upper }}</span>
+                                <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                                {% lucide "chevron-down" size=14 class="user-menu-chevron" %}
+                            </button>
+                            <div class="user-dropdown-actions" id="user-dropdown-panel" role="menu">
+                                <a href="{% url 'accounts:profile' %}" class="dropdown-item" role="menuitem">
+                                    {% lucide "user" size=15 class="dropdown-item-icon" %}
+                                    <span>My Profile & Orders</span>
+                                </a>
+                                <a href="{% url 'accounts:settings' %}" class="dropdown-item" role="menuitem">
+                                    {% lucide "settings" size=15 class="dropdown-item-icon" %}
+                                    <span>Settings</span>
+                                </a>
+                                <a href="{% url 'accounts:logout' %}" class="dropdown-item logout-link" role="menuitem">
+                                    {% lucide "log-out" size=15 class="dropdown-item-icon" %}
+                                    <span>Log out</span>
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="auth-buttons">
+                            <a href="{% url 'accounts:login' %}" class="button-nav-secondary">Sign In</a>
+                            <a href="{% url 'accounts:register' %}" class="button-nav-primary">Register</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Floating Toast Notification System -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="toast-item toast-{{ message.tags|default:'info' }}" role="status" data-autohide="true" data-delay="5000">
+                <div class="toast-icon">
+                    {% if "success" in message.tags %}
+                        {% lucide "circle-check" size=18 class="toast-icon-svg" %}
+                    {% elif "error" in message.tags or "danger" in message.tags %}
+                        {% lucide "circle-alert" size=18 class="toast-icon-svg" %}
+                    {% elif "warning" in message.tags %}
+                        {% lucide "triangle-alert" size=18 class="toast-icon-svg" %}
+                    {% else %}
+                        {% lucide "info" size=18 class="toast-icon-svg" %}
+                    {% endif %}
+                </div>
+                <div class="toast-body">
+                    <span class="toast-message message-text">{{ message }}</span>
+                </div>
+                <button type="button" class="toast-close" aria-label="Close notification" title="Close">
+                    {% lucide "x" size=14 %}
+                </button>
+                <div class="toast-progress-track">
+                    <div class="toast-progress-bar"></div>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="site-body">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-col brand-col">
+                    <div class="footer-logo">
+                        <img src="{% static 'image/logo.svg' %}" alt="Raqnith Logo" class="footer-logo-img brand-logo-img" width="52" height="52">
+                    </div>
+                    <p class="footer-tagline">
+                        Instant digital products with frictionless Philippine payments. Powered by PayMongo, QR Ph, GCash, Maya, and 3DS Cards.
+                    </p>
+                    <div class="footer-badge-list">
+                        <span class="fbadge">
+                            {% lucide "qr-code" size=14 class="fbadge-icon" %}
+                            <span>QR Ph Enabled</span>
+                        </span>
+                        <span class="fbadge">
+                            {% lucide "shield-check" size=14 class="fbadge-icon" %}
+                            <span>256-Bit SSL</span>
+                        </span>
+                        <span class="fbadge">
+                            {% lucide "credit-card" size=14 class="fbadge-icon" %}
+                            <span>PayMongo Secured</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="footer-col">
+                    <h3>Explore</h3>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'catalog:home' %}">Home</a></li>
+                        <li><a href="{% url 'catalog:product_list' %}">All Products</a></li>
+                        <li><a href="{% url 'cart:detail' %}">View Cart</a></li>
+                        <li><a href="{% url 'checkout:index' %}">Checkout</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h3>Account</h3>
+                    <ul class="footer-links">
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'accounts:profile' %}">My Profile</a></li>
+                        <li><a href="{% url 'accounts:profile' %}#orders">Order History</a></li>
+                        <li><a href="{% url 'accounts:settings' %}">Account Settings</a></li>
+                        <li><a href="{% url 'accounts:logout' %}">Sign Out</a></li>
+                        {% else %}
+                        <li><a href="{% url 'accounts:login' %}">Sign In</a></li>
+                        <li><a href="{% url 'accounts:register' %}">Create Account</a></li>
+                        <li><a href="{% url 'catalog:product_list' %}">Browse as Guest</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h3>Trust & Legal</h3>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'privacy_policy' %}">Privacy Policy</a></li>
+                        <li><a href="{% url 'terms_of_service' %}">Terms of Service</a></li>
+                        <li><a href="{% url 'accounts:privacy' %}">Payment Security</a></li>
+                        <li><a href="{% url 'catalog:home' %}#how-it-works">How It Works</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="copyright">© 2026 Raqnith Commerce. All rights reserved.</p>
+                <div class="supported-payment-icons">
+                    <span class="pay-icon-tag">QR Ph</span>
+                    <span class="pay-icon-tag">GCash</span>
+                    <span class="pay-icon-tag">Maya</span>
+                    <span class="pay-icon-tag">BPI</span>
+                    <span class="pay-icon-tag">BDO</span>
+                    <span class="pay-icon-tag">Visa / Mastercard</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/site.js' %}?v=20260820_12" defer></script>
+    <script src="{% static 'js/checkout.js' %}?v=20260820_12" defer></script>
+</body>
+</html>

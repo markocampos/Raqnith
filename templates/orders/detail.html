@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load money_tags %}
+
+{% block title %}Order status — Raqnith{% endblock %}
+
+{% block content %}
+<main class="checkout">
+    <section class="card">
+        {% if state == "paid" %}
+            <h1>Payment confirmed</h1>
+            <p>Thank you. Your order has been received.</p>
+            <dl class="summary-totals">
+                <dt>Order</dt><dd>#{{ order.id }}</dd>
+                <dt>Amount</dt><dd>{{ order.total_amount|centavos }}</dd>
+                {% if payment_method %}<dt>Payment</dt><dd>{{ payment_method }}</dd>{% endif %}
+            </dl>
+            <a class="button" href="{% url 'orders:success' order.id %}">View Order</a>
+        {% elif state == "failed" %}
+            <h1>Payment wasn't completed</h1>
+            <p>Your payment could not be completed.</p>
+            <p class="summary-totals total">Order total: {{ order.total_amount|centavos }}</p>
+            {% if retry_attempt_id %}
+                <a class="button" href="{% url 'checkout:index' %}?retry={{ retry_attempt_id }}">Try again</a>
+            {% else %}
+                <a class="button" href="{% url 'checkout:index' %}">Try again</a>
+            {% endif %}
+        {% else %}
+            <h1>Confirming your payment…</h1>
+            <p>We're still checking with the payment provider. Please don't submit another payment yet.</p>
+            <p class="summary-totals total">Order total: {{ order.total_amount|centavos }}</p>
+            <p><a href="{{ request.path }}">Check again</a></p>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

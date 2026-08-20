@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% load money_tags %}
+{% load lucide %}
+
+{% block title %}Raqnith — Instant Digital Commerce & PayMongo Checkout{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="landing-hero">
+    <div class="hero-container">
+        <div class="hero-badge">
+            <span class="badge-sparkle">{% lucide "sparkles" size=16 class="sparkle-icon" %}</span>
+            <span>Next-Gen Philippine Digital Commerce</span>
+        </div>
+        <h1 class="hero-title">Instant Digital Products with Frictionless Checkout</h1>
+        <p class="hero-subtitle">
+            Purchase developer tools, curated templates, digital kits, and software licenses in seconds.
+            Pay natively with <strong>QR Ph (GCash, Maya, BDO, BPI, UnionBank)</strong> or Cards with bank-grade 3D Secure 2.0.
+        </p>
+
+        <div class="hero-actions">
+            <a href="{% url 'catalog:product_list' %}" class="button button-hero-primary">
+                <span>Browse Catalog</span>
+                {% lucide "arrow-right" size=18 %}
+            </a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'accounts:register' %}" class="button button-hero-secondary">
+                {% lucide "user-plus" size=16 %}
+                <span>Create Free Account</span>
+            </a>
+            {% else %}
+            <a href="{% url 'accounts:profile' %}" class="button button-hero-secondary">
+                {% lucide "user" size=16 %}
+                <span>Go to My Profile</span>
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="hero-metrics">
+            <div class="metric-item">
+                <span class="metric-icon">{% lucide "zap" size=24 class="hero-metric-svg" %}</span>
+                <div class="metric-text">
+                    <strong>Instant Access</strong>
+                    <span>Automated receipt & delivery</span>
+                </div>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+                <span class="metric-icon">{% lucide "qr-code" size=24 class="hero-metric-svg" %}</span>
+                <div class="metric-text">
+                    <strong>QR Ph Standard</strong>
+                    <span>GCash, Maya & 40+ banks</span>
+                </div>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+                <span class="metric-icon">{% lucide "shield-check" size=24 class="hero-metric-svg" %}</span>
+                <div class="metric-text">
+                    <strong>PCI-DSS Scoped</strong>
+                    <span>Powered by PayMongo Intents</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+<section class="landing-section" id="featured-products">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Curated Catalog</span>
+            <h2 class="section-heading">Featured Digital Goods</h2>
+            <p class="section-subtext">Hand-crafted digital assets, boilerplates, and developer resources ready for instant download.</p>
+        </div>
+
+        <div class="product-grid">
+            {% for product in featured_products %}
+            <div class="product-card-modern">
+                <div class="product-card-header">
+                    <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
+                    <span class="product-status-pill">In Stock</span>
+                </div>
+                <div class="product-card-body">
+                    <h3 class="product-title">
+                        <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+                    </h3>
+                    <p class="product-desc">Instant digital license with automated receipt confirmation and download access.</p>
+                </div>
+                <div class="product-card-footer">
+                    <div class="product-price-box">
+                        <span class="price-label">Price</span>
+                        <span class="product-price">{{ product.price_cents|centavos }}</span>
+                    </div>
+                    <div class="product-card-buttons">
+                        <form method="post" action="{% url 'cart:add' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="product" value="{{ product.id }}">
+                            <button type="submit" class="btn-add-cart">
+                                {% lucide "shopping-cart" size=14 %}
+                                <span>Add to Cart</span>
+                            </button>
+                        </form>
+                        <a href="{{ product.get_absolute_url }}" class="btn-view-details">
+                            <span>Details</span>
+                            {% lucide "arrow-right" size=13 %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state-card">
+                <p>New products are currently being indexed. Check back shortly!</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if total_products_count > 0 %}
+        <div class="section-cta-center">
+            <a href="{% url 'catalog:product_list' %}" class="button button-outline">
+                <span>View Full Catalog ({{ total_products_count }} items)</span>
+                {% lucide "arrow-right" size=16 %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Value Propositions / Features -->
+<section class="landing-section section-alternate" id="features">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Why Raqnith</span>
+            <h2 class="section-heading">Engineered for Philippine Digital Commerce</h2>
+            <p class="section-subtext">Built from the ground up for speed, reliability, and security with official PayMongo payment rails.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    {% lucide "smartphone" size=32 class="feature-icon-svg" %}
+                </div>
+                <h3>1-Click QR Ph & E-Wallets</h3>
+                <p>Generate dynamic, fraud-protected QR Ph codes. Scan and approve directly from GCash, Maya, BPI, BDO, UnionBank, or ShopeePay with zero manual typing.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    {% lucide "shield-check" size=32 class="feature-icon-svg" %}
+                </div>
+                <h3>Bank-Grade Payment Security</h3>
+                <p>Card transactions are tokenized client-side directly with PayMongo with 3D Secure 2.0 OTP verification. Sensitive PAN and CVV never touch Raqnith servers.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    {% lucide "zap" size=32 class="feature-icon-svg" %}
+                </div>
+                <h3>Instant Order Fulfillment</h3>
+                <p>Webhooks with HMAC SHA256 signature verification instantly trigger order completion the millisecond your payment clears, sending you live receipts.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    {% lucide "user-check" size=32 class="feature-icon-svg" %}
+                </div>
+                <h3>Dedicated Customer Portal</h3>
+                <p>Manage your account, view past purchase history, access previous receipts, and control security preferences in your unified user profile dashboard.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="landing-section" id="how-it-works">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Effortless Flow</span>
+            <h2 class="section-heading">How Checkout Works</h2>
+            <p class="section-subtext">From selection to fulfillment in under 30 seconds.</p>
+        </div>
+
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3>Select Your Products</h3>
+                <p>Browse our catalog of verified digital assets, add items to your cart, and head to secure checkout with guest or account options.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3>Scan or Enter Card</h3>
+                <p>Scan the live dynamic QR Ph code with GCash/Maya/Bank app, or use any debit/credit card with bank-level authentication.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3>Instant Access</h3>
+                <p>Our real-time reconciliation engine confirms the transaction and renders your itemized receipt and download confirmation.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Security & Trust Banner -->
+<section class="landing-section section-trust">
+    <div class="section-container">
+        <div class="trust-box">
+            <div class="trust-text">
+                <span class="trust-pill">🛡️ High Security Standards</span>
+                <h2>Zero Sensitive Data Exposure</h2>
+                <p>
+                    Raqnith adheres to strict PCI-DSS scope boundaries. We utilize official PayMongo Payment Intent tokenization, verified cryptographic webhooks, and idempotent state machines to prevent duplicate payments.
+                </p>
+                <div class="trust-links">
+                    <a href="{% url 'privacy_policy' %}" class="trust-link">Read our Privacy Policy &rarr;</a>
+                    <a href="{% url 'terms_of_service' %}" class="trust-link">Read our Terms of Service &rarr;</a>
+                </div>
+            </div>
+            <div class="trust-logos-card">
+                <div class="trust-badge-row">
+                    <span class="security-chip">✓ 3DS 2.0 Verified</span>
+                    <span class="security-chip">✓ BSP QR Ph Rails</span>
+                    <span class="security-chip">✓ HMAC Webhook Signatures</span>
+                    <span class="security-chip">✓ 256-Bit SSL Encryption</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="landing-section section-alternate">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Customer Feedback</span>
+            <h2 class="section-heading">Loved by Philippine Builders & Creators</h2>
+            <p class="section-subtext">Here is what our community of developers and digital entrepreneurs say.</p>
+        </div>
+
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="testimonial-rating">★★★★★</div>
+                <p class="testimonial-quote">“Scanning QR Ph with GCash took literally 5 seconds, and my download was instantly confirmed. The smoothest checkout I’ve seen in PH.”</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">MR</div>
+                    <div class="author-info">
+                        <strong>Mark Rivera</strong>
+                        <span>Full-Stack Engineer, Manila</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="testimonial-rating">★★★★★</div>
+                <p class="testimonial-quote">“Clean UI, instant receipts, and no cumbersome redirects. Having order history and receipt downloads in my profile makes tracking expenses effortless.”</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">CL</div>
+                    <div class="author-info">
+                        <strong>Christine Lim</strong>
+                        <span>Product Designer, Cebu</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="testimonial-rating">★★★★★</div>
+                <p class="testimonial-quote">“The PayMongo integration and account system are rock solid. Super reliable payment verification with immediate confirmation.”</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">JS</div>
+                    <div class="author-info">
+                        <strong>Joshua Santos</strong>
+                        <span>Tech Lead, Davao</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section class="landing-cta-banner">
+    <div class="cta-banner-container">
+        <h2>Ready to Experience Seamless Digital Commerce?</h2>
+        <p>Explore our curated digital assets or create your free Raqnith account in seconds.</p>
+        <div class="cta-banner-buttons">
+            <a href="{% url 'catalog:product_list' %}" class="button button-cta-white">Explore All Products</a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'accounts:register' %}" class="button button-cta-outline">Create Free Account</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

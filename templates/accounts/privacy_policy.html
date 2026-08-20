@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — Raqnith{% endblock %}
+
+{% block content %}
+<main class="document-page-container">
+    <article class="document-card">
+        <div class="document-header">
+            <span class="document-tag">Legal & Compliance</span>
+            <h1>Privacy Policy</h1>
+            <p class="document-meta">Last Updated: August 20, 2026 &bull; Effective Immediately</p>
+        </div>
+
+        <div class="document-intro-box">
+            <p>
+                At <strong>Raqnith</strong> ("we", "our", or "us"), we prioritize your privacy and data security.
+                This Privacy Policy explains how we collect, use, disclose, and protect personal information when you use our website, purchase digital products, and utilize our payment services.
+            </p>
+        </div>
+
+        <div class="document-body">
+            <section class="doc-section">
+                <h2>1. Information We Collect</h2>
+                <p>We collect information you provide directly when you interact with our platform:</p>
+                <ul>
+                    <li><strong>Account Information:</strong> When you register an account, we collect your username, email address, first name, last name, and hashed password.</li>
+                    <li><strong>Order & Checkout Contact Data:</strong> When placing an order, we collect your contact email for order confirmation, invoice generation, and product delivery.</li>
+                    <li><strong>Transaction Metadata:</strong> We store non-sensitive transaction records including order items, total amount (in centavos), timestamp, currency (PHP), and payment status.</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>2. Payment Information & PayMongo Integration</h2>
+                <div class="highlight-notice">
+                    <strong>Critical Payment Security Guarantee:</strong>
+                    <p>
+                        Raqnith <strong>never collects, processes, or stores your full credit/debit card numbers, expiration dates, or CVV codes</strong> on our servers.
+                    </p>
+                </div>
+                <p>
+                    All payment processing is executed via <strong>PayMongo Philippines, Inc.</strong>, a PCI-DSS compliant licensed payment gateway:
+                </p>
+                <ul>
+                    <li><strong>Card Payments:</strong> Your browser transmits card data directly to PayMongo via secure TLS client-side tokenization. We only receive a non-sensitive token and Payment Intent ID.</li>
+                    <li><strong>3D Secure 2.0:</strong> Card transactions requiring multi-factor authentication are verified directly through your issuing bank's secure portal.</li>
+                    <li><strong>QR Ph & E-Wallets:</strong> Dynamic QR Ph codes are generated through PayMongo API rails and settled directly via the Bangko Sentral ng Pilipinas (BSP) national QR Ph network.</li>
+                    <li><strong>Webhook Verification:</strong> Payment updates are received via cryptographically signed HMAC SHA256 webhooks to guarantee authenticity and prevent tampering.</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>3. How We Use Your Information</h2>
+                <p>We use the information we collect for the following legitimate purposes:</p>
+                <ul>
+                    <li>Fulfill digital product orders and grant immediate download access.</li>
+                    <li>Generate and email itemized order receipts and tax records.</li>
+                    <li>Authenticate account logins and maintain your active shopping cart.</li>
+                    <li>Prevent fraudulent transactions and protect our community from unauthorized activities.</li>
+                    <li>Provide customer support and resolve transaction inquiries.</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>4. Third-Party Service Providers</h2>
+                <p>
+                    We do not sell, rent, or trade your personal data. We only share necessary data with trusted service providers under strict data protection terms:
+                </p>
+                <ul>
+                    <li><strong>Payment Gateway:</strong> PayMongo Philippines, Inc. for payment acceptance and settlement.</li>
+                    <li><strong>Hosting & Infrastructure:</strong> Managed cloud infrastructure and reverse proxies with strict firewall and encryption safeguards.</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>5. Cookies & Local Session Storage</h2>
+                <p>We use essential functional cookies to deliver our services:</p>
+                <ul>
+                    <li><strong>Session Cookies:</strong> Keep you logged in securely and preserve your shopping cart state across browser tabs.</li>
+                    <li><strong>CSRF Tokens:</strong> Protect your account and forms against Cross-Site Request Forgery attacks.</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>6. Data Security & Retention</h2>
+                <p>
+                    We implement robust organizational and technical safeguards, including HTTPS TLS encryption, database parameterization, password hashing via PBKDF2/Argon2, and strict access controls. We retain account and transaction records for as long as necessary to satisfy legal, tax, and accounting requirements.
+                </p>
+            </section>
+
+            <section class="doc-section">
+                <h2>7. Your Privacy Rights</h2>
+                <p>Under applicable data privacy laws (including the Philippine Data Privacy Act of 2012), you have the right to:</p>
+                <ul>
+                    <li>Access the personal information we hold about you.</li>
+                    <li>Update or correct your personal information via your <a href="{% url 'accounts:profile' %}">Profile Page</a>.</li>
+                    <li>Change your password and security credentials via <a href="{% url 'accounts:settings' %}">Account Settings</a>.</li>
+                    <li>Request closure or deletion of your account and personal data.</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>8. Contact Us</h2>
+                <p>
+                    If you have questions regarding this Privacy Policy or wish to exercise your privacy rights, please contact our Data Protection Team at:
+                </p>
+                <div class="contact-info-block">
+                    <strong>Raqnith Privacy & Compliance Office</strong><br>
+                    Email: <a href="mailto:privacy@raqnith.com">privacy@raqnith.com</a><br>
+                    Support: <a href="mailto:support@raqnith.com">support@raqnith.com</a>
+                </div>
+            </section>
+        </div>
+
+        <div class="document-footer-nav">
+            <a href="{% url 'catalog:home' %}" class="button button-secondary">&larr; Back to Home</a>
+            <a href="{% url 'terms_of_service' %}" class="button button-outline">View Terms of Service</a>
+        </div>
+    </article>
+</main>
+{% endblock %}

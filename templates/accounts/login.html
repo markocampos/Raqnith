@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sign In — Raqnith{% endblock %}
+
+{% block content %}
+<main class="auth-page-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo-badge">
+                <img src="{% static 'image/logo.svg' %}" alt="Raqnith Logo" class="auth-logo-img" width="40" height="40">
+            </div>
+            <h1>Sign in to Raqnith</h1>
+            <p class="auth-subtitle">Access your digital orders, receipts, and account settings.</p>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="auth-error-alert">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'accounts:login' %}" class="auth-form" novalidate>
+            {% csrf_token %}
+            {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
+            <div class="form-group">
+                <label for="{{ form.username_or_email.id_for_label }}">Username or Email Address</label>
+                {{ form.username_or_email }}
+                {% if form.username_or_email.errors %}
+                <span class="field-error">{{ form.username_or_email.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <div class="label-with-aside">
+                    <label for="{{ form.password.id_for_label }}">Password</label>
+                </div>
+                {{ form.password }}
+                {% if form.password.errors %}
+                <span class="field-error">{{ form.password.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="button button-auth-submit">Sign In</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="{% url 'accounts:register' %}{% if next %}?next={{ next }}{% endif %}" class="auth-action-link">Create an account</a></p>
+            <div class="auth-security-notice">
+                <span>🔒 256-bit SSL encrypted connection</span>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

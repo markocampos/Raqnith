@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load money_tags %}
+
+{% block title %}My Profile — Raqnith{% endblock %}
+
+{% block content %}
+<main class="dashboard-container">
+    <!-- User Overview Banner -->
+    <div class="profile-hero-card">
+        <div class="profile-hero-main">
+            <div class="profile-avatar-large">
+                {{ user.username|slice:":1"|upper }}
+            </div>
+            <div class="profile-hero-info">
+                <h1>{{ user.first_name|default:user.username }}{% if user.last_name %} {{ user.last_name }}{% endif %}</h1>
+                <p class="profile-meta">
+                    <span>@{{ user.username }}</span> &bull; 
+                    <span>{{ user.email }}</span> &bull; 
+                    <span>Member since {{ user.date_joined|date:"M d, Y" }}</span>
+                </p>
+            </div>
+        </div>
+        <div class="profile-hero-actions">
+            <a href="{% url 'accounts:settings' %}" class="button-secondary">⚙️ Account Settings</a>
+            <a href="{% url 'catalog:product_list' %}" class="button-primary-sm">Browse Products</a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Summary -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Total Orders</span>
+            <span class="stat-value">{{ total_orders }}</span>
+            <span class="stat-help">All checkout attempts</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Completed Orders</span>
+            <span class="stat-value stat-success">{{ paid_orders_count }}</span>
+            <span class="stat-help">Successfully paid</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Total Spent</span>
+            <span class="stat-value">{{ total_spent_cents|centavos }}</span>
+            <span class="stat-help">Lifetime purchase volume</span>
+        </div>
+    </div>
+
+    <!-- Two-column Section: Edit Details & Account Links -->
+    <div class="dashboard-columns">
+        <!-- Edit Profile Form -->
+        <section class="card profile-card">
+            <div class="card-header">
+                <h2>Edit Personal Information</h2>
+                <p class="card-subtitle">Keep your name and receipt email address up to date.</p>
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="auth-error-alert">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'accounts:profile' %}" class="profile-form" novalidate>
+                {% csrf_token %}
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <span class="field-error">{{ form.first_name.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <span class="field-error">{{ form.last_name.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">Email Address (for Receipts)</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <span class="field-error">{{ form.email.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="button button-primary">Save Changes</button>
+            </form>
+        </section>
+
+        <!-- Quick Access / Security Card -->
+        <aside class="card profile-side-card">
+            <div class="card-header">
+                <h2>Security & Shortcuts</h2>
+                <p class="card-subtitle">Manage login credentials and quick actions.</p>
+            </div>
+
+            <div class="shortcuts-list">
+                <a href="{% url 'accounts:settings' %}" class="shortcut-item">
+                    <div class="shortcut-icon">🔑</div>
+                    <div class="shortcut-text">
+                        <strong>Change Password</strong>
+                        <span>Update your login credentials</span>
+                    </div>
+                    <span class="shortcut-arrow">&rarr;</span>
+                </a>
+
+                <a href="{% url 'cart:detail' %}" class="shortcut-item">
+                    <div class="shortcut-icon">🛒</div>
+                    <div class="shortcut-text">
+                        <strong>Active Shopping Cart</strong>
+                        <span>Review pending items</span>
+                    </div>
+                    <span class="shortcut-arrow">&rarr;</span>
+                </a>
+
+                <a href="{% url 'privacy_policy' %}" class="shortcut-item">
+                    <div class="shortcut-icon">🛡️</div>
+                    <div class="shortcut-text">
+                        <strong>Privacy & Security Policy</strong>
+                        <span>Learn how your data is protected</span>
+                    </div>
+                    <span class="shortcut-arrow">&rarr;</span>
+                </a>
+            </div>
+
+            <div class="logout-box">
+                <form method="post" action="{% url 'accounts:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout-block">Log Out of Account</button>
+                </form>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Order History Section -->
+    <section class="card orders-history-card" id="orders">
+        <div class="card-header">
+            <h2>Order History</h2>
+            <p class="card-subtitle">View your past digital transactions, receipts, and order statuses.</p>
+        </div>
+
+        {% if orders %}
+        <div class="orders-table-wrapper">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td class="order-id-cell">
+                            <code>#{{ order.id|slice:":8" }}</code>
+                        </td>
+                        <td class="order-date-cell">
+                            {{ order.created_at|date:"M d, Y" }}
+                            <small>{{ order.created_at|date:"h:i A" }}</small>
+                        </td>
+                        <td class="order-items-cell">
+                            {% for item in order.items.all %}
+                            <span class="order-item-chip">{{ item.product_name }}</span>
+                            {% empty %}
+                            <span class="text-muted">Digital Order</span>
+                            {% endfor %}
+                        </td>
+                        <td class="order-amount-cell">
+                            <strong>{{ order.total_amount|centavos }}</strong>
+                        </td>
+                        <td class="order-status-cell">
+                            {% if order.status == "paid" or order.status == "fulfilled" %}
+                            <span class="badge-status badge-paid">✓ {{ order.get_status_display }}</span>
+                            {% elif order.status == "pending_payment" %}
+                            <span class="badge-status badge-pending">⏳ Pending Payment</span>
+                            {% elif order.status == "payment_failed" %}
+                            <span class="badge-status badge-failed">✕ Failed</span>
+                            {% else %}
+                            <span class="badge-status badge-neutral">{{ order.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="order-action-cell">
+                            {% if order.status == "paid" or order.status == "fulfilled" %}
+                            <a href="{% url 'orders:receipt' order.id %}" class="btn-table-action">View Receipt</a>
+                            {% elif order.status == "pending_payment" %}
+                            <a href="{% url 'checkout:order' order.id %}" class="btn-table-action btn-pay-now">Pay Now</a>
+                            {% else %}
+                            <a href="{% url 'orders:receipt' order.id %}" class="btn-table-action">Details</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-orders-box">
+            <span class="empty-icon">📦</span>
+            <h3>No orders yet</h3>
+            <p>You haven't placed any orders yet. Discover our catalog of digital goods today!</p>
+            <a href="{% url 'catalog:product_list' %}" class="button button-primary">Browse Catalog</a>
+        </div>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}
