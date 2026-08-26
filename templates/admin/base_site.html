@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | Raqnith Admin{% endblock %}
+
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}">Raqnith Admin</a></div>
+{% endblock %}
+
+{% block footer %}
+<div id="footer">Raqnith Marketplace — internal store console. Buyer-facing site: <a href="/" target="_blank">raqnith</a></div>
+{% endblock %}

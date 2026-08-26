@@ -92,9 +92,48 @@ class Command(BaseCommand):
                 f"  reconciled attempt={attempt.id} -> {attempt.status}"
             )
 
+        # 2. Cancel overdue pending orders (> 60 minutes)
+        from apps.orders.models import Order
+        overdue_orders = Order.objects.filter(
+            status=Order.Status.PENDING_PAYMENT,
+            created_at__lte=now - timezone.timedelta(minutes=60),
+        )
+        expired_orders_count = 0
+        for order in overdue_orders:
+            if dry_run:
+                self.stdout.write(f"  would cancel expired order={order.id}")
+            else:
+                order.transition_to(Order.Status.CANCELLED)
+                PaymentAttempt.objects.filter(
+                    order=order,
+                    status__in=[
+                        PaymentAttempt.Status.CREATED,
+                        PaymentAttempt.Status.AWAITING_METHOD,
+                        PaymentAttempt.Status.AWAITING_ACTION,
+                    ],
+                ).update(status=PaymentAttempt.Status.CANCELLED)
+            expired_orders_count += 1
+
+        # 3. Purge unpaid orders older than 120 minutes (2 hours) to free storage
+        purged_count = 0
+        if not dry_run:
+            purged_count = Order.purge_unpaid_overdue()
+        else:
+            purged_count = Order.objects.filter(
+                created_at__lte=now - timezone.timedelta(minutes=120),
+                paid_at__isnull=True,
+                status__in=[
+                    Order.Status.CANCELLED,
+                    Order.Status.PAYMENT_FAILED,
+                    Order.Status.DRAFT,
+                    Order.Status.PENDING_PAYMENT,
+                ],
+            ).count()
+
         self.stdout.write(
             self.style.SUCCESS(
-                f"Done: {resolved} reconciled, {errors} errored "
-                f"({len(stale) - resolved - errors} still pending)."
+                f"Done: {resolved} reconciled, {errors} errored, "
+                f"{expired_orders_count} overdue order(s) cancelled, "
+                f"{purged_count} stale unpaid order(s) purged."
             )
         )

@@ -2,25 +2,21 @@
 {% load money_tags %}
 {% load lucide %}
 
-{% block title %}Raqnith — Instant Digital Commerce & PayMongo Checkout{% endblock %}
+{% block title %}Raqnith | Instant Digital Products & Secure Checkout{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <section class="landing-hero">
     <div class="hero-container">
-        <div class="hero-badge">
-            <span class="badge-sparkle">{% lucide "sparkles" size=16 class="sparkle-icon" %}</span>
-            <span>Next-Gen Philippine Digital Commerce</span>
-        </div>
-        <h1 class="hero-title">Instant Digital Products with Frictionless Checkout</h1>
+        <h1 class="hero-title">Digital Products Ready to Download Instantly</h1>
         <p class="hero-subtitle">
-            Purchase developer tools, curated templates, digital kits, and software licenses in seconds.
-            Pay natively with <strong>QR Ph (GCash, Maya, BDO, BPI, UnionBank)</strong> or Cards with bank-grade 3D Secure 2.0.
+            Find templates, kits, and creative tools you can use right away.
+            Pay easily with <strong>GCash, Maya, or your bank app</strong>, no hidden fees.
         </p>
 
         <div class="hero-actions">
             <a href="{% url 'catalog:product_list' %}" class="button button-hero-primary">
-                <span>Browse Catalog</span>
+                <span>Browse Products</span>
                 {% lucide "arrow-right" size=18 %}
             </a>
             {% if not user.is_authenticated %}
@@ -31,33 +27,37 @@
             {% else %}
             <a href="{% url 'accounts:profile' %}" class="button button-hero-secondary">
                 {% lucide "user" size=16 %}
-                <span>Go to My Profile</span>
+                <span>My Profile & Orders</span>
             </a>
             {% endif %}
         </div>
 
         <div class="hero-metrics">
             <div class="metric-item">
-                <span class="metric-icon">{% lucide "zap" size=24 class="hero-metric-svg" %}</span>
+                <div class="metric-icon">
+                    {% lucide "zap" size=22 %}
+                </div>
                 <div class="metric-text">
-                    <strong>Instant Access</strong>
-                    <span>Automated receipt & delivery</span>
+                    <strong>Instant Delivery</strong>
+                    <span>Direct downloads & receipts</span>
                 </div>
             </div>
-            <div class="metric-divider"></div>
             <div class="metric-item">
-                <span class="metric-icon">{% lucide "qr-code" size=24 class="hero-metric-svg" %}</span>
+                <div class="metric-icon">
+                    {% lucide "qr-code" size=22 %}
+                </div>
                 <div class="metric-text">
-                    <strong>QR Ph Standard</strong>
-                    <span>GCash, Maya & 40+ banks</span>
+                    <strong>QR Ph & E-Wallets</strong>
+                    <span>GCash, Maya & 40+ PH banks</span>
                 </div>
             </div>
-            <div class="metric-divider"></div>
             <div class="metric-item">
-                <span class="metric-icon">{% lucide "shield-check" size=24 class="hero-metric-svg" %}</span>
+                <div class="metric-icon">
+                    {% lucide "shield-check" size=22 %}
+                </div>
                 <div class="metric-text">
-                    <strong>PCI-DSS Scoped</strong>
-                    <span>Powered by PayMongo Intents</span>
+                    <strong>Safe & Secure</strong>
+                    <span>Your payment stays private</span>
                 </div>
             </div>
         </div>
@@ -70,52 +70,67 @@
         <div class="section-header">
             <span class="section-tag">Curated Catalog</span>
             <h2 class="section-heading">Featured Digital Goods</h2>
-            <p class="section-subtext">Hand-crafted digital assets, boilerplates, and developer resources ready for instant download.</p>
+            <p class="section-subtext">Templates, kits, and assets from experienced sellers, ready to download.</p>
         </div>
 
         <div class="product-grid">
             {% for product in featured_products %}
-            <div class="product-card-modern">
-                <div class="product-card-header">
-                    <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
-                    <span class="product-status-pill">In Stock</span>
+            <article class="product-card product-card-modern" data-category="{{ product.category.slug|default:'' }}">
+                <!-- Card Thumbnail / Visual Area -->
+                <div class="product-visual-banner">
+                    <div class="product-visual-top">
+                        <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
+                        <span class="product-status-pill">✓ In Stock</span>
+                    </div>
+                    <div class="product-visual-center">
+                        <div class="product-visual-icon">
+                            {% include "includes/product_icon.html" with product=product size=26 %}
+                        </div>
+                    </div>
                 </div>
                 <div class="product-card-body">
                     <h3 class="product-title">
                         <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
                     </h3>
-                    <p class="product-desc">Instant digital license with automated receipt confirmation and download access.</p>
+                    <p class="product-desc">{{ product.description|default:"Instant digital license with automated receipt confirmation and download access." }}</p>
                 </div>
                 <div class="product-card-footer">
-                    <div class="product-price-box">
+                    <div class="product-price-block">
                         <span class="price-label">Price</span>
-                        <span class="product-price">{{ product.price_cents|centavos }}</span>
+                        <span class="price-val">{{ product.price_cents|php_or_free }}</span>
                     </div>
                     <div class="product-card-buttons">
-                        <form method="post" action="{% url 'cart:add' %}">
+                        {% if product.is_available %}
+                        <form method="post" action="{% url 'cart:add' %}" class="form-add-to-cart">
                             {% csrf_token %}
                             <input type="hidden" name="product" value="{{ product.id }}">
                             <button type="submit" class="btn-add-cart">
-                                {% lucide "shopping-cart" size=14 %}
+                                {% lucide "shopping-cart" size=15 class="btn-cart-icon-inline" %}
                                 <span>Add to Cart</span>
                             </button>
                         </form>
-                        <a href="{{ product.get_absolute_url }}" class="btn-view-details">
+                        {% endif %}
+                        <a href="{{ product.get_absolute_url }}" class="btn-view-details" title="View details for {{ product.name }}">
                             <span>Details</span>
-                            {% lucide "arrow-right" size=13 %}
+                            {% lucide "arrow-right" size=14 %}
                         </a>
                     </div>
                 </div>
-            </div>
+            </article>
             {% empty %}
             <div class="empty-state-card">
-                <p>New products are currently being indexed. Check back shortly!</p>
+                {% lucide "package-open" size=48 class="empty-icon" %}
+                <h3>No Products Found</h3>
+                <p>Check back soon for new digital goods and releases.</p>
+                <a href="{% url 'catalog:product_list' %}" class="button button-outline" style="margin-top:1rem;">
+                    {% lucide "arrow-right" size=16 %} <span>Browse Latest Products</span>
+                </a>
             </div>
             {% endfor %}
         </div>
 
-        {% if total_products_count > 0 %}
-        <div class="section-cta-center">
+        {% if total_products_count > 6 %}
+        <div class="landing-catalog-cta">
             <a href="{% url 'catalog:product_list' %}" class="button button-outline">
                 <span>View Full Catalog ({{ total_products_count }} items)</span>
                 {% lucide "arrow-right" size=16 %}
@@ -125,46 +140,54 @@
     </div>
 </section>
 
-<!-- Value Propositions / Features -->
+<!-- Value Props / Features Section -->
 <section class="landing-section section-alternate" id="features">
     <div class="section-container">
         <div class="section-header">
             <span class="section-tag">Why Raqnith</span>
-            <h2 class="section-heading">Engineered for Philippine Digital Commerce</h2>
-            <p class="section-subtext">Built from the ground up for speed, reliability, and security with official PayMongo payment rails.</p>
+            <h2 class="section-heading">What Makes Raqnith Different</h2>
+            <p class="section-subtext">Everything is quick, safe, and made for how you already pay in the Philippines.</p>
         </div>
 
         <div class="features-grid">
             <div class="feature-card">
-                <div class="feature-icon-wrapper">
-                    {% lucide "smartphone" size=32 class="feature-icon-svg" %}
+                <div class="feature-icon-wrapper icon-qr">
+                    {% lucide "qr-code" size=22 class="feature-icon-svg" %}
                 </div>
-                <h3>1-Click QR Ph & E-Wallets</h3>
-                <p>Generate dynamic, fraud-protected QR Ph codes. Scan and approve directly from GCash, Maya, BPI, BDO, UnionBank, or ShopeePay with zero manual typing.</p>
+                <div class="feature-content">
+                    <h3>Pay with Apps You Trust</h3>
+                    <p>Just scan to pay with <strong>GCash, Maya, BPI, BDO, UnionBank, ShopeePay</strong> and 40+ banks. No typing, no extra fees.</p>
+                </div>
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon-wrapper">
-                    {% lucide "shield-check" size=32 class="feature-icon-svg" %}
+                <div class="feature-icon-wrapper icon-secure">
+                    {% lucide "shield-check" size=22 class="feature-icon-svg" %}
                 </div>
-                <h3>Bank-Grade Payment Security</h3>
-                <p>Card transactions are tokenized client-side directly with PayMongo with 3D Secure 2.0 OTP verification. Sensitive PAN and CVV never touch Raqnith servers.</p>
+                <div class="feature-content">
+                    <h3>Your Payment Stays Private</h3>
+                    <p>You pay safely with the apps you already use. <strong>We never see or keep</strong> your payment details. Everything stays private.</p>
+                </div>
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon-wrapper">
-                    {% lucide "zap" size=32 class="feature-icon-svg" %}
+                <div class="feature-icon-wrapper icon-instant">
+                    {% lucide "zap" size=22 class="feature-icon-svg" %}
                 </div>
-                <h3>Instant Order Fulfillment</h3>
-                <p>Webhooks with HMAC SHA256 signature verification instantly trigger order completion the millisecond your payment clears, sending you live receipts.</p>
+                <div class="feature-content">
+                    <h3>Get It Right Away</h3>
+                    <p>Your <strong>download and receipt</strong> arrive right after you pay. No waiting, no extra steps.</p>
+                </div>
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon-wrapper">
-                    {% lucide "user-check" size=32 class="feature-icon-svg" %}
+                <div class="feature-icon-wrapper icon-portal">
+                    {% lucide "layout-dashboard" size=22 class="feature-icon-svg" %}
                 </div>
-                <h3>Dedicated Customer Portal</h3>
-                <p>Manage your account, view past purchase history, access previous receipts, and control security preferences in your unified user profile dashboard.</p>
+                <div class="feature-content">
+                    <h3>All Your Orders in One Place</h3>
+                    <p>Find your downloads, receipts, and order history <strong>anytime in your account</strong>.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -174,28 +197,43 @@
 <section class="landing-section" id="how-it-works">
     <div class="section-container">
         <div class="section-header">
-            <span class="section-tag">Effortless Flow</span>
+            <span class="section-tag">Three Simple Steps</span>
             <h2 class="section-heading">How Checkout Works</h2>
-            <p class="section-subtext">From selection to fulfillment in under 30 seconds.</p>
+            <p class="section-subtext">From picking your item to getting it, in under 30 seconds.</p>
         </div>
 
         <div class="steps-grid">
             <div class="step-card">
-                <div class="step-number">1</div>
-                <h3>Select Your Products</h3>
-                <p>Browse our catalog of verified digital assets, add items to your cart, and head to secure checkout with guest or account options.</p>
+                <div class="step-number-wrap">
+                    <span class="step-number">1</span>
+                    <span class="step-icon" aria-hidden="true">{% lucide "shopping-bag" size=16 %}</span>
+                </div>
+                <div class="step-content">
+                    <h3>Select Your Products</h3>
+                    <p>Browse our catalog of digital products, add items to your cart, and head to checkout. Guest or account, no friction.</p>
+                </div>
             </div>
 
             <div class="step-card">
-                <div class="step-number">2</div>
-                <h3>Scan or Enter Card</h3>
-                <p>Scan the live dynamic QR Ph code with GCash/Maya/Bank app, or use any debit/credit card with bank-level authentication.</p>
+                <div class="step-number-wrap">
+                    <span class="step-number">2</span>
+                    <span class="step-icon" aria-hidden="true">{% lucide "qr-code" size=16 %}</span>
+                </div>
+                <div class="step-content">
+                    <h3>Scan to Pay</h3>
+                    <p>Scan the QR code with <strong>GCash, Maya, BPI, BDO, UnionBank</strong> or your usual banking app. Zero fees.</p>
+                </div>
             </div>
 
             <div class="step-card">
-                <div class="step-number">3</div>
-                <h3>Instant Access</h3>
-                <p>Our real-time reconciliation engine confirms the transaction and renders your itemized receipt and download confirmation.</p>
+                <div class="step-number-wrap">
+                    <span class="step-number">3</span>
+                    <span class="step-icon" aria-hidden="true">{% lucide "zap" size=16 %}</span>
+                </div>
+                <div class="step-content">
+                    <h3>Instant Access</h3>
+                    <p>Payment verified in seconds. Download files + receipt sent to your email immediately. No waiting.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -206,22 +244,22 @@
     <div class="section-container">
         <div class="trust-box">
             <div class="trust-text">
-                <span class="trust-pill">🛡️ High Security Standards</span>
-                <h2>Zero Sensitive Data Exposure</h2>
+                <span class="trust-pill">🛡️ Safe & Trusted</span>
+                <h2>Your Information Stays Safe & Private</h2>
                 <p>
-                    Raqnith adheres to strict PCI-DSS scope boundaries. We utilize official PayMongo Payment Intent tokenization, verified cryptographic webhooks, and idempotent state machines to prevent duplicate payments.
+                    Pay the way you already do, with <strong>GCash, Maya, or your banking app</strong>. Your details stay private and are never stored. Every purchase is quick, safe, and confirmed right away, just like shopping with a trusted store.
                 </p>
                 <div class="trust-links">
-                    <a href="{% url 'privacy_policy' %}" class="trust-link">Read our Privacy Policy &rarr;</a>
-                    <a href="{% url 'terms_of_service' %}" class="trust-link">Read our Terms of Service &rarr;</a>
+                    <a href="{% url 'privacy_policy' %}" class="trust-link">Privacy Policy &rarr;</a>
+                    <a href="{% url 'terms_of_service' %}" class="trust-link">Terms of Service &rarr;</a>
                 </div>
             </div>
             <div class="trust-logos-card">
                 <div class="trust-badge-row">
-                    <span class="security-chip">✓ 3DS 2.0 Verified</span>
-                    <span class="security-chip">✓ BSP QR Ph Rails</span>
-                    <span class="security-chip">✓ HMAC Webhook Signatures</span>
-                    <span class="security-chip">✓ 256-Bit SSL Encryption</span>
+                    <span class="security-chip">✓ Pay with GCash & Maya</span>
+                    <span class="security-chip">✓ Private & Protected</span>
+                    <span class="security-chip">✓ Instant Confirmation</span>
+                    <span class="security-chip">✓ Safe & Secure Checkout</span>
                 </div>
             </div>
         </div>
@@ -233,8 +271,8 @@
     <div class="section-container">
         <div class="section-header">
             <span class="section-tag">Customer Feedback</span>
-            <h2 class="section-heading">Loved by Philippine Builders & Creators</h2>
-            <p class="section-subtext">Here is what our community of developers and digital entrepreneurs say.</p>
+            <h2 class="section-heading">What Shoppers Say</h2>
+            <p class="section-subtext">Feedback from people who bought here recently.</p>
         </div>
 
         <div class="testimonials-grid">
@@ -252,7 +290,7 @@
 
             <div class="testimonial-card">
                 <div class="testimonial-rating">★★★★★</div>
-                <p class="testimonial-quote">“Clean UI, instant receipts, and no cumbersome redirects. Having order history and receipt downloads in my profile makes tracking expenses effortless.”</p>
+                <p class="testimonial-quote">“The site is clean and receipts arrive right away. My orders are saved in my profile, so tracking purchases is easy.”</p>
                 <div class="testimonial-author">
                     <div class="author-avatar">CL</div>
                     <div class="author-info">
@@ -264,7 +302,7 @@
 
             <div class="testimonial-card">
                 <div class="testimonial-rating">★★★★★</div>
-                <p class="testimonial-quote">“The PayMongo integration and account system are rock solid. Super reliable payment verification with immediate confirmation.”</p>
+                <p class="testimonial-quote">“Payment was instant. I scanned the QR with Maya and my license + receipt arrived right away. No waiting, super reliable.”</p>
                 <div class="testimonial-author">
                     <div class="author-avatar">JS</div>
                     <div class="author-info">
@@ -280,8 +318,8 @@
 <!-- Call to Action Banner -->
 <section class="landing-cta-banner">
     <div class="cta-banner-container">
-        <h2>Ready to Experience Seamless Digital Commerce?</h2>
-        <p>Explore our curated digital assets or create your free Raqnith account in seconds.</p>
+        <h2>Find Your Next Download</h2>
+        <p>Browse our products or create your free Raqnith account in seconds.</p>
         <div class="cta-banner-buttons">
             <a href="{% url 'catalog:product_list' %}" class="button button-cta-white">Explore All Products</a>
             {% if not user.is_authenticated %}

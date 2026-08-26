@@ -1,7 +1,12 @@
+import logging
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 
+from apps.cart.models import Cart, CartItem
 from apps.catalog.services.pricing import (
+    MINIMUM_TRANSACTION_CENTS,
     add_centavos,
     apply_percent_discount,
     percent_of,
@@ -19,6 +24,8 @@ from apps.orders.validators import (
     validate_product,
     validate_shipping_option,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def unique_products(items):
@@ -141,14 +148,130 @@ def build_order_from_cart(cart, *, coupon_code=None, shipping_method=None, user_
     return order
 
 
-def mark_order_paid(order):
-    """Transition an order to PAID, setting ``paid_at`` (idempotent).
+def is_free_order(order):
+    """True when the order total is below the minimum transaction amount.
 
-    Used by the payment webhook inside its atomic transaction. A no-op when the
-    order is already paid so replays and the return-view reconciliation path
-    remain safe. Expects the order to be in PENDING_PAYMENT (the state set by
-    the checkout before the PayMongo intent is created).
+    Such orders are settled as free checkout: no PayMongo intent is created
+    and no money moves, but confirmation, fulfillment, and receipts all run
+    through the normal paid path.
     """
-    if order.status == Order.Status.PAID:
+    return order.total_amount < MINIMUM_TRANSACTION_CENTS
+
+
+def settle_free_order(order):
+    """Settle a zero-total order through the standard paid workflow.
+
+    Used by checkout when every item in the cart is free (total < ₱1): the
+    buyer still confirms email + terms, then the order transitions
+    PENDING_PAYMENT → PAID and reuses ``mark_order_paid`` so license keys,
+    membership access, the confirmation email, and cart clearing all behave
+    exactly like an ordinary paid order. Idempotent.
+    """
+    if order.status == Order.Status.DRAFT:
+        order.transition_to(Order.Status.PENDING_PAYMENT)
+
+    logger.info("free checkout settlement order=%s total=%s", order.id, order.total_amount)
+    return mark_order_paid(order)
+
+
+def clear_purchased_cart_items(order):
+    """Remove the order's products from the buyer's cart after payment.
+
+    Called from ``mark_order_paid`` so every settlement path (webhook, return
+    view, retry reconciliation, status view) clears the cart exactly once.
+    Only the purchased products are removed — items the buyer added while the
+    payment was pending stay in the cart.
+    """
+    product_ids = [item.product_id for item in order.items.all()]
+    if not product_ids:
+        return
+
+    if order.user_id:
+        carts = Cart.objects.filter(user_id=order.user_id)
+    elif order.session_key:
+        carts = Cart.objects.filter(session_key=order.session_key)
+    else:
+        return
+
+    CartItem.objects.filter(cart__in=carts, product_id__in=product_ids).delete()
+
+
+def mark_order_paid(order):
+    """Settle an order as PAID, setting ``paid_at`` (total-safe + idempotent).
+
+    Used by the payment webhook, polling reconciliation, and the return view.
+    Money arriving is authoritative: this function must never raise for state
+    reasons, or the webhook retries forever and the buyer's browser silently
+    misses the confirmation.
+
+    * PAID / FULFILLED → already settled, no-op.
+    * PENDING_PAYMENT  → normal happy-path transition.
+    * Anything else (CANCELLED / PAYMENT_FAILED / DRAFT) means local state
+      drifted while money was actually captured (e.g. a later checkout
+      cancelled a pending order whose QR was still scanned). Force-settle to
+      protect the buyer and log loudly for manual follow-up.
+    """
+    if order.status in (Order.Status.PAID, Order.Status.FULFILLED):
+        clear_purchased_cart_items(order)
         return order
-    return order.transition_to(Order.Status.PAID)
+
+    if order.status != Order.Status.PENDING_PAYMENT:
+        logger.error(
+            "order %s paid at PayMongo but locally %s — force-settling to PAID.",
+            order.id,
+            order.status,
+        )
+        order.status = Order.Status.PAID
+        if order.paid_at is None:
+            order.paid_at = timezone.now()
+        order.save(update_fields=["status", "paid_at", "updated_at"])
+    else:
+        order = order.transition_to(Order.Status.PAID)
+
+    clear_purchased_cart_items(order)
+    fulfill_order_items(order)
+    _queue_confirmation_email(order)
+    return order
+
+
+def fulfill_order_items(order):
+    """Per-item fulfillment side effects after payment settles.
+
+    * Memberships get ``access_until`` = paid_at + configured duration.
+    * Products flagged ``requires_license_key`` each receive one code.
+    Both steps are idempotent so replays never duplicate anything.
+    """
+    from apps.orders.services.license_keys import issue_license_keys
+
+    memberships_changed = []
+    for item in order.items.select_related("product"):
+        if (
+            item.is_membership
+            and item.access_until is None
+            and item.product.membership_duration_days
+        ):
+            item.access_until = (order.paid_at or timezone.now()) + timezone.timedelta(
+                days=item.product.membership_duration_days
+            )
+            item.save(update_fields=["access_until"])
+            memberships_changed.append(item)
+
+    if memberships_changed:
+        logger.info(
+            "membership access set order=%s items=%s",
+            order.id,
+            [str(i.id) for i in memberships_changed],
+        )
+
+    issued = issue_license_keys(order)
+    if issued:
+        logger.info(
+            "license keys issued order=%s count=%s", order.id, len(issued)
+        )
+
+
+def _queue_confirmation_email(order):
+    """Send the receipt email after the settling transaction commits."""
+    from apps.orders.services.email_service import send_order_confirmation
+
+    transaction.on_commit(lambda: send_order_confirmation(order))

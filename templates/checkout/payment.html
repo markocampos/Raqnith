@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static money_tags lucide %}
 
-{% block title %}Pay with QR Ph — Order #{{ order_id|slice:":8" }} — Raqnith{% endblock %}
+{% block title %}Pay with QR Ph | Order #{{ order_id|slice:":8" }} | Raqnith{% endblock %}
 
 {% block content %}
 <main class="checkout payment-screen checkout-modern" id="order-checkout"
@@ -9,7 +9,8 @@
       data-payment-id="{{ payment_id }}"
       data-seconds-remaining="{{ seconds_remaining }}"
       data-is-expired="{{ is_expired|yesno:"true,false" }}"
-      data-is-paid="{{ is_paid|yesno:"true,false" }}">
+      data-is-paid="{{ is_paid|yesno:"true,false" }}"
+      data-is-order-cancelled="{{ is_order_cancelled|yesno:"true,false" }}">
     
     <!-- Checkout Breadcrumbs & Steps -->
     <nav class="checkout-stepper" aria-label="Checkout Progress">
@@ -127,17 +128,32 @@
                     
                     <img id="qr-code-img" src="{{ qr_url }}" alt="QR Ph Payment Code" width="240" height="240" class="{% if is_expired or is_paid %}dimmed{% endif %}">
                     
-                    <div class="qr-expired-overlay" id="qr-expired-overlay" {% if not is_expired or is_paid %}hidden{% endif %}>
+                    <div class="qr-expired-overlay" id="qr-expired-overlay" {% if not is_expired or is_paid or is_order_cancelled %}hidden{% endif %}>
                         <div class="expired-modal">
                             <div class="expired-icon-wrap">
                                 {% lucide "circle-alert" size=36 class="expired-icon" %}
                             </div>
                             <h3>QR Code Expired</h3>
-                            <p>This QR payment code has expired. Tap below to generate a fresh QR code.</p>
-                            <button type="button" id="refresh-qr-btn" class="btn-refresh-qr">
-                                {% lucide "rotate-cw" size=16 %}
-                                <span>Generate Fresh QR Code</span>
+                            <p>QR codes are valid for 15 minutes for your security. Tap below and we'll prepare a fresh one. Your order and cart are safe.</p>
+                            <button type="button" id="refresh-qr-btn" class="btn-refresh-qr" aria-busy="false">
+                                <span class="btn-refresh-spinner" aria-hidden="true"></span>
+                                {% lucide "rotate-cw" size=16 class="btn-refresh-icon" %}
+                                <span class="btn-refresh-label">Generate Fresh QR Code</span>
                             </button>
+                        </div>
+                    </div>
+
+                    <div class="qr-order-expired-overlay" id="qr-order-expired-overlay" {% if not is_order_cancelled %}hidden{% endif %}>
+                        <div class="expired-modal">
+                            <div class="expired-icon-wrap">
+                                {% lucide "circle-alert" size=40 class="expired-icon" %}
+                            </div>
+                            <h3>Order Expired</h3>
+                            <p>This order exceeded the 1-hour payment window and has been cancelled. Your cart items are saved.</p>
+                            <a href="{% url "catalog:product_list" %}" class="btn-refresh-qr">
+                                {% lucide "arrow-right" size=16 %}
+                                <span>Start New Order</span>
+                            </a>
                         </div>
                     </div>
 
@@ -158,18 +174,18 @@
             </div>
 
             <!-- Single-Device Mobile Helper Buttons -->
-            <div class="qr-actions-row" {% if is_paid %}hidden{% endif %}>
+            <div class="qr-actions-row" {% if is_paid or is_order_cancelled %}hidden{% endif %}>
                 <a id="btn-download-qr" href="{{ qr_url }}" download="Raqnith-QRPh-{{ order_id|slice:':8' }}.png" target="_blank" rel="noopener" class="btn-qr-action btn-save-photo">
                     {% lucide "download" size=16 %}
                     <span>Save QR to Photos</span>
                 </a>
-                <button type="button" id="btn-copy-amount" class="btn-qr-action btn-copy-amt" data-copy="{{ total_cents|centavos }}">
+                <button type="button" id="btn-copy-amount" class="btn-qr-action btn-copy-amt" data-copy="{{ total_cents|centavos }}" data-copy-raw="{{ total_cents }}" title="Copy amount">
                     {% lucide "copy" size=16 %}
                     <span id="copy-amt-text">Copy Amount ({{ total_cents|centavos }})</span>
                 </button>
             </div>
 
-            <div class="qr-amount-banner" {% if is_paid %}hidden{% endif %}>
+            <div class="qr-amount-banner" {% if is_paid or is_order_cancelled %}hidden{% endif %}>
                 <div class="amount-banner-left">
                     <span class="amount-label">Exact Amount to Pay</span>
                     <span class="amount-note">Zero additional transaction fees</span>
@@ -180,7 +196,7 @@
             </div>
 
             <!-- Visual Payment Instructions with Phone Helper -->
-            <div class="payment-guide-card" {% if is_paid %}hidden{% endif %}>
+            <div class="payment-guide-card" {% if is_paid or is_order_cancelled %}hidden{% endif %}>
                 <div class="guide-header">
                     <div class="guide-icon-wrap">
                         {% lucide "smartphone" size=18 %}
@@ -238,9 +254,14 @@
                 <ul class="summary-lines">
                     {% for item in line_items %}
                     <li class="summary-product-row">
-                        <div class="product-info">
-                            <span class="product-name">{{ item.product.name }}</span>
-                            <span class="product-badge">Digital License</span>
+                        <div class="summary-item-left">
+                            <div class="summary-product-icon">
+                                    {% include "includes/product_icon.html" with product=item.product size=16 %}
+                                </div>
+                            <div class="product-info">
+                                <span class="product-name">{{ item.product.name }}</span>
+                                <span class="product-badge">{{ item.product.category.name|default:"Digital License" }}</span>
+                            </div>
                         </div>
                         <span class="product-price">{{ item.line_total_cents|centavos }}</span>
                     </li>
@@ -281,7 +302,7 @@
                     {% lucide "circle-check" size=18 class="guarantee-icon" %}
                     <div class="guarantee-text">
                         <strong>Instant Access Guaranteed</strong>
-                        <span>Automated webhook verification will activate your order immediately upon payment.</span>
+                        <span>Your purchase is delivered immediately after QR Ph payment confirmation.</span>
                     </div>
                 </div>
             </div>
@@ -292,4 +313,8 @@
 
 {{ error_map|json_script:"paymongo-error-map" }}
 {{ error_map_default|json_script:"paymongo-error-map-default" }}
+
+<!-- CSRF token for the silent "Generate Fresh QR Code" / retry requests.
+     This page has no <form>, so the token must be present for fetch(). -->
+<form method="post" action="." class="csrf-holder">{% csrf_token %}</form>
 {% endblock %}

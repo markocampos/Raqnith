@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load lucide %}
+
+{% block title %}Track My Order | Raqnith{% endblock %}
+
+{% block content %}
+<main class="checkout checkout-modern track-order-page">
+    <section class="card checkout-section-card track-card">
+        <div class="section-card-header">
+            <div class="header-icon-wrap">
+                {% lucide "package-search" size=20 %}
+            </div>
+            <div class="header-text-wrap">
+                <h2>Track My Order</h2>
+                <p class="section-desc">Enter your email and order number to see your downloads, receipt, and payment status.</p>
+            </div>
+        </div>
+
+        <!-- Reassurance strip -->
+        <div class="track-reassure-strip">
+            <span class="pay-chip-pill">{% lucide "zap" size=12 %} Instant results</span>
+            <span class="pay-chip-pill">{% lucide "shield-check" size=12 %} Only you can see your order</span>
+            <span class="pay-chip-pill">{% lucide "file-text" size=12 %} Receipt &amp; downloads included</span>
+        </div>
+
+        {% if error %}
+        <div class="track-error-box" role="alert">
+            {% lucide "circle-alert" size=16 %}
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'orders:track' %}" novalidate id="trackForm">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="track-email" class="field-label">
+                    <span class="field-step-badge">1</span>
+                    <span class="field-label-title">Email address</span>
+                    <span class="required-star" title="Required">*</span>
+                </label>
+                <div class="input-container email-input-wrap">
+                    {% lucide "mail" size=18 class="field-icon" %}
+                    <input id="track-email" name="email" type="email" required
+                           inputmode="email" autocapitalize="none" autocorrect="off"
+                           spellcheck="false" value="{{ email }}"
+                           placeholder="The email you used at checkout"
+                           class="form-input checkout-email-input">
+                </div>
+                <p class="track-inline-note hidden" id="emailNote"></p>
+            </div>
+
+            <div class="form-group">
+                <label for="track-ref" class="field-label">
+                    <span class="field-step-badge">2</span>
+                    <span class="field-label-title">Order number</span>
+                    <span class="required-star" title="Required">*</span>
+                </label>
+                <div class="input-container email-input-wrap">
+                    {% lucide "hash" size=18 class="field-icon" %}
+                    <input id="track-ref" name="order_ref" type="text" required
+                           value="{{ order_ref }}" autocomplete="off"
+                           placeholder="Paste the full number or just the first 8 characters"
+                           class="form-input checkout-email-input">
+                </div>
+                <p class="track-hint">
+                    {% lucide "info" size=13 %}
+                    <span>Find it after &ldquo;Order&nbsp;#&rdquo; on your confirmation page or receipt. You can paste the whole confirmation URL too &mdash; we'll find it.</span>
+                </p>
+            </div>
+
+            <button type="submit" class="btn-pay-primary track-submit-btn" id="trackSubmitBtn">
+                {% lucide "search" size=17 class="btn-lock-icon" %}
+                <span>Find My Order</span>
+            </button>
+        </form>
+
+        <div class="track-help-box">
+            <strong>{% lucide "life-buoy" size=14 %} Can't find your order number?</strong>
+            <p>Check the confirmation email we sent after checkout. The subject line starts with your order number. Signed-in buyers can skip this form entirely.</p>
+        </div>
+
+        <p class="track-signedin-note">
+            Have an account? <a href="{% url 'accounts:login' %}?next={% url 'accounts:profile' %}#orders">Sign in</a> to see all your orders in one place.
+        </p>
+    </section>
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var form = document.getElementById("trackForm");
+    if (!form) return;
+    var email = document.getElementById("track-email");
+    var ref = document.getElementById("track-ref");
+    var note = document.getElementById("emailNote");
+    var btn = document.getElementById("trackSubmitBtn");
+
+    function validEmail(v) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || "").trim());
+    }
+
+    // Accept a UUID, a short 8-char code, or a pasted /orders/<uuid>/ URL.
+    function validRef(v) {
+        var tokens = (v || "").trim().split(/[\s/]+/);
+        for (var i = tokens.length - 1; i >= 0; i--) {
+            var t = tokens[i].replace(/^#/, "");
+            if (/^[0-9a-fA-F-]{8,36}$/.test(t)) return true;
+        }
+        return false;
+    }
+
+    function showNote(input, ok, msg) {
+        input.classList.toggle("valid", ok);
+        input.classList.toggle("invalid", !ok && input.value.length > 0);
+        if (!note) return;
+        note.textContent = msg;
+        note.className = "track-inline-note " + (ok ? "note-ok" : (input.value.length ? "note-err" : "hidden"));
+    }
+
+    function validate() {
+        var eOk = validEmail(email.value);
+        showNote(email, eOk, eOk ? "Looks good ✓" : (email.value.length ? "Check your email address" : ""));
+        return eOk;
+    }
+
+    if (email) {
+        email.addEventListener("input", validate);
+        email.addEventListener("blur", validate);
+    }
+    if (ref) {
+        ref.addEventListener("input", function () {
+            ref.classList.toggle("valid", validRef(ref.value));
+            ref.classList.remove("invalid");
+        });
+    }
+
+    form.addEventListener("submit", function (e) {
+        if (!validate()) {
+            e.preventDefault();
+            email.focus();
+            email.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+        }
+        // Guard against double submits while looking up.
+        if (btn) {
+            btn.disabled = true;
+            btn.setAttribute("aria-busy", "true");
+            var label = btn.querySelector("span");
+            if (label) label.textContent = "Looking up your order…";
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -94,3 +94,46 @@ class ReconcilePaymentsCommandTests(TestCase):
 
         self.assertIn("reconcile error attempt=", err)
         self.assertIn("Done: 0 reconciled, 1 errored", out)
+
+    def test_reconcile_cancels_overdue_orders(self):
+        # Create an overdue order (> 60 min)
+        overdue_order = Order.objects.create(
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.PENDING_PAYMENT,
+        )
+        Order.objects.filter(pk=overdue_order.pk).update(
+            created_at=timezone.now() - timezone.timedelta(minutes=70)
+        )
+        attempt = PaymentAttempt.objects.create(
+            order=overdue_order,
+            amount=5000,
+            status=PaymentAttempt.Status.CREATED,
+        )
+
+        out, _ = self._run()
+        self.assertIn("1 overdue order(s) cancelled", out)
+        overdue_order.refresh_from_db()
+        self.assertEqual(overdue_order.status, Order.Status.CANCELLED)
+        attempt.refresh_from_db()
+        self.assertEqual(attempt.status, PaymentAttempt.Status.CANCELLED)
+
+    def test_reconcile_purges_unpaid_orders_after_30_days(self):
+        # Create an unpaid order older than 30 days
+        stale_order = Order.objects.create(
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.CANCELLED,
+        )
+        Order.objects.filter(pk=stale_order.pk).update(
+            created_at=timezone.now() - timezone.timedelta(days=32)
+        )
+        PaymentAttempt.objects.create(
+            order=stale_order,
+            amount=5000,
+            status=PaymentAttempt.Status.CANCELLED,
+        )
+
+        out, _ = self._run()
+        self.assertIn("1 stale unpaid order(s) purged", out)
+        self.assertFalse(Order.objects.filter(pk=stale_order.pk).exists())

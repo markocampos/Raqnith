@@ -236,6 +236,14 @@ class RetryPaymentView(View):
                 )
 
         order = attempt.order
+        if order.expire_if_overdue() or order.status == Order.Status.CANCELLED:
+            return JsonResponse(
+                {
+                    "error": "order_expired",
+                    "detail": "This order has expired (over 1 hour). Please start a new order.",
+                },
+                status=410,
+            )
         if order.status == Order.Status.PAID:
             return JsonResponse(
                 {"error": "already_paid", "detail": "This order has already been paid."},
@@ -410,9 +418,12 @@ class PayMongoWebhookView(View):
 
     Order of operations:
     1. Verify the HMAC signature (reject with 401 before anything else).
-    2. Upsert the WebhookEvent by provider event id — an existing event is a
-       replay, so return 200 without reprocessing (idempotency gate).
-    3. Process the event; a processing failure returns 500 so PayMongo retries.
+    2. Upsert the WebhookEvent by provider event id. An event already
+       *processed* is a replay → 200 without reprocessing. An event that is
+       stored but *unprocessed* (a previous attempt failed) is retried now.
+    3. Process the event; a processing failure records the error, returns 500
+       so PayMongo retries, and alerts an admin once the event has failed
+       WEBHOOK_ALERT_THRESHOLD times.
     """
 
     def post(self, request):
@@ -442,9 +453,11 @@ class PayMongoWebhookView(View):
             provider_event_id=event_id,
             defaults={"event_type": event_type, "payload": payload},
         )
-        if not created:
-            # Already delivered once — replay is a no-op.
+        if not created and webhook_event.processed:
+            # Already delivered and settled once — replay is a no-op.
             return JsonResponse({"received": True}, status=200)
+        if not created:
+            webhook_event.payload = payload
 
         try:
             WebhookService().process_event(payload, webhook_event)
@@ -453,8 +466,38 @@ class PayMongoWebhookView(View):
             # retry a payload that will never match), but leave it unprocessed.
             logger.warning("Webhook mismatch: %s", exc)
             return JsonResponse({"received": True, "status": "mismatch"}, status=200)
-        except Exception:
-            logger.exception("Webhook processing failed for event %s", event_id)
+        except Exception as exc:
+            self._record_failure(webhook_event, exc)
             return JsonResponse({"error": "processing_failed"}, status=500)
 
+        if not webhook_event.processed:
+            self._record_failure(
+                webhook_event,
+                RuntimeError("handler finished without marking the event processed"),
+            )
+            return JsonResponse({"error": "processing_failed"}, status=500)
+
+        if webhook_event.failure_count:
+            # Recovered after earlier failures — clear the error trail.
+            webhook_event.failure_count = 0
+            webhook_event.last_error = ""
+            webhook_event.save(update_fields=["failure_count", "last_error"])
+
         return JsonResponse({"received": True}, status=200)
+
+    @staticmethod
+    def _record_failure(webhook_event, exc):
+        """Persist the failure trail and alert a human past the threshold."""
+        from apps.payments.services.alerts import notify_webhook_failures
+
+        webhook_event.failure_count = (webhook_event.failure_count or 0) + 1
+        webhook_event.last_error = f"{type(exc).__name__}: {exc}"[:2000]
+        try:
+            webhook_event.save(update_fields=["failure_count", "last_error"])
+        except Exception:
+            logger.exception("Could not record webhook failure for %s.", webhook_event.id)
+        logger.exception("Webhook processing failed for event %s", webhook_event.provider_event_id)
+        try:
+            notify_webhook_failures(webhook_event, settings.WEBHOOK_ALERT_THRESHOLD)
+        except Exception:
+            logger.exception("Webhook alert dispatch failed for %s.", webhook_event.id)

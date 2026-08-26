@@ -1,0 +1,43 @@
+{% load money_tags %}Hi there!
+
+Payment confirmed. Thank you for shopping at Raqnith!
+
+Order #{{ order.id|slice:":8" }}
+{% if order.paid_at %}Paid on {{ order.paid_at|date:"M d, Y h:i A" }}{% endif %}
+
+YOUR ITEMS
+{% for item in items %}  - {{ item.product_name }}: {{ item.unit_price_cents|centavos }}
+    Get it here: {{ access_url }}
+{% empty %}  (see your receipt for details)
+{% endfor %}
+{% if discount %}Discount: -{{ discount }}
+{% endif %}Total paid: {{ total }}
+
+{% if license_keys %}YOUR LICENSE KEYS
+{% for key in license_keys %}  {{ key.key }} ({{ key.order_item.product_name }})
+{% endfor %}
+Keep these safe: you'll need them to activate your software. You can always
+find them again in your receipt.
+
+{% endif %}{% for m in memberships %}MEMBERSHIP
+  {{ m.product_name }} is yours until {{ m.access_until|date:"M d, Y" }}.
+
+{% endfor %}INSTANT ACCESS
+Everything you bought is ready right now:
+{{ access_url }}
+
+This personal link works on any device, no account needed, and stays
+valid for 30 days. You can also track your order anytime:
+{{ track_url }}
+
+A full receipt is always available at:
+{{ receipt_url }}
+
+Need help? Just reply to this email with your order number.
+
+Happy creating!
+The Raqnith Team
+
+---
+Raqnith. Instant digital products, PH payments.
+Secure checkout powered by PayMongo · QR Ph · GCash · Maya

@@ -12,7 +12,7 @@ ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1").sp
 
 INSTALLED_APPS = [
     "django.contrib.admin",
-    "django.contrib.auth",
+    "apps.accounts.apps.RaqnithAuthConfig",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "apps.coupons.apps.CouponsConfig",
     "apps.orders.apps.OrdersConfig",
     "apps.payments.apps.PaymentsConfig",
+    "apps.seller.apps.SellerConfig",
 ]
 
 MIDDLEWARE = [
@@ -98,6 +99,36 @@ PAYMONGO_PUBLIC_KEY = config("PAYMONGO_PUBLIC_KEY", default="")
 PAYMONGO_SECRET_KEY = config("PAYMONGO_SECRET_KEY", default="")
 PAYMONGO_WEBHOOK_SECRET = config("PAYMONGO_WEBHOOK_SECRET", default="")
 BASE_URL = config("DJANGO_BASE_URL", default="http://localhost:8000")
+
+# Email — console backend by default (prints to runserver output); switch to
+# SMTP in production by setting EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# plus the EMAIL_HOST* variables in .env.
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = config("EMAIL_HOST", default="")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+EMAIL_TIMEOUT = 10
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Raqnith <receipts@raqnith.com>")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Ops alerting: where webhook-failure alarms go (empty = log only).
+ADMIN_NOTIFY_EMAIL = config("DJANGO_ADMIN_NOTIFY_EMAIL", default="")
+ADMINS = [("Ops", ADMIN_NOTIFY_EMAIL)] if ADMIN_NOTIFY_EMAIL else []
+# Alert after a single webhook event fails this many times.
+WEBHOOK_ALERT_THRESHOLD = config("WEBHOOK_ALERT_THRESHOLD", default=3, cast=int)
+
+# Buyer-facing download fairness: max file downloads served per order per
+# calendar day. 0 disables the cap.
+MAX_DOWNLOADS_PER_DAY_PER_ORDER = config("MAX_DOWNLOADS_PER_DAY", default=20, cast=int)
+
+# Buyer-uploaded product files live outside staticfiles and are served only
+# through the permission-checked orders download view.
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 LOGGING = {
     "version": 1,

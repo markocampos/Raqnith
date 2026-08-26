@@ -1,17 +1,19 @@
-from django.contrib import admin
 from django.urls import include, path
 
 from apps.accounts.views import PrivacyPolicyView, TermsView
 from apps.payments.views import PayMongoWebhookView
 
+from .admin import admin_site
+
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin/", admin_site.urls),
     path("", include("apps.catalog.urls")),
     path("accounts/", include("apps.accounts.urls")),
     path("cart/", include("apps.cart.urls")),
     path("checkout/", include("apps.checkout.urls")),
     path("payments/", include("apps.payments.urls")),
     path("orders/", include("apps.orders.urls")),
+    path("sell/", include("apps.seller.urls")),
     # Top-level legal and info routes:
     path("privacy/", PrivacyPolicyView.as_view(), name="privacy_policy"),
     path("privacy-policy/", PrivacyPolicyView.as_view(), name="privacy_policy_alias"),

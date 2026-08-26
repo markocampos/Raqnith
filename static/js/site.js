@@ -47,6 +47,13 @@
                 }
             }
         });
+
+        // Close when focus moves outside the menu
+        document.addEventListener("focusin", function (e) {
+            if (menu.classList.contains("is-open") && !menu.contains(e.target)) {
+                closeMenu();
+            }
+        });
     }
 
     function initCartAnimations() {
@@ -222,6 +229,100 @@
         return toast;
     }
 
+    function initGlobalCopyButtons() {
+        document.addEventListener("click", function (e) {
+            var btn = e.target.closest(".btn-copy-mini, .btn-copy-id, [data-copy]");
+            if (!btn || btn.id === "btn-copy-amount" || btn.id === "btn-copy-order") return;
+            var text = btn.getAttribute("data-copy");
+            if (!text) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!navigator.clipboard || !navigator.clipboard.writeText) {
+                var tempInput = document.createElement("input");
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+            } else {
+                navigator.clipboard.writeText(text).catch(function () {});
+            }
+
+            var oldHtml = btn.innerHTML;
+            btn.innerHTML = '<span style="font-size: 10px; font-weight: bold; color: #166534;">✓</span>';
+            setTimeout(function () {
+                btn.innerHTML = oldHtml;
+            }, 1500);
+
+            if (window.showToast) {
+                window.showToast("Copied to clipboard: " + text.slice(0, 16) + (text.length > 16 ? "…" : ""), "success", 2000);
+            }
+        });
+    }
+
+    function initAddToCartLoading() {
+        document.addEventListener("submit", function (e) {
+            var form = e.target;
+            if (!form.classList.contains("form-add-to-cart") && !form.classList.contains("product-main-add-form")) return;
+            var btn = form.querySelector('button[type="submit"]');
+            if (!btn || btn.disabled) return;
+            btn.disabled = true;
+            btn.setAttribute("aria-busy", "true");
+            var original = btn.innerHTML;
+            btn.dataset.originalHtml = original;
+            btn.innerHTML = '<span class="btn-spinner" aria-hidden="true" style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite;vertical-align:middle;"></span> <span>Adding…</span>';
+            // re-enable after 4s fallback if navigation fails
+            setTimeout(function(){ if(btn){ btn.disabled=false; btn.removeAttribute("aria-busy"); if(btn.dataset.originalHtml) btn.innerHTML=btn.dataset.originalHtml; }}, 4000);
+        });
+    }
+
+    function initPromoInlineError() {
+        // Promo UI renders twice (desktop sidebar + mobile summary accordion),
+        // so bind every .promo-form instance instead of a single id.
+        var promoForms = document.querySelectorAll(".promo-form");
+        if (!promoForms.length) return;
+
+        var promoToastText = "";
+        var toastMsgs = document.querySelectorAll(".toast-message");
+        for(var i=0;i<toastMsgs.length;i++){
+            var t = toastMsgs[i].textContent || "";
+            if(t.toLowerCase().indexOf("promo") !== -1){
+                promoToastText = t;
+                break;
+            }
+        }
+
+        Array.prototype.forEach.call(promoForms, function(promoForm){
+            var promoInput = promoForm.querySelector(".promo-input");
+            var promoError = promoForm.querySelector(".promo-inline-error");
+            if (!promoInput || !promoError) return;
+
+            promoForm.addEventListener("submit", function(e){
+                if(!promoInput.value.trim()){
+                    e.preventDefault();
+                    promoError.textContent = "Please enter a promo code.";
+                    promoError.hidden = false;
+                    promoInput.classList.add("invalid");
+                    promoInput.focus();
+                    if(window.showToast) window.showToast("Please enter a promo code.", "warning", 3000);
+                    return;
+                }
+                promoError.hidden = true;
+                promoInput.classList.remove("invalid");
+                var btn = promoForm.querySelector(".btn-apply-promo");
+                if(btn){ btn.disabled=true; btn.textContent="Applying…"; }
+            });
+            promoInput.addEventListener("input", function(){ promoError.hidden=true; promoInput.classList.remove("invalid"); });
+
+            if(promoToastText){
+                promoError.textContent = promoToastText;
+                promoError.hidden = false;
+                promoInput.classList.add("invalid");
+            }
+        });
+    }
+
     // Expose global Toast helper
     window.showToast = showToast;
     window.Raqnith = window.Raqnith || {};
@@ -233,10 +334,16 @@
             initUserDropdown();
             initCartAnimations();
             initExistingToasts();
+            initGlobalCopyButtons();
+            initAddToCartLoading();
+            initPromoInlineError();
         });
     } else {
         initUserDropdown();
         initCartAnimations();
         initExistingToasts();
+        initGlobalCopyButtons();
+        initAddToCartLoading();
+        initPromoInlineError();
     }
 })();

@@ -124,7 +124,8 @@ class WebhookTests(TestCase):
         self.assertEqual(self.order.status, Order.Status.PENDING_PAYMENT)
         self.assertTrue(any("mismatch" in line for line in logs.output))
 
-    def test_unknown_event_type_recorded_unprocessed(self):
+    def test_unknown_event_type_acknowledged_processed(self):
+        """Unsupported types are acknowledged permanently, never retried."""
         payload = payment_event_payload(event_type="some.unknown.event")
         resp = self._post(payload)
 
@@ -132,8 +133,8 @@ class WebhookTests(TestCase):
         self.assertEqual(WebhookEvent.objects.count(), 1)
         event = WebhookEvent.objects.get()
         self.assertEqual(event.event_type, "some.unknown.event")
-        self.assertFalse(event.processed)
-        self.assertIsNone(event.processed_at)
+        self.assertTrue(event.processed)
+        self.assertIsNotNone(event.processed_at)
 
     def test_paid_stores_masked_card_method(self):
         payload = payment_event_payload(

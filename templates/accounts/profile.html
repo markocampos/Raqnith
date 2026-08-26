@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load money_tags %}
+{% load money_tags lucide %}
 
-{% block title %}My Profile — Raqnith{% endblock %}
+{% block title %}My Profile | Raqnith{% endblock %}
 
 {% block content %}
 <main class="dashboard-container">
@@ -9,145 +9,137 @@
     <div class="profile-hero-card">
         <div class="profile-hero-main">
             <div class="profile-avatar-large">
-                {{ user.username|slice:":1"|upper }}
+                {{ user.first_name|default:user.email|slice:":1"|upper }}
             </div>
             <div class="profile-hero-info">
-                <h1>{{ user.first_name|default:user.username }}{% if user.last_name %} {{ user.last_name }}{% endif %}</h1>
+                <h1>{{ user.get_full_name|default:user.username }}</h1>
                 <p class="profile-meta">
-                    <span>@{{ user.username }}</span> &bull; 
-                    <span>{{ user.email }}</span> &bull; 
-                    <span>Member since {{ user.date_joined|date:"M d, Y" }}</span>
+                    <span>Member since {{ user.date_joined|date:"F Y" }}</span>
+                    <span class="profile-meta-sep">&bull;</span>
+                    <span class="profile-meta-email">{{ user.email }}</span>
                 </p>
             </div>
         </div>
         <div class="profile-hero-actions">
-            <a href="{% url 'accounts:settings' %}" class="button-secondary">⚙️ Account Settings</a>
-            <a href="{% url 'catalog:product_list' %}" class="button-primary-sm">Browse Products</a>
+            <a href="{% url 'accounts:settings' %}?tab=security" class="button-primary-sm">
+                {% lucide "lock" size=14 %}
+                <span>Security &amp; Password</span>
+            </a>
         </div>
     </div>
 
-    <!-- Quick Stats Summary -->
+    <!-- Quick Stats Grid -->
     <div class="stats-grid">
         <div class="stat-card">
-            <span class="stat-label">Total Orders</span>
+            <div class="stat-card-top">
+                <span class="stat-icon-box">{% lucide "shopping-bag" size=16 %}</span>
+                <span class="stat-label">Total Orders</span>
+            </div>
             <span class="stat-value">{{ total_orders }}</span>
-            <span class="stat-help">All checkout attempts</span>
+            <span class="stat-help">Lifetime digital transactions</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Completed Orders</span>
+            <div class="stat-card-top">
+                <span class="stat-icon-box stat-icon-success">{% lucide "circle-check" size=16 %}</span>
+                <span class="stat-label">Completed Orders</span>
+            </div>
             <span class="stat-value stat-success">{{ paid_orders_count }}</span>
-            <span class="stat-help">Successfully paid</span>
+            <span class="stat-help">Successfully delivered</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Total Spent</span>
+            <div class="stat-card-top">
+                <span class="stat-icon-box">{% lucide "wallet" size=16 %}</span>
+                <span class="stat-label">Total Invested</span>
+            </div>
             <span class="stat-value">{{ total_spent_cents|centavos }}</span>
-            <span class="stat-help">Lifetime purchase volume</span>
+            <span class="stat-help">Lifetime purchases</span>
         </div>
     </div>
 
-    <!-- Two-column Section: Edit Details & Account Links -->
-    <div class="dashboard-columns">
-        <!-- Edit Profile Form -->
-        <section class="card profile-card">
-            <div class="card-header">
-                <h2>Edit Personal Information</h2>
-                <p class="card-subtitle">Keep your name and receipt email address up to date.</p>
+    <!-- Quick Access Hub -->
+    <div class="profile-shortcuts-grid">
+        <a href="{% url 'accounts:settings' %}" class="profile-shortcut-card">
+            <div class="shortcut-icon-box">
+                {% lucide "user-cog" size=20 %}
             </div>
-
-            {% if form.non_field_errors %}
-            <div class="auth-error-alert">
-                {% for error in form.non_field_errors %}
-                <p>{{ error }}</p>
-                {% endfor %}
+            <div class="shortcut-text">
+                <strong>Personal Details & Password</strong>
+                <span>Manage your name, email, and password settings</span>
             </div>
-            {% endif %}
+            <span class="shortcut-arrow">{% lucide "chevron-right" size=18 %}</span>
+        </a>
 
-            <form method="post" action="{% url 'accounts:profile' %}" class="profile-form" novalidate>
-                {% csrf_token %}
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="{{ form.first_name.id_for_label }}">First Name</label>
-                        {{ form.first_name }}
-                        {% if form.first_name.errors %}
-                        <span class="field-error">{{ form.first_name.errors.0 }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="{{ form.last_name.id_for_label }}">Last Name</label>
-                        {{ form.last_name }}
-                        {% if form.last_name.errors %}
-                        <span class="field-error">{{ form.last_name.errors.0 }}</span>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.email.id_for_label }}">Email Address (for Receipts)</label>
-                    {{ form.email }}
-                    {% if form.email.errors %}
-                    <span class="field-error">{{ form.email.errors.0 }}</span>
-                    {% endif %}
-                </div>
-
-                <button type="submit" class="button button-primary">Save Changes</button>
-            </form>
-        </section>
-
-        <!-- Quick Access / Security Card -->
-        <aside class="card profile-side-card">
-            <div class="card-header">
-                <h2>Security & Shortcuts</h2>
-                <p class="card-subtitle">Manage login credentials and quick actions.</p>
+        <a href="{% url 'orders:track' %}" class="profile-shortcut-card">
+            <div class="shortcut-icon-box">
+                {% lucide "package-search" size=20 %}
             </div>
-
-            <div class="shortcuts-list">
-                <a href="{% url 'accounts:settings' %}" class="shortcut-item">
-                    <div class="shortcut-icon">🔑</div>
-                    <div class="shortcut-text">
-                        <strong>Change Password</strong>
-                        <span>Update your login credentials</span>
-                    </div>
-                    <span class="shortcut-arrow">&rarr;</span>
-                </a>
-
-                <a href="{% url 'cart:detail' %}" class="shortcut-item">
-                    <div class="shortcut-icon">🛒</div>
-                    <div class="shortcut-text">
-                        <strong>Active Shopping Cart</strong>
-                        <span>Review pending items</span>
-                    </div>
-                    <span class="shortcut-arrow">&rarr;</span>
-                </a>
-
-                <a href="{% url 'privacy_policy' %}" class="shortcut-item">
-                    <div class="shortcut-icon">🛡️</div>
-                    <div class="shortcut-text">
-                        <strong>Privacy & Security Policy</strong>
-                        <span>Learn how your data is protected</span>
-                    </div>
-                    <span class="shortcut-arrow">&rarr;</span>
-                </a>
+            <div class="shortcut-text">
+                <strong>Track My Order</strong>
+                <span>Look up any order with your email + order number</span>
             </div>
+            <span class="shortcut-arrow">{% lucide "chevron-right" size=18 %}</span>
+        </a>
 
-            <div class="logout-box">
-                <form method="post" action="{% url 'accounts:logout' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-logout-block">Log Out of Account</button>
-                </form>
+        <a href="{% url 'cart:detail' %}" class="profile-shortcut-card">
+            <div class="shortcut-icon-box">
+                {% lucide "shopping-basket" size=20 %}
             </div>
-        </aside>
+            <div class="shortcut-text">
+                <strong>View Cart</strong>
+                <span>{% if cart_item_count %}{{ cart_item_count }} item{{ cart_item_count|pluralize }} ready for checkout{% else %}Your cart is empty. Start browsing{% endif %}</span>
+            </div>
+            <span class="shortcut-arrow">{% lucide "chevron-right" size=18 %}</span>
+        </a>
+
+        {% if pending_order_id %}
+        <a href="{% url 'checkout:order' pending_order_id %}" class="profile-shortcut-card profile-shortcut-attention">
+            <div class="shortcut-icon-box shortcut-icon-attention">
+                {% lucide "qr-code" size=20 %}
+            </div>
+            <div class="shortcut-text">
+                <strong>Complete Payment</strong>
+                <span>Finish paying your reserved order before it expires</span>
+            </div>
+            <span class="shortcut-arrow">{% lucide "chevron-right" size=18 %}</span>
+        </a>
+        {% endif %}
     </div>
 
     <!-- Order History Section -->
     <section class="card orders-history-card" id="orders">
         <div class="card-header">
-            <h2>Order History</h2>
-            <p class="card-subtitle">View your past digital transactions, receipts, and order statuses.</p>
+            <div class="card-header-flex">
+                <div>
+                    <h2>Order History</h2>
+                    <p class="card-subtitle">View your past digital transactions, receipts, and order statuses.</p>
+                </div>
+                <span class="orders-count-badge">{{ total_orders }} Order{{ total_orders|pluralize }}</span>
+            </div>
+        </div>
+
+        <!-- Order Status Filter Tabs -->
+        <div class="order-filter-tabs">
+            <a href="?status=all#orders" class="order-filter-tab {% if status_filter == 'all' %}active{% endif %}">
+                <span>All Orders</span>
+                <span class="filter-count-badge">{{ total_orders }}</span>
+            </a>
+            <a href="?status=paid#orders" class="order-filter-tab {% if status_filter == 'paid' %}active{% endif %}">
+                <span>Completed</span>
+                <span class="filter-count-badge">{{ paid_orders_count }}</span>
+            </a>
+            <a href="?status=pending#orders" class="order-filter-tab {% if status_filter == 'pending' %}active{% endif %}">
+                <span>Pending</span>
+                <span class="filter-count-badge {% if pending_orders_count > 0 %}badge-has-pending{% endif %}">{{ pending_orders_count }}</span>
+            </a>
+            <a href="?status=cancelled#orders" class="order-filter-tab {% if status_filter in 'cancelled,expired' %}active{% endif %}">
+                <span>Expired</span>
+                <span class="filter-count-badge">{{ cancelled_orders_count }}</span>
+            </a>
         </div>
 
         {% if orders %}
-        <div class="orders-table-wrapper">
+        <!-- Desktop Table View -->
+        <div class="orders-table-wrapper desktop-only">
             <table class="orders-table">
                 <thead>
                     <tr>
@@ -161,29 +153,36 @@
                 </thead>
                 <tbody>
                     {% for order in orders %}
-                    <tr>
+                    <tr class="order-table-row">
                         <td class="order-id-cell">
-                            <code>#{{ order.id|slice:":8" }}</code>
+                            <span class="order-id-chip">
+                                <code>#{{ order.id|slice:":8" }}</code>
+                                <button type="button" class="btn-copy-mini" data-copy="{{ order.id }}" aria-label="Copy Order ID" title="Copy Order ID">
+                                    {% lucide "copy" size=11 %}
+                                </button>
+                            </span>
                         </td>
                         <td class="order-date-cell">
-                            {{ order.created_at|date:"M d, Y" }}
-                            <small>{{ order.created_at|date:"h:i A" }}</small>
+                            <span class="date-main">{{ order.created_at|date:"M d, Y" }}</span>
+                            <small class="date-sub">{{ order.created_at|date:"h:i A" }}</small>
                         </td>
                         <td class="order-items-cell">
                             {% for item in order.items.all %}
-                            <span class="order-item-chip">{{ item.product_name }}</span>
+                            <span class="order-item-chip" title="{{ item.product_name }}">{{ item.product_name }}</span>
                             {% empty %}
                             <span class="text-muted">Digital Order</span>
                             {% endfor %}
                         </td>
                         <td class="order-amount-cell">
-                            <strong>{{ order.total_amount|centavos }}</strong>
+                            <strong class="amount-val">{{ order.total_amount|centavos }}</strong>
                         </td>
                         <td class="order-status-cell">
                             {% if order.status == "paid" or order.status == "fulfilled" %}
-                            <span class="badge-status badge-paid">✓ {{ order.get_status_display }}</span>
+                            <span class="badge-status badge-paid">✓ Paid</span>
                             {% elif order.status == "pending_payment" %}
                             <span class="badge-status badge-pending">⏳ Pending Payment</span>
+                            {% elif order.status == "cancelled" %}
+                            <span class="badge-status badge-cancelled">✕ Expired</span>
                             {% elif order.status == "payment_failed" %}
                             <span class="badge-status badge-failed">✕ Failed</span>
                             {% else %}
@@ -192,9 +191,11 @@
                         </td>
                         <td class="order-action-cell">
                             {% if order.status == "paid" or order.status == "fulfilled" %}
-                            <a href="{% url 'orders:receipt' order.id %}" class="btn-table-action">View Receipt</a>
+                            <a href="{% url 'orders:receipt' order.id %}" class="btn-table-action btn-view-receipt-sm">View Receipt</a>
                             {% elif order.status == "pending_payment" %}
-                            <a href="{% url 'checkout:order' order.id %}" class="btn-table-action btn-pay-now">Pay Now</a>
+                            <a href="{% url 'checkout:order' order.id %}" class="btn-table-action btn-pay-now">Pay Now &rarr;</a>
+                            {% elif order.status == "cancelled" %}
+                            <a href="{% url 'catalog:product_list' %}" class="btn-table-action btn-reorder-sm">Reorder</a>
                             {% else %}
                             <a href="{% url 'orders:receipt' order.id %}" class="btn-table-action">Details</a>
                             {% endif %}
@@ -204,11 +205,119 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Mobile Card List View (< 768px) -->
+        <div class="orders-mobile-list mobile-only">
+            {% for order in orders %}
+            <div class="order-card-mobile">
+                <div class="order-card-mobile-header">
+                    <span class="order-id-chip">
+                        <code>#{{ order.id|slice:":8" }}</code>
+                        <button type="button" class="btn-copy-mini" data-copy="{{ order.id }}" aria-label="Copy Order ID" title="Copy Order ID">
+                            {% lucide "copy" size=11 %}
+                        </button>
+                    </span>
+                    
+                    {% if order.status == "paid" or order.status == "fulfilled" %}
+                    <span class="badge-status badge-paid">✓ Paid</span>
+                    {% elif order.status == "pending_payment" %}
+                    <span class="badge-status badge-pending">⏳ Pending</span>
+                    {% elif order.status == "cancelled" %}
+                    <span class="badge-status badge-cancelled">✕ Expired</span>
+                    {% elif order.status == "payment_failed" %}
+                    <span class="badge-status badge-failed">✕ Failed</span>
+                    {% else %}
+                    <span class="badge-status badge-neutral">{{ order.get_status_display }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="order-card-mobile-body">
+                    <div class="order-mobile-items">
+                        {% for item in order.items.all %}
+                        <span class="order-item-chip">{{ item.product_name }}</span>
+                        {% empty %}
+                        <span class="text-muted">Digital Goods</span>
+                        {% endfor %}
+                    </div>
+                    <div class="order-mobile-date">
+                        {% lucide "calendar" size=12 %}
+                        <span>{{ order.created_at|date:"M d, Y" }} at {{ order.created_at|date:"h:i A" }}</span>
+                    </div>
+                </div>
+
+                <div class="order-card-mobile-footer">
+                    <div class="order-mobile-amount-col">
+                        <span class="mobile-amount-label">Total</span>
+                        <strong class="mobile-amount-val">{{ order.total_amount|centavos }}</strong>
+                    </div>
+                    <div class="order-mobile-action-col">
+                        {% if order.status == "paid" or order.status == "fulfilled" %}
+                        <a href="{% url 'orders:receipt' order.id %}" class="btn-table-action btn-view-receipt-sm">View Receipt</a>
+                        {% elif order.status == "pending_payment" %}
+                        <a href="{% url 'checkout:order' order.id %}" class="btn-table-action btn-pay-now">Pay Now &rarr;</a>
+                        {% elif order.status == "cancelled" %}
+                        <a href="{% url 'catalog:product_list' %}" class="btn-table-action btn-reorder-sm">Reorder</a>
+                        {% else %}
+                        <a href="{% url 'orders:receipt' order.id %}" class="btn-table-action">Details</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if paginator.num_pages > 1 %}
+        <div class="orders-pagination-bar">
+            <div class="pagination-info">
+                Showing <strong>{{ page_obj.start_index }}-{{ page_obj.end_index }}</strong> of <strong>{{ paginator.count }}</strong> orders
+            </div>
+            <div class="pagination-controls">
+                {% if page_obj.has_previous %}
+                <a href="?status={{ status_filter }}&page={{ page_obj.previous_page_number }}#orders" class="btn-page-nav">
+                    {% lucide "chevron-left" size=14 %}
+                    <span>Previous</span>
+                </a>
+                {% else %}
+                <span class="btn-page-nav disabled">
+                    {% lucide "chevron-left" size=14 %}
+                    <span>Previous</span>
+                </span>
+                {% endif %}
+
+                <span class="page-current-pill">{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+
+                {% if page_obj.has_next %}
+                <a href="?status={{ status_filter }}&page={{ page_obj.next_page_number }}#orders" class="btn-page-nav">
+                    <span>Next</span>
+                    {% lucide "chevron-right" size=14 %}
+                </a>
+                {% else %}
+                <span class="btn-page-nav disabled">
+                    <span>Next</span>
+                    {% lucide "chevron-right" size=14 %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
         {% else %}
         <div class="empty-orders-box">
-            <span class="empty-icon">📦</span>
+            <div class="empty-icon-wrap" style="margin:0 auto 1rem; width:64px; height:64px;">{% lucide "package-open" size=28 %}</div>
+            {% if status_filter == 'pending' %}
+            <h3>No Pending Payments</h3>
+            <p>You don't have any unpaid orders waiting for payment.</p>
+            {% elif status_filter == 'paid' %}
+            <h3>No Completed Orders Yet</h3>
+            <p>Your confirmed purchases and digital receipts will appear here.</p>
+            {% elif status_filter in 'cancelled,expired' %}
+            <h3>No Expired Orders</h3>
+            <p>None of your past orders have expired or been cancelled.</p>
+            {% else %}
             <h3>No orders yet</h3>
             <p>You haven't placed any orders yet. Discover our catalog of digital goods today!</p>
+            {% endif %}
             <a href="{% url 'catalog:product_list' %}" class="button button-primary">Browse Catalog</a>
         </div>
         {% endif %}

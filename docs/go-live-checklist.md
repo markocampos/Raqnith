@@ -44,6 +44,13 @@ live transaction before full launch.
 - [ ] **Retry**: failed attempt → "Try again" keeps order/email, creates fresh attempt
 - [ ] **Recovery**: close the browser mid-payment, reopen `/orders/<id>/` → reconciles
 - [ ] **Reconciliation**: run `python manage.py reconcile_payments --dry-run`, then for real
+- [ ] **Cron jobs scheduled** (same host as the app):
+      - `*/10 * * * * python manage.py reconcile_payments` — repairs stuck payments
+      - `*/15 * * * * python manage.py send_recovery_emails` — "your QR expired, here's a fresh one" nudges
+- [ ] **Ops alerts**: set `DJANGO_ADMIN_NOTIFY_EMAIL`, verify a webhook-failure alert email arrives
+- [ ] **Receipt PDF**: open `/orders/<id>/receipt.pdf/` on a paid order — renders and downloads
+- [ ] **License keys**: product with "Requires license key" shows a key after payment (page + email + PDF)
+- [ ] **Membership expiry**: membership order sets access window; expired items hide downloads with renewal notice
 
 ## 5. Security review
 

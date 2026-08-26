@@ -49,7 +49,11 @@ class WebhookService:
         elif event_type in KNOWN_EVENTS:
             # Other known events are acknowledged and marked processed safely.
             self._mark_processed(webhook_event)
-        # else: unknown event — recorded but left unprocessed (view still returns 200).
+        elif event_type:
+            # Unsupported event type: acknowledge permanently rather than let
+            # the webhook view retry an event no handler will ever accept.
+            logger.info("Unrecognized webhook type %s acknowledged.", event_type)
+            self._mark_processed(webhook_event)
 
 
 

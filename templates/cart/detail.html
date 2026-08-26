@@ -2,82 +2,160 @@
 {% load money_tags %}
 {% load lucide %}
 
-{% block title %}Your Cart — Raqnith{% endblock %}
+{% block title %}Shopping Cart | Raqnith{% endblock %}
 
 {% block content %}
-<main class="page-container cart-page">
-    <div class="page-header">
-        <span class="section-tag">Checkout Preparation</span>
-        <h1>Your Shopping Cart</h1>
-        <p class="section-subtext">Review your selected digital assets before proceeding to checkout.</p>
-    </div>
+<main class="page-container cart-page-container">
+    <!-- Cart Header -->
+    <header class="cart-header">
+        <div class="cart-header-title-row">
+            <h1>Shopping Cart</h1>
+            {% if items %}
+            <span class="cart-count-pill">{{ items|length }} Item{{ items|length|pluralize }}</span>
+            {% endif %}
+        </div>
+        <p class="cart-header-sub">Your picks, ready when you are. Checkout takes seconds with GCash, Maya, or your bank app.</p>
+    </header>
 
     {% if items %}
-    <div class="cart-layout">
-        <div class="cart-items-container">
-            <ul class="cart-items-list">
-                {% for item in items %}
-                <li class="cart-item-row">
-                    <div class="cart-item-info">
-                        <div class="cart-item-icon-wrap">
-                            {% lucide "package" size=20 class="cart-item-icon" %}
+    <div class="cart-layout-grid">
+        <!-- Left: Items List -->
+        <div class="cart-items-section">
+            <div class="cart-items-card">
+                <ul class="cart-items-list">
+                    {% for item in items %}
+                    <li class="cart-item-card">
+                        <div class="cart-item-left">
+                            <div class="cart-item-icon-box">
+                                {% include "includes/product_icon.html" with product=item.product size=24 %}
+                            </div>
+                            <div class="cart-item-details">
+                                <h3 class="cart-item-title">
+                                    <a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a>
+                                </h3>
+                                <div class="cart-item-tags">
+                                    <span class="cart-tag-pill">{{ item.product.category.name|default:"Digital Asset" }}</span>
+                                    <span class="cart-tag-delivery">{% lucide "zap" size=11 %} Instant Download</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="cart-item-meta">
-                            <h3 class="cart-item-name">{{ item.product.name }}</h3>
-                            <span class="cart-item-badge">Digital License</span>
+
+                        <div class="cart-item-right">
+                            <div class="cart-item-pricing">
+                                <span class="cart-item-price">{{ item.line_total_cents|php_or_free }}</span>
+                                <span class="cart-item-license">Single Digital License</span>
+                            </div>
+                            <form method="post" action="{% url 'cart:remove' item.id %}" class="cart-remove-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-cart-remove" aria-label="Remove {{ item.product.name }} from cart" title="Remove from cart">
+                                    {% lucide "trash-2" size=15 %}
+                                    <span>Remove</span>
+                                </button>
+                            </form>
                         </div>
-                    </div>
-                    <div class="cart-item-actions">
-                        <span class="cart-item-total">{{ item.line_total_cents|centavos }}</span>
-                        <form method="post" action="{% url 'cart:remove' item.id %}" class="cart-remove-form">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-cart-remove" aria-label="Remove {{ item.product.name }} from cart">
-                                {% lucide "trash-2" size=15 class="btn-remove-icon" %}
-                                <span>Remove</span>
-                            </button>
-                        </form>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Cart Guarantee Banner -->
+            <div class="cart-guarantee-box">
+                <div class="guarantee-item">
+                    {% lucide "zap" size=18 class="guarantee-icon" %}
+                    <span>Instant access upon payment</span>
+                </div>
+                <div class="guarantee-item">
+                    {% lucide "shield-check" size=18 class="guarantee-icon" %}
+                    <span>Official automated email receipt</span>
+                </div>
+                <div class="guarantee-item">
+                    {% lucide "qr-code" size=18 class="guarantee-icon" %}
+                    <span>Zero extra processing fees</span>
+                </div>
+            </div>
         </div>
 
-        <div class="cart-summary-card">
-            <h2>Order Summary</h2>
-            <div class="summary-line-item">
-                <span>Subtotal</span>
-                <span class="subtotal-val">{{ subtotal_cents|centavos }}</span>
+        <!-- Right: Order Summary Sidebar -->
+        <aside class="cart-summary-section">
+            <div class="cart-summary-card">
+                <h2 class="summary-heading">Order Summary</h2>
+
+                <div class="summary-rows">
+                    <div class="summary-row">
+                        <span class="row-label">Subtotal ({{ items|length }} item{{ items|length|pluralize }})</span>
+                        <span class="row-value">{{ subtotal_cents|php_or_free }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="row-label">Delivery</span>
+                        <span class="row-value free-pill">Instant (Free)</span>
+                    </div>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-total-row">
+                    <div class="total-label-block">
+                        <strong>Total Amount</strong>
+                        <span>Inclusive of all digital delivery</span>
+                    </div>
+                    <strong class="total-amount">{{ subtotal_cents|php_or_free }}</strong>
+                </div>
+
+                <div class="summary-actions">
+                    <a href="{% url 'checkout:index' %}" class="button button-checkout-primary">
+                        <span>Proceed to Checkout</span>
+                        {% lucide "arrow-right" size=18 %}
+                    </a>
+                    <a href="{% url 'catalog:product_list' %}" class="button-continue-shopping">
+                        {% lucide "arrow-left" size=15 %}
+                        <span>Continue Shopping</span>
+                    </a>
+                </div>
+
+                <!-- Accepted Payment Chips -->
+                <div class="cart-payment-badges">
+                    <span class="pay-tag-label">Scan to Pay via:</span>
+                    <div class="pay-chips-grid">
+                        <span class="pay-chip-pill">QR Ph</span>
+                        <span class="pay-chip-pill">GCash</span>
+                        <span class="pay-chip-pill">Maya</span>
+                        <span class="pay-chip-pill">BDO</span>
+                        <span class="pay-chip-pill">BPI</span>
+                        <span class="pay-chip-pill">UnionBank</span>
+                    </div>
+                </div>
             </div>
-            <div class="summary-line-item">
-                <span>Delivery</span>
-                <span class="delivery-val">Instant Download</span>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-total-item">
-                <span>Total</span>
-                <span class="total-val subtotal">{{ subtotal_cents|centavos }}</span>
-            </div>
-            <a class="button button-checkout-action" href="{% url 'checkout:index' %}">
-                <span>Proceed to Checkout</span>
-                {% lucide "arrow-right" size=18 class="btn-arrow-icon" %}
-            </a>
-            <a class="continue-link" href="{% url 'catalog:product_list' %}">
-                {% lucide "arrow-left" size=14 %}
-                <span>Continue Shopping</span>
-            </a>
-        </div>
+        </aside>
     </div>
     {% else %}
-    <div class="cart-empty-card">
-        <div class="empty-cart-icon-wrap">
-            {% lucide "shopping-cart" size=48 class="empty-cart-icon" %}
+    <div class="cart-empty-state">
+        <div class="empty-icon-wrap">
+            {% lucide "shopping-bag" size=48 %}
         </div>
-        <h2>Your cart is empty.</h2>
-        <p>You have not added any digital items to your shopping cart yet.</p>
-        <a class="button button-empty-browse" href="{% url 'catalog:product_list' %}">
+        <h2>Your cart is waiting for something great</h2>
+        <p>Discover <strong>templates, kits, and tools</strong> ready to download instantly. Your next favorite is just a tap away.</p>
+        <a href="{% url 'catalog:product_list' %}" class="button button-browse-store">
             <span>Browse Products</span>
             {% lucide "arrow-right" size=16 %}
         </a>
+        <div class="empty-perks">
+            <span class="empty-perk">{% lucide "zap" size=14 %} Instant Download</span>
+            <span class="empty-perk">{% lucide "shield-check" size=14 %} Safe & Secure</span>
+            <span class="empty-perk">{% lucide "file-check" size=14 %} Receipt Included</span>
+        </div>
+        <div class="empty-trust">
+            <span class="empty-trust-label">Pay the way you already do</span>
+            <div class="empty-pay-chips">
+                <span class="empty-pay-chip">GCash</span>
+                <span class="empty-pay-chip">Maya</span>
+                <span class="empty-pay-chip">BPI</span>
+                <span class="empty-pay-chip">BDO</span>
+                <span class="empty-pay-chip">UnionBank</span>
+            </div>
+        </div>
+        {% if not user.is_authenticated %}
+        <p class="empty-signin-hint">Have an account? <a href="{% url 'accounts:login' %}?next={% url 'cart:detail' %}">Sign in</a> to see saved items.</p>
+        {% endif %}
     </div>
     {% endif %}
 </main>

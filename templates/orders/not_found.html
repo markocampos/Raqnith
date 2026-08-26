@@ -1,12 +1,16 @@
 {% extends "base.html" %}
+{% load lucide %}
 
-{% block title %}Order not found — Raqnith{% endblock %}
+{% block title %}Order not found | Raqnith{% endblock %}
 
 {% block content %}
-<main class="checkout">
-    <section class="card">
+<main class="checkout checkout-modern">
+    <section class="status-state-card state-failed">
+        <div class="state-icon-wrap failed">{% lucide "search-x" size=40 %}</div>
         <h1>Order not found</h1>
-        <p>We couldn't find that order. It may belong to a different session.</p>
+        <p>We couldn't find that order. It may belong to a different session or has expired.</p>
+        <a href="{% url 'catalog:product_list' %}" class="btn-pay-primary">{% lucide "shopping-bag" size=16 %}<span>Browse Products</span></a>
+        <a href="{% url 'cart:detail' %}" class="button-continue-shopping">View Cart</a>
     </section>
 </main>
 {% endblock %}

@@ -2,18 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>{% block title %}Raqnith — Digital Commerce & Payments{% endblock %}</title>
     {% load static %}
     {% load lucide %}
-    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20260820_12">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <title>{% block title %}Raqnith | Digital Commerce & Payments{% endblock %}</title>
+
+    <!-- SEO & Social Sharing -->
+    <meta name="description" content="{% block meta_description %}Buy curated digital products: developer kits, boilerplates, templates and digital assets. Instant checkout with QR Ph, GCash and Maya. Download the moment you pay.{% endblock %}">
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:site_name" content="Raqnith">
+    <meta property="og:title" content="{% block og_title %}Raqnith | Digital Products, Instant Checkout{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Curated digital products with instant QR Ph & e-wallet checkout. Download the moment your payment confirms.{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'image/logo.svg' %}{% endblock %}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ block.super }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ block.super }}{% endblock %}">
+    {% block structured_data %}{% endblock %}
+    <link rel="preload" href="{% static 'fonts/PlusJakartaSansVariable.woff2' %}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{% static 'fonts/InterVariable.woff2' %}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20260825_09">
 </head>
 <body>
     <header class="site-header">
         <div class="header-container">
             <div class="header-brand-wrap">
                 <a href="{% url 'catalog:home' %}" class="brand-logo" aria-label="Raqnith Home">
-                    <img src="{% static 'image/logo.svg' %}" alt="Raqnith Logo" class="brand-logo-img" width="52" height="52">
+                    <img src="{% static 'image/logo.svg' %}" alt="Raqnith Logo" class="brand-logo-img" width="86" height="48">
                 </a>
             </div>
 
@@ -64,8 +81,12 @@
                         {% else %}
                         <div class="auth-buttons">
                             <a href="{% url 'accounts:login' %}" class="button-nav-secondary">Sign In</a>
-                            <a href="{% url 'accounts:register' %}" class="button-nav-primary">Register</a>
+                            <a href="{% url 'accounts:register' %}?next=/" class="button-nav-primary">Register</a>
                         </div>
+                        <!-- Compact single-tap account entry for small screens -->
+                        <a href="{% url 'accounts:login' %}" class="auth-mobile-icon" aria-label="Sign in or create an account" title="Sign in or create an account">
+                            {% lucide "circle-user" size=21 %}
+                        </a>
                         {% endif %}
                     </div>
                 </div>
@@ -112,25 +133,11 @@
             <div class="footer-grid">
                 <div class="footer-col brand-col">
                     <div class="footer-logo">
-                        <img src="{% static 'image/logo.svg' %}" alt="Raqnith Logo" class="footer-logo-img brand-logo-img" width="52" height="52">
+                        <img src="{% static 'image/logo.svg' %}" alt="Raqnith Logo" class="footer-logo-img brand-logo-img" width="93" height="52">
                     </div>
                     <p class="footer-tagline">
-                        Instant digital products with frictionless Philippine payments. Powered by PayMongo, QR Ph, GCash, Maya, and 3DS Cards.
+                        Instant digital products with frictionless Philippine payments. Powered by PayMongo, QR Ph, GCash, Maya, and major Philippine banks.
                     </p>
-                    <div class="footer-badge-list">
-                        <span class="fbadge">
-                            {% lucide "qr-code" size=14 class="fbadge-icon" %}
-                            <span>QR Ph Enabled</span>
-                        </span>
-                        <span class="fbadge">
-                            {% lucide "shield-check" size=14 class="fbadge-icon" %}
-                            <span>256-Bit SSL</span>
-                        </span>
-                        <span class="fbadge">
-                            {% lucide "credit-card" size=14 class="fbadge-icon" %}
-                            <span>PayMongo Secured</span>
-                        </span>
-                    </div>
                 </div>
 
                 <div class="footer-col">
@@ -140,6 +147,7 @@
                         <li><a href="{% url 'catalog:product_list' %}">All Products</a></li>
                         <li><a href="{% url 'cart:detail' %}">View Cart</a></li>
                         <li><a href="{% url 'checkout:index' %}">Checkout</a></li>
+                        <li><a href="{% url 'seller:apply' %}">Apply as Seller</a></li>
                     </ul>
                 </div>
 
@@ -150,10 +158,11 @@
                         <li><a href="{% url 'accounts:profile' %}">My Profile</a></li>
                         <li><a href="{% url 'accounts:profile' %}#orders">Order History</a></li>
                         <li><a href="{% url 'accounts:settings' %}">Account Settings</a></li>
-                        <li><a href="{% url 'accounts:logout' %}">Sign Out</a></li>
+                        <li><a href="{% url 'orders:track' %}">Track My Order</a></li>
                         {% else %}
                         <li><a href="{% url 'accounts:login' %}">Sign In</a></li>
-                        <li><a href="{% url 'accounts:register' %}">Create Account</a></li>
+                        <li><a href="{% url 'accounts:register' %}?next=/">Create Account</a></li>
+                        <li><a href="{% url 'orders:track' %}">Track My Order</a></li>
                         <li><a href="{% url 'catalog:product_list' %}">Browse as Guest</a></li>
                         {% endif %}
                     </ul>
@@ -172,19 +181,11 @@
 
             <div class="footer-bottom">
                 <p class="copyright">© 2026 Raqnith Commerce. All rights reserved.</p>
-                <div class="supported-payment-icons">
-                    <span class="pay-icon-tag">QR Ph</span>
-                    <span class="pay-icon-tag">GCash</span>
-                    <span class="pay-icon-tag">Maya</span>
-                    <span class="pay-icon-tag">BPI</span>
-                    <span class="pay-icon-tag">BDO</span>
-                    <span class="pay-icon-tag">Visa / Mastercard</span>
-                </div>
             </div>
         </div>
     </footer>
 
-    <script src="{% static 'js/site.js' %}?v=20260820_12" defer></script>
-    <script src="{% static 'js/checkout.js' %}?v=20260820_12" defer></script>
+    <script src="{% static 'js/site.js' %}?v=20260824_08" defer></script>
+    <script src="{% static 'js/checkout.js' %}?v=20260825_01" defer></script>
 </body>
 </html>

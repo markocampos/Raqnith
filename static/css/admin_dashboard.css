@@ -1,0 +1,111 @@
+/* Raqnith admin store-overview dashboard.
+   Scoped to .rq-* classes so stock Django admin styles are untouched.
+   Honours the admin's dark-mode variables where available. */
+
+.rq-dashboard {
+  margin-bottom: 24px;
+}
+
+/* ---- Metric cards ---- */
+.rq-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.rq-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--body-bg, #f8f8f8);
+  border: 1px solid var(--hairline-color, #e8e8e8);
+  border-top: 3px solid #2563eb;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.rq-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.rq-card--good { border-top-color: #15803d; }
+.rq-card--warn { border-top-color: #d97706; }
+.rq-card--bad  { border-top-color: #b91c1c; }
+
+.rq-card__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--body-quiet-color, #666);
+}
+
+.rq-card__value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.rq-card__sub {
+  font-size: 12px;
+  color: var(--body-quiet-color, #666);
+}
+
+/* ---- Panels ---- */
+.rq-panel {
+  background: var(--body-bg, #fff);
+  border: 1px solid var(--hairline-color, #e8e8e8);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.rq-panel h2 {
+  font-size: 13px;
+  margin: 4px 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--body-quiet-color, #666);
+}
+
+/* Attention list */
+.rq-attention ul { margin: 0; padding: 0; list-style: none; }
+.rq-attention li {
+  padding: 6px 10px;
+  border-left: 3px solid #d97706;
+  background: rgba(217, 119, 6, 0.06);
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+.rq-attention li strong { margin-right: 6px; }
+.rq-attention li.rq-attention--bad {
+  border-left-color: #b91c1c;
+  background: rgba(185, 28, 28, 0.07);
+}
+.rq-attention li a { color: inherit; }
+
+/* Latest orders table */
+.rq-latest-orders table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.rq-latest-orders th,
+.rq-latest-orders td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--hairline-color, #eee);
+  font-size: 12px;
+}
+.rq-latest-orders th {
+  color: var(--body-quiet-color, #666);
+  font-weight: 600;
+}
+.rq-more { margin: 10px 0 2px; }
+
+@media (max-width: 768px) {
+  .rq-cards { grid-template-columns: repeat(2, 1fr); }
+}

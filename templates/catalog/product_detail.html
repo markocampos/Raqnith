@@ -2,48 +2,179 @@
 {% load money_tags %}
 {% load lucide %}
 
-{% block title %}{{ product.name }} — Raqnith{% endblock %}
+{% block title %}{{ product.name }} | Digital Product | Raqnith{% endblock %}
+
+{% block meta_description %}{{ product.description|default:"Instant digital download with receipt included."|truncatechars:155 }}{% if product.price_cents < 100 %} Get it free — instant download, no payment needed.{% else %} Buy now for {{ product.price_cents|centavos }} with instant QR Ph, GCash and Maya checkout.{% endif %}{% endblock %}
+
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ product.name }} | {{ product.price_cents|php_or_free }}{% endblock %}
+{% block og_description %}{{ product.description|default:"Instant digital download with receipt included."|truncatechars:160 }}{% endblock %}
+{% block twitter_title %}{{ product.name }} | {{ product.price_cents|php_or_free }}{% endblock %}
+{% block twitter_description %}{{ product.description|default:"Instant digital download with receipt included."|truncatechars:190 }}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ product.name|escapejs }}",
+  "description": "{{ product.description|default:'Instant digital download with receipt included.'|escapejs }}",
+  "category": "{{ product.category.name|default:'Digital Product' }}",
+  "brand": { "@type": "Brand", "name": "Raqnith" },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ request.build_absolute_uri }}",
+    "priceCurrency": "PHP",
+    "price": "{{ product.price_cents|pesos_raw }}",
+    "availability": "{% if product.is_available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
-<main class="page-container product-detail-page">
-    <div class="product-detail-card">
-        <div class="product-detail-header">
-            <span class="product-category-tag">Digital Asset</span>
-            <h1>{{ product.name }}</h1>
-            <p class="product-detail-price price">{{ product.price_cents|centavos }}</p>
-        </div>
+<main class="page-container product-detail-container">
+    <!-- Breadcrumb Nav -->
+    <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <a href="{% url 'catalog:home' %}">Home</a>
+        <span class="breadcrumb-sep">/</span>
+        <a href="{% url 'catalog:product_list' %}">Products</a>
+        {% if product.category %}
+        <span class="breadcrumb-sep">/</span>
+        <a href="{% url 'catalog:product_list' %}?category={{ product.category.slug }}">{{ product.category.name }}</a>
+        {% endif %}
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">{{ product.name }}</span>
+    </nav>
 
-        <div class="product-detail-body">
-            <div class="feature-item-pill">
-                {% lucide "zap" size=16 class="pill-icon" %}
-                <span>Instant Digital Delivery</span>
+    <div class="product-showcase-grid">
+        <!-- Left: Product Showcase Visual Card -->
+        <div class="product-showcase-visual">
+            <div class="product-visual-banner product-showcase-banner" data-category="{{ product.category.slug|default:'' }}">
+                <div class="product-visual-top">
+                    <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
+                    {% if product.is_available %}
+                    <span class="product-status-pill">✓ In Stock</span>
+                    {% else %}
+                    <span class="product-status-pill out-of-stock">Sold Out</span>
+                    {% endif %}
+                </div>
+                <div class="product-visual-center">
+                    <div class="product-visual-icon showcase-icon">
+                        {% include "includes/product_icon.html" with product=product size=44 %}
+                    </div>
+                </div>
             </div>
-            <div class="feature-item-pill">
-                {% lucide "shield-check" size=16 class="pill-icon" %}
-                <span>Official License & Receipt</span>
+
+            <!-- Guarantee Perks Box -->
+            <div class="showcase-perks-card">
+                <div class="showcase-perk-item">
+                    {% lucide "download" size=18 class="perk-icon" %}
+                    <div>
+                        <strong>Instant File Download</strong>
+                        <span>Available immediately upon payment completion</span>
+                    </div>
+                </div>
+                <div class="showcase-perk-item">
+                    {% lucide "file-check" size=18 class="perk-icon" %}
+                    <div>
+                        <strong>Commercial & Personal License</strong>
+                        <span>Official digital license certificate and automated receipt</span>
+                    </div>
+                </div>
+                <div class="showcase-perk-item">
+                    {% lucide "shield-check" size=18 class="perk-icon" %}
+                    <div>
+                        <strong>100% Protected Transaction</strong>
+                        <span>Official PayMongo QR Ph & Philippine e-wallet rails</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="product-detail-actions">
-            {% if product.is_available %}
-            <form method="post" action="{% url 'cart:add' %}" class="add-to-cart-form">
-                {% csrf_token %}
-                <input type="hidden" name="product" value="{{ product.id }}">
-                <button type="submit" class="button button-product-add">
-                    {% lucide "shopping-cart" size=18 %}
-                    <span>Add to cart</span>
-                </button>
-            </form>
-            {% else %}
-            <p class="out-of-stock">Unavailable</p>
-            {% endif %}
-        </div>
+        <!-- Right: Product Info & Purchase Panel -->
+        <div class="product-showcase-panel">
+            <div class="product-meta-header">
+                {% if product.category %}
+                <a href="{% url 'catalog:product_list' %}?category={{ product.category.slug }}" class="product-category-link">
+                    {% if product.category.icon %}{% lucide product.category.icon size=14 %}{% endif %}
+                    <span>{{ product.category.name }}</span>
+                </a>
+                {% else %}
+                <span class="product-category-link">Digital Asset</span>
+                {% endif %}
+                <h1 class="product-showcase-title">{{ product.name }}</h1>
+            </div>
 
-        <div class="product-detail-back">
-            <a href="{% url 'catalog:product_list' %}" class="back-products-link">
-                {% lucide "arrow-left" size=16 %}
-                <span>Back to products</span>
-            </a>
+            <!-- Price Card Box -->
+            <div class="product-price-card">
+                <div class="price-main-row">
+                    <span class="price-figure">{{ product.price_cents|php_or_free }}</span>
+                    {% if product.price_cents >= 100 %}<span class="price-currency-badge">PHP</span>{% endif %}
+                </div>
+                <p class="price-note">One-time digital purchase • Instant automated access • No recurring fees</p>
+            </div>
+
+            <!-- Product Description -->
+            <div class="product-description-block">
+                <p class="product-description-text">{{ product.description|default:"Instant digital license with automated receipt confirmation and download access."|linebreaksbr }}</p>
+            </div>
+
+            <!-- Feature Pills -->
+            <div class="product-features-row">
+                <div class="feature-item-pill">
+                    {% lucide "zap" size=15 class="pill-icon" %}
+                    <span>Instant Digital Delivery</span>
+                </div>
+                <div class="feature-item-pill">
+                    {% lucide "shield-check" size=15 class="pill-icon" %}
+                    <span>Official License & Receipt</span>
+                </div>
+                <div class="feature-item-pill">
+                    {% lucide "qr-code" size=15 class="pill-icon" %}
+                    <span>QR Ph Ready</span>
+                </div>
+            </div>
+
+            <!-- Purchase Actions -->
+            <div class="product-purchase-box">
+                {% if product.is_available %}
+                <form method="post" action="{% url 'cart:add' %}" class="product-main-add-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="product" value="{{ product.id }}">
+                    <button type="submit" class="button button-showcase-add">
+                        {% lucide "shopping-cart" size=18 %}
+                        <span>Add to Cart {{ product.price_cents|php_or_free }}</span>
+                    </button>
+                </form>
+                {% else %}
+                <div class="out-of-stock-banner">
+                    {% lucide "alert-circle" size=18 %}
+                    <span>This digital product is currently unavailable.</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Accepted Payments Pill Bar -->
+            <div class="payment-methods-strip">
+                <span class="strip-label">Accepted QR Ph & E-Wallets:</span>
+                <div class="strip-badges">
+                    <span class="pay-chip">QR Ph</span>
+                    <span class="pay-chip">GCash</span>
+                    <span class="pay-chip">Maya</span>
+                    <span class="pay-chip">BDO</span>
+                    <span class="pay-chip">BPI</span>
+                    <span class="pay-chip">UnionBank</span>
+                </div>
+            </div>
+
+            <!-- Back Link -->
+            <div class="product-detail-back">
+                <a href="{% url 'catalog:product_list' %}" class="back-products-link">
+                    {% lucide "arrow-left" size=16 %}
+                    <span>Back to all products</span>
+                </a>
+            </div>
         </div>
     </div>
 </main>

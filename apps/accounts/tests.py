@@ -2,6 +2,7 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.cart.models import Cart
 from apps.catalog.models import Product
@@ -223,14 +224,62 @@ class ProfileAndSettingsTests(TestCase):
         self.assertContains(resp, str(self.order.id)[:8])
         self.assertContains(resp, "Digital Book")
 
-    def test_profile_update(self):
+    def test_profile_cancels_older_pending_orders_leaving_single_active(self):
         self.client.login(username="juan", password="SecurePassword123!")
-        resp = self.client.post(reverse("accounts:profile"), {
+        # Create 2 pending orders
+        order1 = Order.objects.create(
+            user=self.user,
+            subtotal_amount=3000,
+            total_amount=3000,
+            status=Order.Status.PENDING_PAYMENT,
+        )
+        order2 = Order.objects.create(
+            user=self.user,
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.PENDING_PAYMENT,
+        )
+
+        resp = self.client.get(reverse("accounts:profile"))
+        self.assertEqual(resp.status_code, 200)
+
+        order1.refresh_from_db()
+        order2.refresh_from_db()
+        # Newer order (order2) remains PENDING_PAYMENT, older order1 is CANCELLED
+        self.assertEqual(order2.status, Order.Status.PENDING_PAYMENT)
+        self.assertEqual(order1.status, Order.Status.CANCELLED)
+
+    def test_profile_status_filtering_and_pagination(self):
+        self.client.login(username="juan", password="SecurePassword123!")
+        # Create multiple orders to test pagination (page size 6)
+        for i in range(8):
+            Order.objects.create(
+                user=self.user,
+                subtotal_amount=1000,
+                total_amount=1000,
+                status=Order.Status.PAID,
+                paid_at=timezone.now(),
+            )
+
+        resp = self.client.get(reverse("accounts:profile"), {"status": "paid", "page": 1})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.context["orders"]), 6)
+        self.assertTrue(resp.context["page_obj"].has_next())
+
+        resp_page_2 = self.client.get(reverse("accounts:profile"), {"status": "paid", "page": 2})
+        self.assertEqual(resp_page_2.status_code, 200)
+        # Total paid = 1 from setUp + 8 created = 9 -> page 2 has 3
+        self.assertEqual(len(resp_page_2.context["orders"]), 3)
+
+    def test_settings_personal_details_update(self):
+        self.client.login(username="juan", password="SecurePassword123!")
+        resp = self.client.post(reverse("accounts:settings"), {
+            "action": "update_profile",
             "first_name": "Juanito",
             "last_name": "Santos",
             "email": "juanito@example.com",
         })
-        self.assertRedirects(resp, reverse("accounts:profile"))
+        self.assertRedirects(resp, reverse("accounts:settings") + "?tab=profile")
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, "Juanito")
         self.assertEqual(self.user.last_name, "Santos")
@@ -244,7 +293,7 @@ class ProfileAndSettingsTests(TestCase):
             "new_password": "NewUltraPassword456!",
             "confirm_password": "NewUltraPassword456!",
         })
-        self.assertRedirects(resp, reverse("accounts:settings"))
+        self.assertRedirects(resp, reverse("accounts:settings") + "?tab=security")
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("NewUltraPassword456!"))
 
@@ -271,3 +320,82 @@ class LegalPagesTests(TestCase):
         resp = self.client.get(reverse("terms_of_service"))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Terms of Service")
+
+
+class UserAdminTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username="admin",
+            email="admin@raqnith.test",
+            password="AdminPass123!",
+        )
+        self.buyer = User.objects.create_user(
+            username="juan",
+            email="JUAN@buyer.test",
+            password="BuyerPass123!",
+            first_name="Juan",
+            last_name="Dela Cruz",
+        )
+        Order.objects.create(
+            user=self.buyer,
+            status=Order.Status.PAID,
+            subtotal_amount=49_900,
+            total_amount=49_900,
+        )
+        Order.objects.create(
+            user=self.buyer,
+            status=Order.Status.PENDING_PAYMENT,
+            subtotal_amount=10_000,
+            total_amount=10_000,
+        )
+
+    def _login_admin(self):
+        self.client.force_login(self.admin)
+
+    def test_changelist_shows_buyer_stats(self):
+        self._login_admin()
+        resp = self.client.get(reverse("admin:accounts_user_changelist"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "@buyer.test")
+        self.assertContains(resp, "\u20b1499.00")  # paid order only
+        self.assertContains(resp, "Juan Dela Cruz")
+
+    def test_change_page_lists_orders_inline(self):
+        self._login_admin()
+        url = reverse("admin:accounts_user_change", args=[self.buyer.pk])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Orders")
+
+    def test_deactivate_action(self):
+        self._login_admin()
+        change_url = reverse("admin:accounts_user_changelist")
+        resp = self.client.post(
+            change_url,
+            {
+                "action": "deactivate_users",
+                "_selected_action": str(self.buyer.pk),
+            },
+        )
+        self.buyer.refresh_from_db()
+        self.assertFalse(self.buyer.is_active)
+
+
+class AdminDashboardTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username="admin",
+            email="admin@raqnith.test",
+            password="AdminPass123!",
+        )
+
+    def test_admin_index_is_branded_and_jargon_free(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("admin:index"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Raqnith Admin")
+        self.assertNotContains(resp, "Django administration")
+        # Unused auth machinery stays out of the dashboard.
+        self.assertNotContains(resp, "Authentication and Authorization")
+        self.assertNotContains(resp, "Access &amp; Roles")
+        self.assertNotContains(resp, "/admin/auth/group/")

@@ -1,0 +1,18 @@
+{% load lucide %}
+{% if product.category and product.category.icon %}
+    {% lucide product.category.icon size=size|default:26 %}
+{% elif "smoke" in product.name|lower or "test" in product.name|lower %}
+    {% lucide "zap" size=size|default:26 %}
+{% elif "template" in product.name|lower or "layout" in product.name|lower or "theme" in product.name|lower %}
+    {% lucide "panels-top-left" size=size|default:26 %}
+{% elif "code" in product.name|lower or "dev" in product.name|lower or "api" in product.name|lower or "kit" in product.name|lower %}
+    {% lucide "code-xml" size=size|default:26 %}
+{% elif "software" in product.name|lower or "app" in product.name|lower or "tool" in product.name|lower %}
+    {% lucide "terminal" size=size|default:26 %}
+{% elif "pack" in product.name|lower or "bundle" in product.name|lower %}
+    {% lucide "layers" size=size|default:26 %}
+{% elif "book" in product.name|lower or "guide" in product.name|lower or "doc" in product.name|lower %}
+    {% lucide "book-open" size=size|default:26 %}
+{% else %}
+    {% lucide "box" size=size|default:26 %}
+{% endif %}

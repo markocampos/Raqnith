@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}Access Forbidden (403) | Raqnith{% endblock %}
+
+{% block content %}
+<main class="error-page-container">
+    <div class="error-page-card">
+        <div class="error-icon-wrapper error-icon-403">
+            {% lucide "shield-alert" size=44 class="error-icon-svg" %}
+        </div>
+        <div class="error-code-badge error-badge-warning">403 Forbidden</div>
+        <h1 class="error-title">Access Restricted</h1>
+        <p class="error-description">
+            You don't have permission to view or access this resource. If this is unexpected, please ensure you are signed in with the correct account.
+        </p>
+
+        <div class="error-actions-group">
+            {% if not user.is_authenticated %}
+            <a href="{% url 'accounts:login' %}" class="button button-hero-primary error-action-btn">
+                {% lucide "log-in" size=16 %}
+                <span>Sign In</span>
+            </a>
+            {% endif %}
+            <a href="{% url 'catalog:home' %}" class="button button-hero-secondary error-action-btn">
+                {% lucide "home" size=16 %}
+                <span>Return Home</span>
+            </a>
+            <a href="{% url 'catalog:product_list' %}" class="button button-hero-secondary error-action-btn">
+                {% lucide "shopping-bag" size=16 %}
+                <span>Browse Products</span>
+            </a>
+        </div>
+
+        <div class="error-help-box">
+            <p>Need access assistance? Review your <a href="{% url 'accounts:profile' %}">Account Profile</a> or check our <a href="{% url 'terms_of_service' %}">Terms of Service</a>.</p>
+        </div>
+    </div>
+</main>
+{% endblock %}

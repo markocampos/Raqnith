@@ -181,3 +181,13 @@ class RetryPaymentViewTests(TestCase):
         )
         resp = self.client.post(self._url(attempt=other_attempt))
         self.assertEqual(resp.status_code, 404)
+
+    def test_retry_on_expired_order_rejected(self):
+        from django.utils import timezone
+        self.order.created_at = timezone.now() - timezone.timedelta(minutes=65)
+        self.order.save(update_fields=["created_at"])
+        resp = self.client.post(self._url())
+        self.assertEqual(resp.status_code, 410)
+        self.assertEqual(resp.json()["error"], "order_expired")
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.Status.CANCELLED)

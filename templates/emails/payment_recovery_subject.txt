@@ -1,0 +1,1 @@
+{% load money_tags %}Your Raqnith order is waiting. Here's a fresh QR code

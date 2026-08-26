@@ -1,0 +1,24 @@
+{% load money_tags %}Hi there!
+
+Your QR code for order #{{ order.id|slice:":8" }} expired before payment
+went through. No worries, nothing was charged and your items are still
+reserved.
+
+YOUR CART
+{% for item in items %}  - {{ item.product_name }}: {{ item.unit_price_cents|centavos }}
+{% endfor %}Total: {{ total }}
+
+FINISH YOUR ORDER
+Tap below to get a fresh QR code (valid another 15 minutes):
+{{ pay_url }}
+
+You can pay with GCash, Maya, or any PH banking app. The moment your
+payment confirms, your downloads unlock automatically.
+
+Changed your mind? No problem, just ignore this email.
+
+The Raqnith Team
+
+---
+Raqnith. Instant digital products, PH payments.
+Secure checkout powered by PayMongo · QR Ph · GCash · Maya

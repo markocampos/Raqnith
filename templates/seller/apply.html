@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+{% load lucide %}
+
+{% block title %}Apply as Seller | Raqnith{% endblock %}
+
+{% block content %}
+<main class="dashboard-container">
+    <!-- Page Header -->
+    <div class="settings-page-header">
+        <a href="{% url 'catalog:home' %}" class="back-link">
+            {% lucide "arrow-left" size=16 %}
+            <span>Back to Home</span>
+        </a>
+        <div class="settings-title-row">
+            <div>
+                <h1>Sell on Raqnith</h1>
+                <p class="section-subtext">We carefully pick every creator we work with. Tell us what you make and if it fits, we'll list your products with instant QR Ph, GCash and Maya checkout.</p>
+            </div>
+        </div>
+    </div>
+
+    {% if sent %}
+    <!-- Success Panel -->
+    <div class="card settings-main-card seller-apply-card seller-success-card">
+        <div class="seller-success-icon">
+            {% lucide "check-check" size=30 %}
+        </div>
+        <h2>Application received!</h2>
+        <p>Thanks for applying! A real person on our team reads every application. Expect an email from us within <strong>2 to 3 business days</strong>.</p>
+        <ul class="seller-success-points">
+            <li>{% lucide "badge-check" size=16 %} We review your work and brand fit</li>
+            <li>{% lucide "mail" size=16 %} Approved? We handle listing, pricing and publishing with you</li>
+            <li>{% lucide "zap" size=16 %} Your buyers enjoy instant downloads and receipts. We take care of the rest</li>
+        </ul>
+        <div class="seller-success-actions">
+            <a href="{% url 'catalog:product_list' %}" class="button button-primary">Browse the Catalog</a>
+            <a href="{% url 'seller:apply' %}" class="button button-outline">Submit Another Application</a>
+        </div>
+    </div>
+    {% else %}
+
+    <!-- Phase Progress -->
+    <div class="apply-progress" id="applyProgress">
+        <ol class="apply-steps">
+            <li class="apply-step-dot is-active" data-dot="1">
+                <span class="dot-num">1</span>
+                <span class="dot-label">About You</span>
+            </li>
+            <li class="apply-step-dot" data-dot="2">
+                <span class="dot-num">2</span>
+                <span class="dot-label">Your Brand</span>
+            </li>
+            <li class="apply-step-dot" data-dot="3">
+                <span class="dot-num">3</span>
+                <span class="dot-label">What You Sell</span>
+            </li>
+        </ol>
+        <div class="apply-progress-track">
+            <div class="apply-progress-bar" id="applyProgressBar" style="width: 0%;"></div>
+        </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="auth-error-alert seller-form-alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'seller:apply' %}" class="card settings-main-card seller-apply-card" id="applyForm" novalidate>
+        {% csrf_token %}
+
+        <!-- Honeypot: hidden from humans, catches bots -->
+        <div class="hp-field" aria-hidden="true">
+            <label for="id_website">Website</label>
+            <input type="text" name="website" id="id_website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <!-- Phase 1: About You -->
+        <section class="seller-form-section apply-panel is-active" data-panel="1">
+            <div class="seller-section-head">
+                <span class="seller-section-badge">{% lucide "user-round" size=17 %}</span>
+                <div>
+                    <h3>About You</h3>
+                    <p>How we reach you about your application.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.full_name.id_for_label }}">Full Name <span class="required-star">*</span></label>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}<span class="field-error">{{ form.full_name.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email Address <span class="required-star">*</span></label>
+                {{ form.email }}
+                {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>
+                {% else %}<span class="field-hint">{% lucide "lock" size=12 %} Encrypted and never shared. This is where we send our decision.</span>{% endif %}
+            </div>
+        </section>
+
+        <!-- Phase 2: Your Brand -->
+        <section class="seller-form-section apply-panel" data-panel="2">
+            <div class="seller-section-head">
+                <span class="seller-section-badge badge-green">{% lucide "store" size=17 %}</span>
+                <div>
+                    <h3>Your Brand</h3>
+                    <p>Show us what you've built so far.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.brand_name.id_for_label }}">Brand or Store Name <span class="required-star">*</span></label>
+                {{ form.brand_name }}
+                {% if form.brand_name.errors %}<span class="field-error">{{ form.brand_name.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.portfolio_url.id_for_label }}">Portfolio or Work Link</label>
+                {{ form.portfolio_url }}
+                {% if form.portfolio_url.errors %}<span class="field-error">{{ form.portfolio_url.errors.0 }}</span>
+                {% else %}<span class="field-hint">Website, GitHub, Behance… anything that shows your work.</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.social_url.id_for_label }}">Social Page</label>
+                {{ form.social_url }}
+                {% if form.social_url.errors %}<span class="field-error">{{ form.social_url.errors.0 }}</span>
+                {% else %}<span class="field-hint">Instagram, TikTok or Facebook page. Optional.</span>{% endif %}
+            </div>
+        </section>
+
+        <!-- Phase 3: What You Sell -->
+        <section class="seller-form-section apply-panel" data-panel="3">
+            <div class="seller-section-head">
+                <span class="seller-section-badge">{% lucide "package" size=17 %}</span>
+                <div>
+                    <h3>What You Sell</h3>
+                    <p>We accept digital products like templates, kits, e-books and assets.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.category.id_for_label }}">Category</label>
+                <div class="select-wrap">
+                    {{ form.category }}
+                    {% lucide "chevron-down" size=15 class="select-caret" %}
+                </div>
+                {% if form.category.errors %}<span class="field-error">{{ form.category.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.message.id_for_label }}">Tell Us About Your Products <span class="required-star">*</span></label>
+                {{ form.message }}
+                {% if form.message.errors %}<span class="field-error">{{ form.message.errors.0 }}</span>
+                {% else %}<span class="field-hint">What do you make, who is it for, and why will Raqnith buyers love it?</span>{% endif %}
+            </div>
+        </section>
+
+        <!-- Phase navigation -->
+        <div class="seller-create-footer apply-nav">
+            <button type="button" class="button button-outline" id="applyBack" hidden>
+                {% lucide "arrow-left" size=16 %}
+                <span>Back</span>
+            </button>
+            <button type="button" class="button button-primary" id="applyNext">
+                <span>Continue</span>
+                {% lucide "arrow-right" size=16 %}
+            </button>
+            <button type="submit" class="button button-primary button-save-settings" id="applySubmit" hidden>
+                {% lucide "send" size=16 %}
+                <span>Submit Application</span>
+            </button>
+        </div>
+
+        <div class="apply-trust-row">
+            <div class="checkout-trust-strip">
+                {% lucide "shield-check" size=14 %}
+                <span>Curated marketplace • Secure QR Ph checkout • We never share your details</span>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+</main>
+
+{% if not sent %}
+<noscript>
+    <style>
+        .apply-panel { display: flex !important; }
+        .apply-progress { display: none; }
+        #applyBack, #applyNext { display: none !important; }
+        #applySubmit { display: inline-flex !important; }
+    </style>
+</noscript>
+<script>
+(function () {
+    var form = document.getElementById("applyForm");
+    if (!form) return;
+
+    var TOTAL = 3;
+    var DRAFT_KEY = "raqnith_seller_apply_draft";
+    var DRAFT_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // one week
+    var panels = form.querySelectorAll(".apply-panel");
+    var dots = document.querySelectorAll(".apply-step-dot");
+    var bar = document.getElementById("applyProgressBar");
+    var backBtn = document.getElementById("applyBack");
+    var nextBtn = document.getElementById("applyNext");
+    var submitBtn = document.getElementById("applySubmit");
+    var current = 1;
+    var interacted = false;
+
+    function show(step) {
+        current = Math.min(Math.max(step, 1), TOTAL);
+        panels.forEach(function (panel) {
+            panel.classList.toggle("is-active", panel.dataset.panel == current);
+        });
+        dots.forEach(function (dot) {
+            var n = parseInt(dot.dataset.dot, 10);
+            dot.classList.toggle("is-active", n === current);
+            dot.classList.toggle("is-done", n < current);
+        });
+        bar.style.width = ((current - 1) / (TOTAL - 1)) * 100 + "%";
+        backBtn.hidden = current === 1;
+        nextBtn.hidden = current === TOTAL;
+        submitBtn.hidden = current !== TOTAL;
+        if (interacted) history.replaceState(null, "", "#phase-" + current);
+    }
+
+    function clearError(field) {
+        var group = field.closest(".form-group");
+        if (!group) return;
+        group.classList.remove("has-js-error");
+        var msg = group.querySelector(".js-error-msg");
+        if (msg) msg.remove();
+    }
+
+    function flagError(field, message) {
+        var group = field.closest(".form-group");
+        if (!group || group.querySelector(".js-error-msg")) return;
+        group.classList.add("has-js-error");
+        var msg = document.createElement("span");
+        msg.className = "field-error js-error-msg";
+        msg.textContent = message;
+        group.appendChild(msg);
+    }
+
+    function validatePanel(step) {
+        var panel = form.querySelector('[data-panel="' + step + '"]');
+        var ok = true;
+        var firstBad = null;
+        panel.querySelectorAll("input[name], select[name], textarea[name]").forEach(function (field) {
+            clearError(field);
+            if (field.type === "hidden") return;
+            var empty = field.value.trim() === "";
+            var invalid = !field.checkValidity();
+            if ((field.required && empty) || (!empty && invalid)) {
+                ok = false;
+                var why = empty ? "Please fill this in." : "Please check this entry.";
+                if (!empty && field.type === "email") why = "Please check your email address.";
+                if (!empty && field.type === "url") why = "Paste a full link starting with https://";
+                flagError(field, why);
+                firstBad = firstBad || field;
+            }
+        });
+        if (!ok && firstBad) firstBad.focus();
+        return ok;
+    }
+
+    /* Draft autosave: refreshes and accidental tab closes lose nothing. */
+    function namedFields() {
+        return Array.prototype.filter.call(
+            form.querySelectorAll("input[name], select[name], textarea[name]"),
+            function (field) {
+                return field.type !== "hidden" && !field.closest(".hp-field");
+            }
+        );
+    }
+
+    function saveDraft() {
+        try {
+            var data = { saved_at: Date.now(), phase: current, fields: {} };
+            namedFields().forEach(function (field) {
+                data.fields[field.name] = field.value;
+            });
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+        } catch (err) { /* private mode or full storage: keep going without drafts */ }
+    }
+
+    function restoreDraft() {
+        var data = null;
+        try {
+            data = JSON.parse(localStorage.getItem(DRAFT_KEY));
+        } catch (err) { return false; }
+        if (!data || !data.fields || !data.saved_at) return false;
+        if (Date.now() - data.saved_at > DRAFT_MAX_AGE) {
+            localStorage.removeItem(DRAFT_KEY);
+            return false;
+        }
+        namedFields().forEach(function (field) {
+            var saved = data.fields[field.name];
+            if (saved !== undefined && saved !== null && field.value === "") {
+                field.value = saved;
+            }
+        });
+        return typeof data.phase === "number" && data.phase >= 1 && data.phase <= TOTAL
+            ? data.phase
+            : 1;
+    }
+
+    var saveTimer = null;
+    form.addEventListener("input", function () {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveDraft, 300);
+    });
+    form.addEventListener("change", saveDraft);
+
+    form.addEventListener("submit", function (event) {
+        for (var phase = 1; phase <= TOTAL; phase++) {
+            if (!validatePanel(phase)) {
+                event.preventDefault();
+                show(phase);
+                return;
+            }
+        }
+        try { localStorage.removeItem(DRAFT_KEY); } catch (err) {}
+    });
+
+    backBtn.addEventListener("click", function () {
+        interacted = true;
+        show(current - 1);
+    });
+    nextBtn.addEventListener("click", function () {
+        if (validatePanel(current)) {
+            interacted = true;
+            saveDraft();
+            show(current + 1);
+        }
+    });
+
+    form.querySelectorAll("input, select, textarea").forEach(function (field) {
+        field.addEventListener("input", function () { clearError(field); });
+    });
+
+    // Where to start: server errors win, then the saved draft, then deep link.
+    var errPanel = form.querySelector(".apply-panel .field-error");
+    var hashMatch = window.location.hash.match(/^#phase-(\d)$/);
+
+    if (errPanel) {
+        show(parseInt(errPanel.closest(".apply-panel").dataset.panel, 10));
+    } else {
+        var draftPhase = restoreDraft();
+        if (draftPhase !== false) {
+            interacted = true; // keep the applicant on their saved phase
+            show(draftPhase);
+        } else if (hashMatch) {
+            show(parseInt(hashMatch[1], 10));
+        } else {
+            show(1);
+        }
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

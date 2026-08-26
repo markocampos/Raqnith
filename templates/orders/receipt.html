@@ -1,48 +1,152 @@
 {% extends "base.html" %}
-{% load money_tags %}
+{% load money_tags lucide %}
 
-{% block title %}Receipt — Raqnith{% endblock %}
+{% block title %}Receipt | Order #{{ order.id|slice:":8" }} | Raqnith{% endblock %}
 
 {% block content %}
-<main class="checkout">
-    <section class="card">
-        <h1>Order receipt</h1>
-        <p>Order #{{ order.id }}</p>
+<main class="checkout checkout-modern checkout-receipt-modern">
+    <nav class="checkout-stepper" aria-label="Checkout Progress">
+        <ol class="stepper-list">
+            <li class="step-item step-completed"><span class="step-badge">✓</span><span class="step-label">Information</span></li>
+            <li class="step-connector completed"></li>
+            <li class="step-item step-completed"><span class="step-badge">✓</span><span class="step-label">{% if order.total_amount < 100 %}Free Checkout{% else %}QR Ph Payment{% endif %}</span></li>
+            <li class="step-connector completed"></li>
+            <li class="step-item step-active"><span class="step-badge">3</span><span class="step-label">Instant Access</span></li>
+        </ol>
+    </nav>
 
-        <table class="receipt-lines">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Price</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td>{{ item.product_name }}</td>
-                    <td>{{ item.unit_price_cents|centavos }}</td>
-                </tr>
+    <div class="receipt-header-card">
+        <div class="receipt-header-left">
+            <span class="receipt-pill">{% lucide "file-check" size=13 %} Digital Receipt</span>
+            <h1>Order receipt</h1>
+            <p class="receipt-order-meta">
+                <span class="order-ref-pill">
+                    <span>Order #{{ order.id|slice:":8" }}</span>
+                    <button type="button" class="btn-copy-mini" data-copy="{{ order.id }}" aria-label="Copy Order ID" title="Copy Order ID">{% lucide "copy" size=12 %}</button>
+                </span>
+                {% if order.paid_at %}<span class="receipt-paid-date">Paid on {{ order.paid_at|date:"M d, Y h:i A" }}</span>{% endif %}
+            </p>
+        </div>
+        <div class="receipt-header-right">
+            {% if payment_method %}<span class="receipt-method-badge">{{ payment_method }}</span>{% elif order.total_amount < 100 %}<span class="receipt-method-badge">Free</span>{% endif %}
+            {% if order.total_amount < 100 %}<span class="badge-status badge-paid">✓ Confirmed</span>{% else %}<span class="badge-status badge-paid">✓ Paid</span>{% endif %}
+        </div>
+    </div>
+
+    <div class="receipt-grid">
+        <section class="card checkout-section-card receipt-items-card">
+            <h2 class="receipt-card-title">{% lucide "package" size=18 %} Items</h2>
+            <div class="receipt-table-wrap">
+                <table class="receipt-table">
+                    <thead>
+                        <tr><th>Item</th><th class="text-right">Price</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <span class="receipt-item-name">{{ item.product_name }}</span>
+                                <span class="receipt-item-sub">{{ item.product.get_product_type_display|default:"Digital Product" }}</span>
+                            </td>
+                            <td class="text-right"><strong>{{ item.unit_price_cents|centavos }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <dl class="summary-totals receipt-totals">
+                <div class="totals-row"><dt>Subtotal</dt><dd>{{ order.subtotal_amount|php_or_free }}</dd></div>
+                {% if order.discount_amount %}<div class="totals-row discount-row"><dt>Discount</dt><dd>-{{ order.discount_amount|centavos }}</dd></div>{% endif %}
+                <div class="totals-row total-highlight"><dt class="total">Total</dt><dd class="total">{{ order.total_amount|php_or_free }}</dd></div>
+            </dl>
+
+            {% if payment_method or order.paid_at %}
+            <div class="receipt-payment-meta">
+                {% if payment_method %}<span>Paid with <strong>{{ payment_method }}</strong></span>{% elif order.total_amount < 100 %}<span>Free checkout — no payment required</span>{% endif %}
+                {% if order.paid_at %}<span>Paid on {{ order.paid_at|date:"M d, Y" }}</span>{% endif %}
+            </div>
+            {% endif %}
+        </section>
+
+        <aside class="receipt-sidebar">
+            <div class="card checkout-section-card receipt-contact-card">
+                <h2 class="receipt-card-title">{% lucide "mail" size=16 %} Delivery</h2>
+                <p class="receipt-email-line">Receipt sent to <strong>{{ order.email }}{% if not order.email and user.is_authenticated %} {{ user.email }}{% endif %}</strong></p>
+                {% if order.shipping_name or order.shipping_address %}
+                <div class="receipt-address-block">
+                    <h3>Shipping address</h3>
+                    <address>
+                        {% if order.shipping_name %}{{ order.shipping_name }}<br>{% endif %}
+                        {% if order.shipping_address %}{{ order.shipping_address }}<br>{% endif %}
+                        {% if order.shipping_city %}{{ order.shipping_city }}{% endif %}{% if order.shipping_postal %} {{ order.shipping_postal }}{% endif %}
+                    </address>
+                </div>
+                {% endif %}
+                <div class="receipt-actions">
+                    {% if has_deliverables %}
+                    <a href="#your-downloads" class="btn-pay-primary" style="justify-content:center;">{% lucide "download" size=16 %} Download Files</a>
+                    {% else %}
+                    <a href="{% url 'orders:status' order.id %}" class="btn-pay-primary" style="justify-content:center;">{% lucide "package" size=16 %} View Order</a>
+                    {% endif %}
+                    <a href="{% url 'orders:receipt_pdf' order.id %}" class="button-continue-shopping" style="justify-content:center; display:inline-flex; align-items:center; gap:0.4rem;">{% lucide "file-text" size=16 %} Download Receipt PDF</a>
+                    <a href="{% url 'accounts:profile' %}#orders" class="button-continue-shopping" style="justify-content:center; display:inline-flex; align-items:center; gap:0.4rem;">{% lucide "layout-dashboard" size=16 %} View All Orders</a>
+                    <a href="{% url 'catalog:product_list' %}" class="button-continue-shopping">{% lucide "arrow-left" size=14 %} Continue Shopping</a>
+                </div>
+
+                {% if license_keys %}
+                <div class="receipt-downloads-card">
+                    <h3 class="downloads-title">{% lucide "key-round" size=15 %} Your License Keys</h3>
+                    <p class="downloads-hint">Keep these safe. You'll need them to activate your software.</p>
+                    <ul class="downloads-list">
+                        {% for key in license_keys %}
+                        <li class="download-row license-row">
+                            <div class="license-meta">
+                                <code class="license-key-value">{{ key.key }}</code>
+                                <span class="license-product">{{ key.order_item.product_name }}</span>
+                            </div>
+                            <button type="button" class="btn-download-file btn-copy-key" data-copy="{{ key.key }}">
+                                Copy
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <p class="downloads-note">🔒 Each key works with one installation. View them anytime on this page or Track My Order.</p>
+                </div>
+                {% endif %}
+
+                {% for item in expired_memberships %}
+                <div class="membership-expired-card">
+                    <h3 class="downloads-title">{% lucide "lock" size=15 %} {{ item.product_name }}</h3>
+                    <p class="downloads-hint">Your membership ended {{ item.access_until|date:"M d, Y" }}. Renew to regain instant access.</p>
+                    <a href="{% url 'catalog:product_detail' item.product.slug %}" class="btn-download-file" style="text-decoration:none;">Renew Now</a>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
 
-        <dl class="summary-totals">
-            <dt>Subtotal</dt><dd>{{ order.subtotal_amount|centavos }}</dd>
-            {% if order.discount_amount %}<dt>Discount</dt><dd>-{{ order.discount_amount|centavos }}</dd>{% endif %}
-            <dt class="total">Total</dt><dd class="total">{{ order.total_amount|centavos }}</dd>
-        </dl>
-
-        {% if order.shipping_name or order.shipping_address %}
-        <h2>Shipping address</h2>
-        <address>
-            {% if order.shipping_name %}{{ order.shipping_name }}<br>{% endif %}
-            {% if order.shipping_address %}{{ order.shipping_address }}<br>{% endif %}
-            {% if order.shipping_city %}{{ order.shipping_city }}{% endif %}{% if order.shipping_postal %} {{ order.shipping_postal }}{% endif %}
-        </address>
-        {% endif %}
-
-        {% if payment_method %}<p>Paid with {{ payment_method }}.</p>{% endif %}
-        {% if order.paid_at %}<p>Paid on {{ order.paid_at }}.</p>{% endif %}
-    </section>
+                {% if has_deliverables %}
+                <div class="receipt-downloads-card" id="your-downloads">
+                    <h3 class="downloads-title">{% lucide "zap" size=15 %} Your Downloads</h3>
+                    <p class="downloads-hint">Instant access. Files are yours to keep.</p>
+                    <ul class="downloads-list">
+                        {% for item in items %}
+                        {% for file in item.buyer_files %}
+                        <li class="download-row">
+                            <span class="download-name">{% if file.kind == "stream" %}{% lucide "play" size=15 %}{% else %}{% lucide "file-down" size=15 %}{% endif %} {{ file.name }}</span>
+                            <a href="{% url 'orders:download_file' order.id file.id %}" class="btn-download-file" {% if file.kind == "download" %}download{% endif %}>
+                                {{ file.kind|capfirst }} {% lucide "arrow-right" size=13 %}
+                            </a>
+                        </li>
+                        {% endfor %}
+                        {% endfor %}
+                    </ul>
+                    <p class="downloads-note">🔒 Your link is private to this order. Re-download anytime from this page or Track My Order.</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="summary-guarantee-box">
+                {% lucide "shield-check" size=18 class="guarantee-icon" %}
+                <div class="guarantee-text"><strong>Need help?</strong><span>Contact support with your order ID for instant assistance.</span></div>
+            </div>
+        </aside>
+    </div>
 </main>
 {% endblock %}

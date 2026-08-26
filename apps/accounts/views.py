@@ -1,8 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Sum
+from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import TemplateView
@@ -15,6 +16,7 @@ from apps.accounts.forms import (
 )
 from apps.cart.services import merge_cart_on_login
 from apps.orders.models import Order
+from apps.payments.models import PaymentAttempt
 
 
 class RegisterView(View):
@@ -109,29 +111,69 @@ class LogoutView(View):
 
 class ProfileView(LoginRequiredMixin, View):
     def get(self, request):
-        form = UserProfileForm(instance=request.user)
-        return self._render_profile(request, form)
+        return self._render_profile(request)
 
-    def post(self, request):
-        form = UserProfileForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Your profile details have been updated successfully.")
-            return redirect("accounts:profile")
-        return self._render_profile(request, form, status=400)
+    def _render_profile(self, request, status=200):
+        # 1. Purge unpaid orders older than 30 days (1 month) to free storage
+        Order.purge_unpaid_overdue()
 
-    def _render_profile(self, request, form, status=200):
-        orders = Order.objects.filter(user=request.user).order_by("-created_at")
-        total_orders = orders.count()
-        paid_orders = orders.filter(status=Order.Status.PAID)
-        paid_count = paid_orders.count()
-        total_spent_cents = paid_orders.aggregate(total=Sum("total_amount"))["total"] or 0
+        # 2. Fetch user orders and check expiration
+        orders = list(
+            Order.objects.filter(user=request.user)
+            .prefetch_related("items")
+            .order_by("-created_at")
+        )
+        for order in orders:
+            order.expire_if_overdue()
+
+        # 3. Ensure only the single newest pending order stays active; cancel older pending ones
+        pending_orders = [o for o in orders if o.status == Order.Status.PENDING_PAYMENT]
+        if len(pending_orders) > 1:
+            for older_pending in pending_orders[1:]:
+                older_pending.transition_to(Order.Status.CANCELLED)
+                PaymentAttempt.objects.filter(
+                    order=older_pending,
+                    status__in=[
+                        PaymentAttempt.Status.CREATED,
+                        PaymentAttempt.Status.AWAITING_METHOD,
+                        PaymentAttempt.Status.AWAITING_ACTION,
+                    ],
+                ).update(status=PaymentAttempt.Status.CANCELLED)
+
+        total_orders = len(orders)
+        paid_orders = [o for o in orders if o.status in (Order.Status.PAID, Order.Status.FULFILLED)]
+        paid_count = len(paid_orders)
+        pending_count = len([o for o in orders if o.status == Order.Status.PENDING_PAYMENT])
+        cancelled_count = len([o for o in orders if o.status in (Order.Status.CANCELLED, Order.Status.PAYMENT_FAILED)])
+        total_spent_cents = sum(o.total_amount for o in paid_orders)
+
+        # 4. Status Filtering (All, Paid, Pending, Expired)
+        status_filter = request.GET.get("status", "all").lower().strip()
+        if status_filter == "paid":
+            filtered_orders = paid_orders
+        elif status_filter == "pending":
+            filtered_orders = [o for o in orders if o.status == Order.Status.PENDING_PAYMENT]
+        elif status_filter in ("cancelled", "expired"):
+            filtered_orders = [o for o in orders if o.status in (Order.Status.CANCELLED, Order.Status.PAYMENT_FAILED)]
+        else:
+            status_filter = "all"
+            filtered_orders = orders
+
+        # 5. Pagination (6 orders per page)
+        paginator = Paginator(filtered_orders, 6)
+        page_number = request.GET.get("page", 1)
+        page_obj = paginator.get_page(page_number)
 
         context = {
-            "form": form,
-            "orders": orders,
+            "orders": page_obj,
+            "page_obj": page_obj,
+            "paginator": paginator,
+            "status_filter": status_filter,
             "total_orders": total_orders,
             "paid_orders_count": paid_count,
+            "pending_orders_count": pending_count,
+            "cancelled_orders_count": cancelled_count,
+            "pending_order_id": pending_orders[0].id if pending_orders else None,
             "total_spent_cents": total_spent_cents,
         }
         return render(request, "accounts/profile.html", context, status=status)
@@ -139,27 +181,71 @@ class ProfileView(LoginRequiredMixin, View):
 
 class SettingsView(LoginRequiredMixin, View):
     def get(self, request):
+        profile_form = UserProfileForm(instance=request.user)
         password_form = ChangePasswordForm(user=request.user)
-        return render(request, "accounts/settings.html", {"password_form": password_form})
+        paid_orders_count = Order.objects.filter(
+            user=request.user,
+            status__in=[Order.Status.PAID, Order.Status.FULFILLED],
+        ).count()
+        return render(
+            request,
+            "accounts/settings.html",
+            {
+                "profile_form": profile_form,
+                "password_form": password_form,
+                "paid_orders_count": paid_orders_count,
+                "active_tab": request.GET.get("tab", "profile"),
+            },
+        )
 
     def post(self, request):
         action = request.POST.get("action", "change_password")
-        if action == "change_password":
+        paid_orders_count = Order.objects.filter(
+            user=request.user,
+            status__in=[Order.Status.PAID, Order.Status.FULFILLED],
+        ).count()
+
+        if action == "update_profile":
+            profile_form = UserProfileForm(request.POST, instance=request.user)
+            password_form = ChangePasswordForm(user=request.user)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, "Your personal details have been updated successfully.")
+                return redirect(reverse("accounts:settings") + "?tab=profile")
+            return render(
+                request,
+                "accounts/settings.html",
+                {
+                    "profile_form": profile_form,
+                    "password_form": password_form,
+                    "paid_orders_count": paid_orders_count,
+                    "active_tab": "profile",
+                },
+                status=400,
+            )
+
+        elif action == "change_password":
+            profile_form = UserProfileForm(instance=request.user)
             password_form = ChangePasswordForm(user=request.user, data=request.POST)
             if password_form.is_valid():
                 password_form.save(request=request)
                 messages.success(request, "Your password has been changed successfully.")
-                return redirect("accounts:settings")
+                return redirect(reverse("accounts:settings") + "?tab=security")
             return render(
                 request,
                 "accounts/settings.html",
-                {"password_form": password_form},
+                {
+                    "profile_form": profile_form,
+                    "password_form": password_form,
+                    "paid_orders_count": paid_orders_count,
+                    "active_tab": "security",
+                },
                 status=400,
             )
 
         elif action == "update_preferences":
             messages.success(request, "Your account preferences have been saved.")
-            return redirect("accounts:settings")
+            return redirect(reverse("accounts:settings") + "?tab=notifications")
 
         return redirect("accounts:settings")
 

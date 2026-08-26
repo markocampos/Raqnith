@@ -1,29 +1,126 @@
 {% extends "base.html" %}
-{% load money_tags %}
+{% load money_tags lucide %}
 
-{% block title %}Payment confirmed — Raqnith{% endblock %}
+{% block title %}Payment confirmed | Order #{{ order.id|slice:":8" }} | Raqnith{% endblock %}
 
 {% block content %}
-<main class="checkout">
-    <section class="card">
-        <h1>✓ Payment confirmed</h1>
+<main class="checkout checkout-modern checkout-success-modern">
+    <nav class="checkout-stepper" aria-label="Checkout Progress">
+        <ol class="stepper-list">
+            <li class="step-item step-completed"><span class="step-badge">✓</span><span class="step-label">Information</span></li>
+            <li class="step-connector completed"></li>
+            <li class="step-item step-completed"><span class="step-badge">✓</span><span class="step-label">{% if order.total_amount < 100 %}Free Checkout{% else %}QR Ph Payment{% endif %}</span></li>
+            <li class="step-connector completed"></li>
+            <li class="step-item step-active"><span class="step-badge">3</span><span class="step-label">Instant Access</span></li>
+        </ol>
+    </nav>
 
-        {% if order.shipping_name %}
-            <p>Thank you, {{ order.shipping_name }}.</p>
+    <section class="success-hero-card">
+        <div class="success-check-wrap">
+            <div class="success-check-circle">
+                {% lucide "circle-check" size=44 class="success-check-icon" %}
+            </div>
+        </div>
+        <span class="success-pill">✓ Payment Confirmed</span>
+        <h1 class="success-title">Thank you{% if order.shipping_name %}, {{ order.shipping_name }}{% elif user.is_authenticated and user.first_name %}, {{ user.first_name }}{% endif %}!</h1>
+        {% if order.total_amount < 100 %}
+        <p class="success-subtitle">Your free order is confirmed. Instant access has been activated.</p>
         {% else %}
-            <p>Thank you for your order.</p>
+        <p class="success-subtitle">Your payment was verified successfully. Instant access has been activated.</p>
         {% endif %}
 
-        <dl class="summary-totals">
-            <dt>Order</dt><dd>#{{ order.id }}</dd>
-            <dt>Amount</dt><dd>{{ order.total_amount|centavos }}</dd>
-            {% if payment_method %}<dt>Payment</dt><dd>{{ payment_method }}</dd>{% endif %}
-            {% if order.email %}<dt>Email</dt><dd>{{ order.email }}</dd>{% endif %}
-        </dl>
+        <div class="success-order-summary">
+            <div class="success-summary-row">
+                <span class="success-label">Order</span>
+                <span class="success-value">
+                    <code>#{{ order.id|slice:":8" }}</code>
+                    <button type="button" class="btn-copy-mini" data-copy="{{ order.id }}" aria-label="Copy Order ID" title="Copy Order ID">{% lucide "copy" size=12 %}</button>
+                </span>
+            </div>
+            <div class="success-summary-row">
+                <span class="success-label">Amount</span>
+                <strong class="success-value success-amount">{{ order.total_amount|php_or_free }}</strong>
+            </div>
+            {% if payment_method %}
+            <div class="success-summary-row">
+                <span class="success-label">Payment</span>
+                <span class="success-value">{{ payment_method }}</span>
+            </div>
+            {% elif order.total_amount < 100 %}
+            <div class="success-summary-row">
+                <span class="success-label">Payment</span>
+                <span class="success-value">Free — no payment needed</span>
+            </div>
+            {% endif %}
+            {% if order.email %}
+            <div class="success-summary-row">
+                <span class="success-label">Receipt sent to</span>
+                <span class="success-value">{{ order.email }}</span>
+            </div>
+            {% endif %}
+            {% if order.paid_at %}
+            <div class="success-summary-row">
+                <span class="success-label">Paid on</span>
+                <span class="success-value">{{ order.paid_at|date:"M d, Y h:i A" }}</span>
+            </div>
+            {% endif %}
+        </div>
 
-        <p>We've sent your order confirmation.</p>
+        <p class="success-email-note">
+            {% lucide "mail" size=14 %}
+            <span>We've sent your order confirmation to <strong>{{ order.email }}{% if not order.email and user.is_authenticated %} {{ user.email }}{% endif %}</strong>.</span>
+        </p>
 
-        <a class="button" href="{% url 'orders:receipt' order.id %}">View Order</a>
+        {% if license_keys %}
+        <div class="success-downloads-card">
+            <h2 class="downloads-title">{% lucide "key-round" size=15 %} Your License Keys</h2>
+            <p class="downloads-hint">Keep these safe. You'll need them to activate your software.</p>
+            <ul class="downloads-list">
+                {% for key in license_keys %}
+                <li class="download-row license-row">
+                    <div class="license-meta">
+                        <code class="license-key-value">{{ key.key }}</code>
+                        <span class="license-product">{{ key.order_item.product_name }}</span>
+                    </div>
+                    <button type="button" class="btn-download-file btn-copy-key" data-copy="{{ key.key }}">Copy</button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if has_deliverables %}
+        <div class="success-downloads-card" id="your-downloads">
+            <h2 class="downloads-title">{% lucide "zap" size=15 %} Your Downloads</h2>
+            <p class="downloads-hint">Ready now and yours to keep forever.</p>
+            <ul class="downloads-list">
+                {% for item in items %}
+                {% for file in item.buyer_files %}
+                <li class="download-row">
+                    <span class="download-name">{% if file.kind == "stream" %}{% lucide "play" size=15 %}{% else %}{% lucide "file-down" size=15 %}{% endif %} {{ file.name }}</span>
+                    <a href="{% url 'orders:download_file' order.id file.id %}" class="btn-download-file" {% if file.kind == "download" %}download{% endif %}>
+                        {{ file.kind|capfirst }} {% lucide "arrow-right" size=13 %}
+                    </a>
+                </li>
+                {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="success-actions">
+            <a href="{% url 'orders:receipt' order.id %}" class="btn-pay-primary success-cta">
+                {% lucide "file-text" size=18 %}
+                <span>View Receipt & Downloads</span>
+            </a>
+            <a href="{% url 'catalog:product_list' %}" class="button-continue-shopping">Continue Shopping {% lucide "arrow-right" size=15 %}</a>
+        </div>
+
+        <div class="success-trust-strip">
+            <span>{% lucide "shield-check" size=14 %} Bank-grade encrypted</span>
+            <span>{% lucide "zap" size=14 %} Instant delivery</span>
+            <span>{% lucide "circle-check" size=14 %} PayMongo verified</span>
+        </div>
     </section>
 </main>
 {% endblock %}

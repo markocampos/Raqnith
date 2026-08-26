@@ -1,0 +1,29 @@
+{% load lucide %}
+{# Promo box: used in desktop sidebar + mobile accordion; site.js binds every .promo-form (no ids). #}
+<div class="checkout-promo-box">
+    {% if coupon_code %}
+    <div class="applied-coupon-tag">
+        <div class="coupon-tag-info">
+            {% lucide "tag" size=14 %}
+            <span>Code <strong>{{ coupon_code }}</strong> applied</span>
+        </div>
+        <form method="post" action="{% url 'checkout:remove_coupon' %}" class="remove-coupon-form">
+            {% csrf_token %}
+            <button type="submit" class="btn-remove-coupon" title="Remove promo code" aria-label="Remove promo code">
+                {% lucide "x" size=14 %}
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <form method="post" action="{% url 'checkout:apply_coupon' %}" class="apply-coupon-form promo-form" novalidate>
+        {% csrf_token %}
+        <div class="promo-input-group">
+            <input type="text" name="coupon_code" placeholder="Promo code" class="promo-input"
+                   autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                   aria-label="Promo code">
+            <button type="submit" class="btn-apply-promo">Apply</button>
+        </div>
+        <span class="field-error promo-error promo-inline-error" hidden></span>
+    </form>
+    {% endif %}
+</div>

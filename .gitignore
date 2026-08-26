@@ -7,3 +7,5 @@ staticfiles/
 .coverage
 .pytest_cache/
 .ruff_cache/
+# Buyer-delivered product files (private, served via permission-checked view)
+/media/

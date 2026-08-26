@@ -78,6 +78,10 @@ class WebhookEvent(models.Model):
     processed = models.BooleanField(default=False)
     received_at = models.DateTimeField(auto_now_add=True)
     processed_at = models.DateTimeField(null=True, blank=True)
+    # Monitoring: how many times processing failed and the last error, so the
+    # webhook view can reprocess replays and alert an admin past a threshold.
+    failure_count = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True)
 
     class Meta:
         ordering = ["-received_at"]

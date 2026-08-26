@@ -19,6 +19,12 @@ case "$COMMAND" in
     deploy)
         "${INFRA_DIR}/deploy.sh"
         ;;
+    offline)
+        "${INFRA_DIR}/offline.sh"
+        ;;
+    online)
+        "${INFRA_DIR}/deploy.sh"
+        ;;
     backup)
         "${INFRA_DIR}/backup.sh"
         ;;
@@ -38,7 +44,7 @@ case "$COMMAND" in
         "${INFRA_DIR}/status.sh"
         ;;
     check)
-        /home/ubuntu/raqnith/.venv/bin/python /home/ubuntu/raqnith/manage.py check --deploy
+        /home/ubuntu/raqnith/.venv/bin/python /home/ubuntu/raqnith/manage.py check --deploy --settings=config.settings.production
         ;;
     help|--help|-h|*)
         echo "Raqnith Service Management CLI"
@@ -46,10 +52,12 @@ case "$COMMAND" in
         echo "Usage: $0 <command>"
         echo ""
         echo "Commands:"
+        echo "  offline       Put raqnith.duckdns.org in offline mode (503 + block search indexing)"
+        echo "  deploy        Deploy updates, bring site online, run migrations, collectstatic & restart"
+        echo "  online        Alias for deploy (brings site online)"
         echo "  restart       Restart raqnith.service with status and health probe"
-        echo "  status        Display production status and recent service logs"
+        echo "  status        Display production status (online/offline state, service state, logs)"
         echo "  logs [-f]     View or stream systemd journal logs"
-        echo "  deploy        Run migrations, collectstatic, restart, and health-check"
         echo "  start         Start the raqnith.service"
         echo "  stop          Stop the raqnith.service"
         echo "  reload        Gracefully reload service workers"

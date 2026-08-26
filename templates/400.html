@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}Bad Request (400) | Raqnith{% endblock %}
+
+{% block content %}
+<main class="error-page-container">
+    <div class="error-page-card">
+        <div class="error-icon-wrapper error-icon-400">
+            {% lucide "circle-alert" size=44 class="error-icon-svg" %}
+        </div>
+        <div class="error-code-badge error-badge-danger">400 Bad Request</div>
+        <h1 class="error-title">Invalid Request</h1>
+        <p class="error-description">
+            The server was unable to process your request because the submitted data was malformed, invalid, or expired.
+        </p>
+
+        <div class="error-actions-group">
+            <a href="{% url 'catalog:home' %}" class="button button-hero-primary error-action-btn">
+                {% lucide "home" size=16 %}
+                <span>Return Home</span>
+            </a>
+            <a href="{% url 'catalog:product_list' %}" class="button button-hero-secondary error-action-btn">
+                {% lucide "shopping-bag" size=16 %}
+                <span>Browse Products</span>
+            </a>
+        </div>
+
+        <div class="error-help-box">
+            <p>If you were attempting a checkout, you can check your <a href="{% url 'cart:detail' %}">Shopping Cart</a> or view your <a href="{% url 'accounts:profile' %}#orders">Order History</a>.</p>
+        </div>
+    </div>
+</main>
+{% endblock %}

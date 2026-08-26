@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static money_tags lucide %}
 
-{% block title %}Secure Checkout — Raqnith{% endblock %}
+{% block title %}Secure Checkout | Raqnith{% endblock %}
 
 {% block content %}
 <main class="checkout checkout-modern" id="checkout-index" data-cart-id="{{ cart_id }}">
@@ -16,7 +16,7 @@
             <li class="step-connector"></li>
             <li class="step-item">
                 <span class="step-badge">2</span>
-                <span class="step-label">QR Ph Payment</span>
+                {% if total_cents < 100 %}<span class="step-label">Confirmation</span>{% else %}<span class="step-label">QR Ph Payment</span>{% endif %}
             </li>
             <li class="step-connector"></li>
             <li class="step-item">
@@ -35,7 +35,7 @@
                 {% lucide "chevron-down" size=16 class="summary-toggle-chevron" %}
             </div>
             <div class="summary-toggle-right">
-                <strong class="summary-toggle-amount">{{ total_cents|centavos }}</strong>
+                <strong class="summary-toggle-amount">{{ total_cents|php_or_free }}</strong>
             </div>
         </button>
         <div class="mobile-summary-panel" id="mobile-summary-panel" hidden>
@@ -46,14 +46,14 @@
                         <span class="mobile-item-name">{{ item.product.name }}</span>
                         <span class="mobile-item-badge">Digital License</span>
                     </div>
-                    <span class="mobile-item-price">{{ item.line_total_cents|centavos }}</span>
+                    <span class="mobile-item-price">{{ item.line_total_cents|php_or_free }}</span>
                 </li>
                 {% endfor %}
             </ul>
             <div class="mobile-summary-breakdown">
                 <div class="mobile-breakdown-row">
                     <span>Subtotal</span>
-                    <span>{{ subtotal_cents|centavos }}</span>
+                    <span>{{ subtotal_cents|php_or_free }}</span>
                 </div>
                 {% if discount_cents %}
                 <div class="mobile-breakdown-row discount">
@@ -71,28 +71,32 @@
                 </div>
                 <div class="mobile-breakdown-row total-row">
                     <span>Total</span>
-                    <span>{{ total_cents|centavos }}</span>
+                    <span>{{ total_cents|php_or_free }}</span>
                 </div>
             </div>
+
+            <!-- Promo Code (phones: promo lives in the summary accordion) -->
+            {% include "includes/promo_code.html" %}
         </div>
     </div>
 
-    <form id="checkout-form" method="post" action="{% url 'checkout:index' %}" novalidate>
-        {% csrf_token %}
+    <div class="checkout-columns">
 
-        <div class="checkout-columns">
+        <!-- Left / Main Column: Contact & Payment Info -->
+        <!-- NOTE: #checkout-form wraps ONLY this column. The order summary
+             sidebar (with promo-code forms) and the mobile pay bar sit outside
+             it; their submit buttons re-attach via form="checkout-form". -->
+        <form id="checkout-form" method="post" action="{% url 'checkout:index' %}" novalidate class="checkout-main-col">
+            {% csrf_token %}
 
-            <!-- Left / Main Column: Contact & Payment Info -->
-            <div class="checkout-main-col">
-                
                 <section class="card checkout-section-card">
                     <div class="section-card-header">
                         <div class="header-icon-wrap">
                             {% lucide "mail" size=20 %}
                         </div>
                         <div class="header-text-wrap">
-                            <h2>Email &amp; Receipt Information</h2>
-                            <p class="section-desc">Your order receipt and instant license key will be delivered to this email.</p>
+                            <h2>Contact</h2>
+                            <p class="section-desc">Your receipt and download link go here.</p>
                         </div>
                         {% if not is_authenticated %}
                         <div class="header-login-link-wrap">
@@ -118,13 +122,12 @@
                     </div>
                     {% endif %}
 
-                    <div class="form-group">
+                    <div class="form-group checkout-email-group">
                         <label for="email" class="field-label">
-                            <span class="field-label-title">Email Address</span>
+                            <span class="field-label-title">Email address</span>
                             <span class="required-star" title="Required">*</span>
-                            <span class="field-label-subtext">— where your digital files &amp; receipt will be sent</span>
                         </label>
-                        <div class="input-container">
+                        <div class="input-container email-input-wrap">
                             {% lucide "mail" size=18 class="field-icon" %}
                             <input id="email" name="email" type="email" autocomplete="email" required
                                    inputmode="email"
@@ -133,35 +136,64 @@
                                    spellcheck="false"
                                    value="{% if user.is_authenticated %}{{ checkout_contact.email|default:user.email }}{% else %}{{ checkout_contact.email|default:'' }}{% endif %}"
                                    placeholder="e.g. mark@example.com"
-                                   class="form-input"
+                                   class="form-input checkout-email-input"
                                    data-error-message="Please enter a valid email address.">
-                            <span class="input-valid-indicator" aria-hidden="true">
-                                {% lucide "check" size=16 %}
+                            <span class="input-valid-indicator" id="emailValidIndicator" aria-hidden="true">
+                                {% lucide "circle-check" size=18 class="valid-icon" %}
                             </span>
                         </div>
+
+                        <!-- Quick 1-Tap Email Domain Autocomplete Chips -->
+                        <div class="email-domain-suggestions" id="emailDomainPills">
+                            <span class="domain-pill" data-domain="@gmail.com">@gmail.com</span>
+                            <span class="domain-pill" data-domain="@yahoo.com">@yahoo.com</span>
+                            <span class="domain-pill" data-domain="@outlook.com">@outlook.com</span>
+                            <span class="domain-pill" data-domain="@icloud.com">@icloud.com</span>
+                        </div>
+
+                        <!-- Email Typo Detector Notice -->
+                        <div class="email-typo-notice hidden" id="emailTypoNotice">
+                            {% lucide "info" size=14 %}
+                            <span>Did you mean <strong id="suggestedEmailText"></strong>?</span>
+                            <button type="button" id="btnAcceptTypo" class="btn-accept-typo">Use this</button>
+                        </div>
+
                         <span class="field-error" data-error-for="email">{% if form_errors.email %}{{ form_errors.email }}{% endif %}</span>
+
+                        <div class="email-guarantee-hint">
+                            {% lucide "zap" size=14 class="hint-icon" %}
+                            {% if total_cents < 100 %}<span>Download link and receipt arrive here the moment you confirm your free order.</span>{% else %}<span>Download link and receipt arrive here instantly after payment.</span>{% endif %}
+                        </div>
                     </div>
 
                     <!-- Payment Method Preview Section -->
                     <div class="payment-method-section">
                         <div class="payment-section-header">
                             <h3>Payment Method</h3>
-                            <span class="security-chip-mini">
-                                {% lucide "shield-check" size=13 %}
-                                <span>PayMongo Verified</span>
-                            </span>
                         </div>
 
+                        {% if total_cents < 100 %}
+                        <div class="qrph-badge-card">
+                            <div class="qrph-badge-header">
+                                <div class="qrph-brand-badge">
+                                    <span class="zero-fee-pill" style="background:#ecfdf5; color:#15803d;">No Payment Needed</span>
+                                    <span class="qrph-subtitle">This order is 100% free</span>
+                                </div>
+                            </div>
+                            <p style="margin:8px 0 0; font-size:13px; color:var(--body-color, #4b5563);">
+                                Just confirm your email below — your download and receipt unlock instantly. No QR scan, no charge.
+                            </p>
+                        </div>
+                        {% else %}
                         <div class="qrph-badge-card">
                             <div class="qrph-badge-header">
                                 <div class="qrph-brand-badge">
                                     <span class="qrph-tag">QR Ph</span>
-                                    <span class="qrph-subtitle">National QR Standard</span>
+                                    <span class="qrph-subtitle">Scan with any PH app</span>
                                 </div>
                                 <span class="zero-fee-pill">Zero Extra Fees</span>
                             </div>
-                            <p class="qrph-desc">Pay instantly using <strong>GCash, Maya, BDO, BPI, UnionBank, ShopeePay</strong>, or any Philippine banking app with QR Ph support.</p>
-                            
+
                             <div class="supported-wallets-grid">
                                 <span class="wallet-pill"><span class="wallet-dot gcash"></span>GCash</span>
                                 <span class="wallet-pill"><span class="wallet-dot maya"></span>Maya</span>
@@ -174,12 +206,13 @@
                                 <span class="wallet-pill more-banks">+40 Banks</span>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
 
                     <!-- Terms & Conditions with generous tap target -->
                     <div class="terms-container">
                         <label class="terms-touch-label" id="terms-label" for="terms">
-                            <input type="checkbox" id="terms" name="terms" checked required class="terms-checkbox">
+                            <input type="checkbox" id="terms" name="terms" required class="terms-checkbox" aria-required="true">
                             <span class="custom-checkbox-box" aria-hidden="true">
                                 {% lucide "check" size=14 class="check-icon" %}
                             </span>
@@ -197,15 +230,15 @@
                 <div class="desktop-submit-wrap">
                     <button type="submit" id="pay-button" class="btn-pay-primary">
                         {% lucide "lock" size=18 class="btn-lock-icon" %}
-                        <span class="btn-text">Proceed to Payment — {{ total_cents|centavos }}</span>
+                        <span class="btn-text">{% if total_cents < 100 %}Complete Order · Free{% else %}Proceed to Payment {{ total_cents|centavos }}{% endif %}</span>
                     </button>
                     <div class="checkout-trust-footer">
                         <span class="trust-item">{% lucide "shield-check" size=14 %} 256-Bit SSL</span>
                         <span class="trust-item">{% lucide "zap" size=14 %} Instant Digital Delivery</span>
-                        <span class="trust-item">{% lucide "circle-check" size=14 %} PayMongo Guaranteed</span>
+                        <span class="trust-item">{% lucide "circle-check" size=14 %} Secure checkout powered by PayMongo</span>
                     </div>
                 </div>
-            </div>
+        </form>
 
             <!-- Right Column: Desktop Order Summary Sidebar -->
             <aside class="checkout-sidebar">
@@ -218,24 +251,32 @@
                     <ul class="summary-lines">
                         {% for item in line_items %}
                         <li class="summary-product-row">
-                            <div class="product-info">
-                                <span class="product-name">{{ item.product.name }}</span>
-                                <span class="product-badge">Digital License</span>
+                            <div class="summary-item-left">
+                                <div class="summary-product-icon">
+                                    {% include "includes/product_icon.html" with product=item.product size=16 %}
+                                </div>
+                                <div class="product-info">
+                                    <span class="product-name">{{ item.product.name }}</span>
+                                    <span class="product-badge">{{ item.product.category.name|default:"Digital License" }}</span>
+                                </div>
                             </div>
-                            <span class="product-price">{{ item.line_total_cents|centavos }}</span>
+                            <span class="product-price">{{ item.line_total_cents|php_or_free }}</span>
                         </li>
                         {% endfor %}
                     </ul>
 
+                    <!-- Promo Code Box -->
+                    {% include "includes/promo_code.html" %}
+
                     <dl class="summary-totals">
                         <div class="totals-row">
                             <dt>Subtotal</dt>
-                            <dd>{{ subtotal_cents|centavos }}</dd>
+                            <dd>{{ subtotal_cents|php_or_free }}</dd>
                         </div>
                         {% if discount_cents %}
                         <div class="totals-row discount-row">
                             <dt>Discount</dt>
-                            <dd>-{{ discount_cents|centavos }}</dd>
+                            <dd class="discount-val">-{{ discount_cents|centavos }}</dd>
                         </div>
                         {% endif %}
                         <div class="totals-row">
@@ -248,7 +289,7 @@
                         </div>
                         <div class="totals-row total-highlight">
                             <dt class="total">Total</dt>
-                            <dd class="total" id="summary-total" data-total-cents="{{ total_cents }}">{{ total_cents|centavos }}</dd>
+                            <dd class="total" id="summary-total" data-total-cents="{{ total_cents }}">{{ total_cents|php_or_free }}</dd>
                         </div>
                     </dl>
 
@@ -256,7 +297,7 @@
                         {% lucide "circle-check" size=18 class="guarantee-icon" %}
                         <div class="guarantee-text">
                             <strong>Instant Access Guaranteed</strong>
-                            <span>Your purchase is delivered immediately after QR Ph payment confirmation.</span>
+                            {% if total_cents < 100 %}<span>Your free download unlocks the moment you confirm your order.</span>{% else %}<span>Your purchase is delivered immediately after QR Ph payment confirmation.</span>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -268,17 +309,16 @@
         <div class="pay-bar mobile-pay-bar">
             <div class="mobile-pay-inner">
                 <div class="mobile-pay-total">
-                    <span class="mobile-total-label">Total to Pay:</span>
-                    <strong class="mobile-total-value">{{ total_cents|centavos }}</strong>
+                    <span class="mobile-total-label">{% if total_cents < 100 %}Your Total:{% else %}Total to Pay:{% endif %}</span>
+                    <strong class="mobile-total-value">{{ total_cents|php_or_free }}</strong>
                 </div>
-                <button type="submit" id="mobile-pay-button" class="btn-pay-mobile">
+                <button type="submit" id="mobile-pay-button" class="btn-pay-mobile" form="checkout-form">
                     {% lucide "lock" size=18 class="btn-lock-icon" %}
-                    <span>Proceed to Pay</span>
+                    <span>{% if total_cents < 100 %}Complete Order · Free{% else %}Pay {{ total_cents|centavos }}{% endif %}</span>
                 </button>
             </div>
         </div>
-    </form>
-</main>
+    </main>
 
 {{ error_map|json_script:"paymongo-error-map" }}
 {{ error_map_default|json_script:"paymongo-error-map-default" }}

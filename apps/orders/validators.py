@@ -1,6 +1,9 @@
 from django.core.exceptions import ValidationError
 
-from apps.catalog.services.pricing import validate_minimum
+from apps.catalog.services.pricing import (
+    MINIMUM_TRANSACTION_CENTS,
+    validate_minimum,
+)
 from apps.orders.constants import CURRENCY
 from apps.orders.services.shipping import SHIPPING_METHODS
 
@@ -34,6 +37,11 @@ def validate_currency(currency):
 
 
 def validate_minimum_transaction(total_cents):
+    # Sub-peso totals (< ₱1) cannot be charged through QR Ph / e-wallets.
+    # Checkout settles them as free orders (see settle_free_order), so they
+    # are accepted here instead of being rejected as below-minimum.
+    if 0 <= total_cents < MINIMUM_TRANSACTION_CENTS:
+        return total_cents
     try:
         validate_minimum(total_cents)
     except ValueError as exc:

@@ -19,7 +19,11 @@ from apps.coupons.models import Coupon
 from apps.orders.exceptions import OrderBuildError
 from apps.orders.models import Order, OrderItem
 from apps.orders.selectors import get_order_for_checkout
-from apps.orders.services.order_service import build_order_from_cart, unique_products
+from apps.orders.services.order_service import (
+    build_order_from_cart,
+    mark_order_paid,
+    unique_products,
+)
 from apps.orders.validators import (
     validate_coupon,
     validate_currency,
@@ -185,8 +189,11 @@ class ValidatorTests(TestCase):
 
     def test_validate_minimum_transaction(self):
         self.assertEqual(validate_minimum_transaction(100), 100)
+        # Sub-peso totals are accepted: checkout settles them as free orders.
+        self.assertEqual(validate_minimum_transaction(99), 99)
+        self.assertEqual(validate_minimum_transaction(0), 0)
         with self.assertRaises(ValidationError):
-            validate_minimum_transaction(99)
+            validate_minimum_transaction(-1)
 
 
 class OrderServiceTests(TestCase):
@@ -267,13 +274,14 @@ class OrderServiceTests(TestCase):
             self._build(shipping_method="teleport")
         self.assertIn("shipping_method", cm.exception.errors)
 
-    def test_minimum_transaction_rejected(self):
+    def test_sub_peso_cart_builds_as_free_order(self):
         product = Product.objects.create(name="Cheap", slug="cheap", price_cents=50)
         cart = Cart.objects.create(session_key="cart-cheap")
         CartItem.objects.create(cart=cart, product=product)
-        with self.assertRaises(OrderBuildError) as cm:
-            build_order_from_cart(cart, shipping_method="standard")
-        self.assertIn("total", cm.exception.errors)
+        order = build_order_from_cart(cart, shipping_method="standard")
+        # Sub-peso totals no longer fail the minimum check: checkout settles
+        # them as free orders (total < ₱1 → settle_free_order).
+        self.assertLess(order.total_amount, 100)
 
     def test_unique_products_dedupes(self):
         other = Product.objects.create(name="Gadget", slug="gadget", price_cents=2000)
@@ -332,6 +340,76 @@ class OrderSelectorTests(TestCase):
     def test_nonexistent_order(self):
         with self.assertRaises(Order.DoesNotExist):
             get_order_for_checkout(uuid.uuid4(), self.user)
+
+
+class MarkOrderPaidCartTests(TestCase):
+    """Paying an order removes exactly the purchased products from the
+    buyer's cart; unrelated items and other buyers' carts stay untouched."""
+
+    def setUp(self):
+        self.purchased = Product.objects.create(
+            name="Widget", slug="widget", price_cents=1000
+        )
+        self.extra = Product.objects.create(
+            name="Gadget", slug="gadget", price_cents=2000
+        )
+
+    def _pending_session_order(self, session_key, cart):
+        CartItem.objects.get_or_create(cart=cart, product=self.purchased)
+        order = build_order_from_cart(
+            cart, shipping_method="standard", user_or_session=session_key
+        )
+        order.transition_to(Order.Status.PENDING_PAYMENT)
+        return order
+
+    def test_paid_guest_order_clears_purchased_items_only(self):
+        cart = Cart.objects.create(session_key="sess-1")
+        order = self._pending_session_order("sess-1", cart)
+        # Item the buyer added while payment was pending must survive.
+        CartItem.objects.create(cart=cart, product=self.extra)
+
+        mark_order_paid(order)
+
+        self.assertEqual(order.status, Order.Status.PAID)
+        remaining = list(cart.items.values_list("product__slug", flat=True))
+        self.assertEqual(remaining, ["gadget"])
+
+    def test_mark_order_paid_is_idempotent(self):
+        cart = Cart.objects.create(session_key="sess-1")
+        order = self._pending_session_order("sess-1", cart)
+
+        mark_order_paid(order)
+        mark_order_paid(order)  # replay / double-settle must not raise
+
+        self.assertEqual(order.status, Order.Status.PAID)
+        self.assertEqual(cart.items.count(), 0)
+
+    def test_paid_user_order_clears_user_cart(self):
+        user = get_user_model().objects.create_user(
+            username="owner", email="owner@example.com", password="password123"
+        )
+        cart = Cart.objects.create(user=user)
+        CartItem.objects.get_or_create(cart=cart, product=self.purchased)
+        order = build_order_from_cart(
+            cart, shipping_method="standard", user_or_session=user
+        )
+        order.transition_to(Order.Status.PENDING_PAYMENT)
+        self.assertEqual(cart.items.count(), 1)
+
+        mark_order_paid(order)
+        cart.refresh_from_db()
+        self.assertEqual(cart.items.count(), 0)
+
+    def test_other_sessions_cart_untouched(self):
+        cart_a = Cart.objects.create(session_key="sess-a")
+        cart_b = Cart.objects.create(session_key="sess-b")
+        CartItem.objects.create(cart=cart_b, product=self.purchased)
+        order = self._pending_session_order("sess-a", cart_a)
+
+        mark_order_paid(order)
+
+        self.assertEqual(cart_a.items.count(), 0)
+        self.assertEqual(cart_b.items.count(), 1)
 
 
 class CreateOrderViewTests(TestCase):
@@ -577,3 +655,74 @@ class OrderStatusViewTests(TestCase):
         )
         resp = self.client.get(reverse("orders:status", args=[other.id]))
         self.assertEqual(resp.status_code, 404)
+
+
+class OrderExpirationTests(TestCase):
+    def test_order_is_expired_after_60_minutes(self):
+        order = Order.objects.create(
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.PENDING_PAYMENT,
+        )
+        self.assertFalse(order.is_expired)
+
+        # Fast-forward 65 minutes
+        order.created_at = timezone.now() - timezone.timedelta(minutes=65)
+        order.save(update_fields=["created_at"])
+
+        self.assertTrue(order.is_expired)
+        expired = order.expire_if_overdue()
+        self.assertTrue(expired)
+        self.assertEqual(order.status, Order.Status.CANCELLED)
+
+    def test_paid_order_never_expires(self):
+        order = Order.objects.create(
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.PAID,
+        )
+        order.created_at = timezone.now() - timezone.timedelta(days=2)
+        order.save(update_fields=["created_at"])
+        self.assertFalse(order.is_expired)
+        self.assertFalse(order.expire_if_overdue())
+        self.assertEqual(order.status, Order.Status.PAID)
+
+    def test_purge_unpaid_overdue_deletes_orders_after_30_days(self):
+        # 1. Unpaid order created 31 days ago -> should be purged
+        stale_order = Order.objects.create(
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.CANCELLED,
+        )
+        Order.objects.filter(pk=stale_order.pk).update(
+            created_at=timezone.now() - timezone.timedelta(days=31)
+        )
+        PaymentAttempt.objects.create(
+            order=stale_order,
+            amount=5000,
+            status=PaymentAttempt.Status.CANCELLED,
+        )
+
+        # 2. Paid order created 31 days ago -> must NEVER be purged
+        paid_order = Order.objects.create(
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.PAID,
+            paid_at=timezone.now() - timezone.timedelta(days=31),
+        )
+        Order.objects.filter(pk=paid_order.pk).update(
+            created_at=timezone.now() - timezone.timedelta(days=31)
+        )
+
+        # 3. Recent unpaid order created 5 days ago -> should NOT be purged
+        recent_order = Order.objects.create(
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.PENDING_PAYMENT,
+        )
+
+        purged_count = Order.purge_unpaid_overdue()
+        self.assertEqual(purged_count, 1)
+        self.assertFalse(Order.objects.filter(pk=stale_order.pk).exists())
+        self.assertTrue(Order.objects.filter(pk=paid_order.pk).exists())
+        self.assertTrue(Order.objects.filter(pk=recent_order.pk).exists())

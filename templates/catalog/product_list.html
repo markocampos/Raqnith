@@ -2,62 +2,176 @@
 {% load money_tags %}
 {% load lucide %}
 
-{% block title %}All Products — Raqnith{% endblock %}
+{% block title %}Store Catalog | Digital Products & Assets | Raqnith{% endblock %}
 
 {% block content %}
-<main class="page-container">
-    <div class="page-header">
-        <span class="section-tag">Store Catalog</span>
-        <h1>All Products</h1>
-        <p class="section-subtext">Browse our complete collection of digital tools, templates, and developer kits.</p>
-    </div>
+<main class="page-container catalog-page-container">
+    <!-- Catalog Header -->
+    <header class="catalog-page-header">
+        <div class="catalog-header-top">
+            <h1 class="catalog-title">All Products</h1>
+            <span class="catalog-count-pill">{{ products|length }} Available Product{{ products|length|pluralize }}</span>
+        </div>
 
-    <div class="product-grid">
-        {% for product in products %}
-        <div class="product-card product-card-modern">
-            <div class="product-card-header">
-                <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
-                {% if product.is_available %}
-                <span class="product-status-pill">Available</span>
-                {% else %}
-                <span class="product-status-pill out-of-stock">Sold Out</span>
+        <!-- Catalog Search -->
+        <form method="get" action="{% url 'catalog:product_list' %}" class="catalog-search" role="search">
+            <div class="catalog-search-input-wrap">
+                {% lucide "search" size=18 class="search-field-icon" %}
+                <input type="search" name="q" value="{{ search_query }}"
+                       class="catalog-search-input" placeholder="Search templates, kits, tools…"
+                       aria-label="Search products" autocomplete="off">
+                {% if selected_category and selected_category != 'all' %}
+                <input type="hidden" name="category" value="{{ selected_category }}">
+                {% endif %}
+                {% if search_query %}
+                <a href="{% url 'catalog:product_list' %}{% if selected_category and selected_category != 'all' %}?category={{ selected_category }}{% endif %}"
+                   class="search-clear-btn" aria-label="Clear search">{% lucide "x" size=15 %}</a>
                 {% endif %}
             </div>
-            <div class="product-card-body">
-                <h3 class="product-title">
-                    <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
-                </h3>
-                <p class="product-desc">Instant digital delivery with automated order receipt.</p>
+        </form>
+
+        {% if search_query %}
+        <p class="catalog-search-feedback">
+            {{ products.paginator.count }} result{{ products.paginator.count|pluralize }} for &ldquo;<strong>{{ search_query }}</strong>&rdquo;
+        </p>
+        {% endif %}
+
+        {% if categories %}
+        <!-- Category Filter Tabs -->
+        <nav class="catalog-category-nav" aria-label="Filter by Category">
+            <a href="{% url 'catalog:product_list' %}" class="category-pill-tab {% if not selected_category or selected_category == 'all' %}active{% endif %}">
+                <span>All</span>
+                <span class="category-count-badge">{{ total_count }}</span>
+            </a>
+            {% for cat in categories %}
+            <a href="?category={{ cat.slug }}" class="category-pill-tab {% if selected_category == cat.slug %}active{% endif %}">
+                <span>{{ cat.name }}</span>
+                <span class="category-count-badge">{{ cat.products.count }}</span>
+            </a>
+            {% endfor %}
+        </nav>
+        {% endif %}
+        <div class="catalog-perks-bar">
+            <span class="catalog-perk-item">{% lucide "zap" size=14 class="perk-icon" %} Instant Download</span>
+            <span class="catalog-perk-dot">•</span>
+            <span class="catalog-perk-item">{% lucide "shield-check" size=14 class="perk-icon" %} Secure Checkout</span>
+            <span class="catalog-perk-dot">•</span>
+            <span class="catalog-perk-item">{% lucide "file-check" size=14 class="perk-icon" %} Receipt Included</span>
+        </div>
+    </header>
+
+    <!-- Responsive Product Grid -->
+    <div class="product-grid catalog-grid">
+        {% for product in products %}
+        <article class="product-card product-card-modern product-card-catalog" data-category="{{ product.category.slug|default:'' }}">
+            <!-- Card Thumbnail / Visual Area -->
+            <div class="product-visual-banner">
+                <div class="product-visual-top">
+                    <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
+                    {% if product.is_available %}
+                    <span class="product-status-pill">✓ In Stock</span>
+                    {% else %}
+                    <span class="product-status-pill out-of-stock">Sold Out</span>
+                    {% endif %}
+                </div>
+                <div class="product-visual-center">
+                    <div class="product-visual-icon">
+                        {% include "includes/product_icon.html" with product=product size=26 %}
+                    </div>
+                </div>
             </div>
+
+            <!-- Card Content -->
+            <div class="product-card-body">
+                <h2 class="product-title">
+                    <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+                </h2>
+                <p class="product-desc">{{ product.description|default:"Download right after checkout. Receipt included." }}</p>
+            </div>
+
+            <!-- Card Footer -->
             <div class="product-card-footer">
                 <div class="product-price-box">
                     <span class="price-label">Price</span>
-                    <span class="price product-price">{{ product.price_cents|centavos }}</span>
+                    <strong class="product-price">{{ product.price_cents|php_or_free }}</strong>
                 </div>
+                
                 <div class="product-card-buttons">
                     {% if product.is_available %}
-                    <form method="post" action="{% url 'cart:add' %}">
+                    <form method="post" action="{% url 'cart:add' %}" class="form-add-to-cart">
                         {% csrf_token %}
                         <input type="hidden" name="product" value="{{ product.id }}">
                         <button type="submit" class="btn-add-cart">
-                            {% lucide "shopping-cart" size=14 class="btn-cart-icon-inline" %}
+                            {% lucide "shopping-cart" size=15 class="btn-cart-icon-inline" %}
                             <span>Add to Cart</span>
                         </button>
                     </form>
                     {% endif %}
-                    <a href="{{ product.get_absolute_url }}" class="btn-view-details">
+                    <a href="{{ product.get_absolute_url }}" class="btn-view-details" title="View details for {{ product.name }}">
                         <span>Details</span>
-                        {% lucide "arrow-right" size=13 %}
+                        {% lucide "arrow-right" size=14 %}
                     </a>
                 </div>
             </div>
-        </div>
+        </article>
         {% empty %}
-        <div class="empty-state-card">
-            <p>No products available right now. Please check back later!</p>
+        <div class="empty-state-card empty-catalog-card">
+            <div class="empty-icon-wrap" style="margin:0 auto 1rem;">{% lucide "package-open" size=32 %}</div>
+            <h3>No products found</h3>
+            <p>Nothing here yet. New products are added regularly.</p>
+            <a href="{% url 'catalog:product_list' %}" class="button button-outline" style="margin-top:1rem; display:inline-flex; align-items:center; gap:0.4rem;">
+                {% lucide "arrow-right" size=16 %} <span>Browse Latest Products</span>
+            </a>
         </div>
         {% endfor %}
     </div>
+
+    {% if is_paginated %}
+    <!-- Catalog Pagination -->
+    <nav class="catalog-pagination" aria-label="Product pages">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+           class="pager-btn pager-prev" rel="prev" aria-label="Previous page">
+            {% lucide "arrow-left" size=15 %}
+            <span>Prev</span>
+        </a>
+        {% else %}
+        <span class="pager-btn pager-disabled" aria-hidden="true">
+            {% lucide "arrow-left" size=15 %}
+            <span>Prev</span>
+        </span>
+        {% endif %}
+
+        <div class="pager-pages">
+            {% for num in paginator.page_range %}
+            {% if num == page_obj.number %}
+            <span class="pager-num pager-current" aria-current="page">{{ num }}</span>
+            {% elif num > page_obj.number|add:2 or num < page_obj.number|add:-2 %}
+            {% if num == 1 or num == paginator.num_pages %}
+            <a href="?page={{ num }}{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="pager-num">{{ num }}</a>
+            {% elif num == page_obj.number|add:-3 or num == page_obj.number|add:3 %}
+            <span class="pager-ellipsis">&hellip;</span>
+            {% endif %}
+            {% else %}
+            <a href="?page={{ num }}{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="pager-num">{{ num }}</a>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if selected_category and selected_category != 'all' %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+           class="pager-btn pager-next" rel="next" aria-label="Next page">
+            <span>Next</span>
+            {% lucide "arrow-right" size=15 %}
+        </a>
+        {% else %}
+        <span class="pager-btn pager-disabled" aria-hidden="true">
+            <span>Next</span>
+            {% lucide "arrow-right" size=15 %}
+        </span>
+        {% endif %}
+    </nav>
+    {% endif %}
 </main>
 {% endblock %}
 
