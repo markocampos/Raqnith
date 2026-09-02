@@ -27,7 +27,14 @@ else
 fi
 
 SERVICE_NAME="raqnith.service"
-HOST_HEADER="${DJANGO_ALLOWED_HOSTS:-virtus.duckdns.org}"
+HOST_HEADER=""
+if [[ -f "${PROJECT_DIR}/.env" ]]; then
+    ENV_HOST=$(grep -E "^DJANGO_ALLOWED_HOSTS=" "${PROJECT_DIR}/.env" | cut -d '=' -f2 | cut -d ',' -f1 | tr -d '"' | tr -d "'" | tr -d '\r' | xargs || true)
+    if [[ -n "${ENV_HOST}" ]]; then
+        HOST_HEADER="${ENV_HOST}"
+    fi
+fi
+HOST_HEADER="${HOST_HEADER:-virtusdigital.store}"
 PORT="8002"
 
 cd "${PROJECT_DIR}"

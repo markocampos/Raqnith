@@ -10,6 +10,9 @@ def build_checkout_context(cart, coupon_code=None, shipping_method="standard"):
     Totals are computed server-side from database prices only; the browser
     never supplies or re-derives an amount.
     """
+    if cart is None:
+        raise OrderBuildError({"cart": "The cart is empty."})
+
     items = list(cart.items.select_related("product"))
     if not items:
         raise OrderBuildError({"cart": "The cart is empty."})

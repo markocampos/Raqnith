@@ -94,7 +94,7 @@ input:-webkit-autofill:focus {
 }
 
 html {
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100%;
     scroll-behavior: smooth;
 }
@@ -109,7 +109,7 @@ body {
     background: var(--canvas);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100%;
 }
 

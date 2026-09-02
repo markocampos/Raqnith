@@ -1,120 +1,203 @@
 {% extends "base.html" %}
+{% load lucide %}
 
-{% block title %}Privacy Policy | Virtus{% endblock %}
+{% block title %}Privacy Policy & Data Security | Virtus{% endblock %}
 
 {% block content %}
-<main class="document-page-container">
-    <article class="document-card">
-        <div class="document-header">
-            <span class="document-tag">Legal & Compliance</span>
-            <h1>Privacy Policy</h1>
-            <p class="document-meta">Last Updated: August 20, 2026 &bull; Effective Immediately</p>
-        </div>
+<main class="legal-page-wrap">
+    <div class="legal-container">
 
-        <div class="document-intro-box">
-            <p>
-                At <strong>Virtus</strong> ("we", "our", or "us"), we prioritize your privacy and data security.
-                This Privacy Policy explains how we collect, use, disclose, and protect personal information when you use our website, purchase digital products, and utilize our payment services.
-            </p>
-        </div>
+        <!-- Quick Navigation Sidebar (Desktop Sticky) -->
+        <aside class="legal-toc-sidebar" aria-label="Table of Contents">
+            <div class="legal-toc-card">
+                <div class="legal-toc-header">
+                    {% lucide "shield-check" size=16 class="legal-toc-icon" %}
+                    <span>Contents</span>
+                </div>
+                <nav class="legal-toc-nav">
+                    <a href="#collect" class="legal-toc-link">1. Information We Collect</a>
+                    <a href="#payment-security" class="legal-toc-link">2. Payment Security &amp; Encryption</a>
+                    <a href="#usage" class="legal-toc-link">3. How We Use Your Data</a>
+                    <a href="#third-parties" class="legal-toc-link">4. Service Providers</a>
+                    <a href="#cookies" class="legal-toc-link">5. Cookies &amp; Sessions</a>
+                    <a href="#retention" class="legal-toc-link">6. Storage &amp; Safety</a>
+                    <a href="#rights" class="legal-toc-link">7. Your Privacy Rights</a>
+                    <a href="#contact" class="legal-toc-link">8. Contact Support</a>
+                </nav>
+            </div>
+        </aside>
 
-        <div class="document-body">
-            <section class="doc-section">
-                <h2>1. Information We Collect</h2>
-                <p>We collect information you provide directly when you interact with our platform:</p>
-                <ul>
-                    <li><strong>Account Information:</strong> When you register an account, we collect your username, email address, first name, last name, and hashed password.</li>
-                    <li><strong>Order & Checkout Contact Data:</strong> When placing an order, we collect your contact email for order confirmation, invoice generation, and product delivery.</li>
-                    <li><strong>Transaction Metadata:</strong> We store non-sensitive transaction records including order items, total amount (in centavos), timestamp, currency (PHP), and payment status.</li>
-                </ul>
-            </section>
+        <!-- Main Document Article -->
+        <article class="legal-article">
+            <!-- Header -->
+            <header class="legal-header">
+                <div class="legal-eyebrow">
+                    {% lucide "shield" size=14 %}
+                    <span>Trust &amp; Legal Compliance</span>
+                </div>
+                <h1 class="legal-title">Privacy Policy</h1>
+                <p class="legal-meta">
+                    Last updated: <strong>August 2026</strong> &bull; Effective immediately &bull; Philippine DPA 2012 Compliant
+                </p>
+            </header>
 
-            <section class="doc-section">
-                <h2>2. Payment Information & PayMongo Integration</h2>
-                <div class="highlight-notice">
-                    <strong>Critical Payment Security Guarantee:</strong>
+            <!-- 3 Trust Pillars Quick Summary -->
+            <div class="legal-summary-grid">
+                <div class="legal-summary-card">
+                    <div class="legal-summary-icon">{% lucide "lock" size=18 %}</div>
+                    <h4>Zero Card Storage</h4>
+                    <p>We never see, store, or log your card numbers, CVC, or bank credentials.</p>
+                </div>
+                <div class="legal-summary-card">
+                    <div class="legal-summary-icon">{% lucide "zap" size=18 %}</div>
+                    <h4>Direct Fulfillment</h4>
+                    <p>Your email is used only to deliver your digital purchases and official receipts.</p>
+                </div>
+                <div class="legal-summary-card">
+                    <div class="legal-summary-icon">{% lucide "user-check" size=18 %}</div>
+                    <h4>Total Control</h4>
+                    <p>Access, update, or delete your account data anytime via your profile settings.</p>
+                </div>
+            </div>
+
+            <div class="legal-intro-box">
+                <p>
+                    At <strong>Virtus</strong>, your privacy and financial security are our top priorities. This Privacy Policy explains transparently how we collect, handle, and safeguard your information when you browse our catalog, create an account, or purchase digital products.
+                </p>
+            </div>
+
+            <!-- Content Sections -->
+            <div class="legal-body">
+
+                <!-- Section 1 -->
+                <section class="legal-section" id="collect">
+                    <h2><span class="legal-sec-num">01.</span> Information We Collect</h2>
+                    <p>We only collect the essential information required to fulfill your orders and manage your account:</p>
+                    <ul class="legal-list">
+                        <li><strong>Account Details:</strong> When you register an account, we store your chosen username, email address, first name, last name, and securely hashed passwords.</li>
+                        <li><strong>Order &amp; Delivery Email:</strong> When checking out as a guest or member, we collect your email to transmit your instant product download links, license keys, and itemized receipts.</li>
+                        <li><strong>Transaction Records:</strong> We maintain order metadata including purchased items, total purchase amount, timestamp, currency (PHP), and confirmed payment status.</li>
+                    </ul>
+                </section>
+
+                <!-- Section 2 -->
+                <section class="legal-section" id="payment-security">
+                    <h2><span class="legal-sec-num">02.</span> Payment Security &amp; Encryption</h2>
+                    
+                    <div class="legal-guarantee-box">
+                        <div class="guarantee-box-header">
+                            {% lucide "shield-alert" size=18 class="guarantee-icon" %}
+                            <strong>Our Core Security Guarantee</strong>
+                        </div>
+                        <p>
+                            Virtus <strong>never handles, processes, or stores your raw credit/debit card numbers or bank login PINs</strong>. All financial transactions are processed securely via PayMongo through BSP-regulated payment networks with 256-bit SSL bank-grade encryption.
+                        </p>
+                    </div>
+
+                    <p>Our payment infrastructure guarantees your safety across all supported payment rails:</p>
+                    <ul class="legal-list">
+                        <li><strong>QR Ph &amp; E-Wallets:</strong> Dynamic QR Ph codes are generated through official Bangko Sentral ng Pilipinas (BSP) payment rails via PayMongo. You pay directly inside your familiar app (GCash, Maya, BPI, BDO, UnionBank, GoTyme, SeaBank, and 40+ banks) without sharing financial details with us.</li>
+                        <li><strong>Card Payments &amp; Tokenization:</strong> Card details are tokenized directly in your browser using secure bank encryption before reaching our servers.</li>
+                        <li><strong>Multi-Factor Authentication (3D Secure):</strong> Card purchases undergo direct verification with your card issuer via OTP or biometric approval.</li>
+                    </ul>
+                </section>
+
+                <!-- Section 3 -->
+                <section class="legal-section" id="usage">
+                    <h2><span class="legal-sec-num">03.</span> How We Use Your Information</h2>
+                    <p>We process your data strictly for legitimate commerce purposes:</p>
+                    <ul class="legal-list">
+                        <li>Deliver digital files, license keys, and templates immediately upon payment confirmation.</li>
+                        <li>Send official purchase receipts and payment confirmations to your inbox.</li>
+                        <li>Maintain your active cart and provide order history in your member profile.</li>
+                        <li>Prevent fraudulent transactions and secure the marketplace for all buyers.</li>
+                        <li>Provide responsive customer support for any fulfillment or licensing questions.</li>
+                    </ul>
+                </section>
+
+                <!-- Section 4 -->
+                <section class="legal-section" id="third-parties">
+                    <h2><span class="legal-sec-num">04.</span> Service Providers &amp; Third Parties</h2>
                     <p>
-                        Virtus <strong>never collects, processes, or stores your full credit/debit card numbers, expiration dates, or CVV codes</strong> on our servers.
+                        <strong>We never sell, rent, or trade your personal information.</strong> We only partner with verified, enterprise-grade service providers under strict data privacy agreements:
                     </p>
-                </div>
-                <p>
-                    All payment processing is executed via <strong>PayMongo Philippines, Inc.</strong>, a PCI-DSS compliant licensed payment gateway:
-                </p>
-                <ul>
-                    <li><strong>Card Payments:</strong> Your browser transmits card data directly to PayMongo via secure TLS client-side tokenization. We only receive a non-sensitive token and Payment Intent ID.</li>
-                    <li><strong>3D Secure 2.0:</strong> Card transactions requiring multi-factor authentication are verified directly through your issuing bank's secure portal.</li>
-                    <li><strong>QR Ph & E-Wallets:</strong> Dynamic QR Ph codes are generated through PayMongo API rails and settled directly via the Bangko Sentral ng Pilipinas (BSP) national QR Ph network.</li>
-                    <li><strong>Webhook Verification:</strong> Payment updates are received via cryptographically signed HMAC SHA256 webhooks to guarantee authenticity and prevent tampering.</li>
-                </ul>
-            </section>
+                    <ul class="legal-list">
+                        <li><strong>Payment Partner:</strong> PayMongo Philippines, Inc. (BSP-licensed payment operator) for transaction routing, settlement, and fraud prevention.</li>
+                        <li><strong>Cloud Infrastructure:</strong> High-security cloud hosting with automated firewall protection, SSL/TLS encryption, and continuous monitoring.</li>
+                    </ul>
+                </section>
 
-            <section class="doc-section">
-                <h2>3. How We Use Your Information</h2>
-                <p>We use the information we collect for the following legitimate purposes:</p>
-                <ul>
-                    <li>Fulfill digital product orders and grant immediate download access.</li>
-                    <li>Generate and email itemized order receipts and tax records.</li>
-                    <li>Authenticate account logins and maintain your active shopping cart.</li>
-                    <li>Prevent fraudulent transactions and protect our community from unauthorized activities.</li>
-                    <li>Provide customer support and resolve transaction inquiries.</li>
-                </ul>
-            </section>
+                <!-- Section 5 -->
+                <section class="legal-section" id="cookies">
+                    <h2><span class="legal-sec-num">05.</span> Cookies &amp; Session Storage</h2>
+                    <p>We use essential cookies and local session data strictly to enable platform functionality:</p>
+                    <ul class="legal-list">
+                        <li><strong>Session Management:</strong> Preserves your shopping cart items as you browse products and keeps you signed in securely.</li>
+                        <li><strong>Security Tokens:</strong> Protects your account and checkout forms against Cross-Site Request Forgery (CSRF).</li>
+                    </ul>
+                    <p>We do not use intrusive third-party tracking or behavioral ad networks.</p>
+                </section>
 
-            <section class="doc-section">
-                <h2>4. Third-Party Service Providers</h2>
-                <p>
-                    We do not sell, rent, or trade your personal data. We only share necessary data with trusted service providers under strict data protection terms:
-                </p>
-                <ul>
-                    <li><strong>Payment Gateway:</strong> PayMongo Philippines, Inc. for payment acceptance and settlement.</li>
-                    <li><strong>Hosting & Infrastructure:</strong> Managed cloud infrastructure and reverse proxies with strict firewall and encryption safeguards.</li>
-                </ul>
-            </section>
+                <!-- Section 6 -->
+                <section class="legal-section" id="retention">
+                    <h2><span class="legal-sec-num">06.</span> Data Security &amp; Retention</h2>
+                    <p>
+                        We enforce multi-layered defense protocols: 256-bit TLS encryption in transit, modern password hashing, parameterized database queries, and role-based access limits.
+                    </p>
+                    <p>
+                        We retain order records for as long as necessary to provide lifetime access to your purchased digital goods and comply with accounting and legal standards.
+                    </p>
+                </section>
 
-            <section class="doc-section">
-                <h2>5. Cookies & Local Session Storage</h2>
-                <p>We use essential functional cookies to deliver our services:</p>
-                <ul>
-                    <li><strong>Session Cookies:</strong> Keep you logged in securely and preserve your shopping cart state across browser tabs.</li>
-                    <li><strong>CSRF Tokens:</strong> Protect your account and forms against Cross-Site Request Forgery attacks.</li>
-                </ul>
-            </section>
+                <!-- Section 7 -->
+                <section class="legal-section" id="rights">
+                    <h2><span class="legal-sec-num">07.</span> Your Privacy Rights</h2>
+                    <p>Under the Philippine Data Privacy Act of 2012 (RA 10173) and global standards, you have the right to:</p>
+                    <ul class="legal-list">
+                        <li>Access and download the personal records associated with your account.</li>
+                        <li>Update or correct your account details anytime in your <a href="{% url 'accounts:profile' %}">Profile Dashboard</a>.</li>
+                        <li>Manage your password and security credentials via <a href="{% url 'accounts:settings' %}">Account Settings</a>.</li>
+                        <li>Request the closure and deletion of your account and personal records by contacting support.</li>
+                    </ul>
+                </section>
 
-            <section class="doc-section">
-                <h2>6. Data Security & Retention</h2>
-                <p>
-                    We implement robust organizational and technical safeguards, including HTTPS TLS encryption, database parameterization, password hashing via PBKDF2/Argon2, and strict access controls. We retain account and transaction records for as long as necessary to satisfy legal, tax, and accounting requirements.
-                </p>
-            </section>
+                <!-- Section 8 -->
+                <section class="legal-section" id="contact">
+                    <h2><span class="legal-sec-num">08.</span> Contact &amp; Privacy Inquiries</h2>
+                    <p>
+                        Have questions about this Privacy Policy or need help with your personal data? Our support team is ready to assist you:
+                    </p>
+                    <div class="legal-contact-card">
+                        <div class="legal-contact-item">
+                            <span class="contact-label">Data Privacy Office:</span>
+                            <a href="mailto:{{ PRIVACY_EMAIL|default:'privacy@virtusdigital.store' }}" class="contact-val">{{ PRIVACY_EMAIL|default:'privacy@virtusdigital.store' }}</a>
+                        </div>
+                        <div class="legal-contact-item">
+                            <span class="contact-label">Customer Support:</span>
+                            <a href="mailto:{{ SUPPORT_EMAIL|default:'support@virtusdigital.store' }}" class="contact-val">{{ SUPPORT_EMAIL|default:'support@virtusdigital.store' }}</a>
+                        </div>
+                        <div class="legal-contact-item">
+                            <span class="contact-label">Response Time:</span>
+                            <span class="contact-val">Within 24 to 48 business hours</span>
+                        </div>
+                    </div>
+                </section>
 
-            <section class="doc-section">
-                <h2>7. Your Privacy Rights</h2>
-                <p>Under applicable data privacy laws (including the Philippine Data Privacy Act of 2012), you have the right to:</p>
-                <ul>
-                    <li>Access the personal information we hold about you.</li>
-                    <li>Update or correct your personal information via your <a href="{% url 'accounts:profile' %}">Profile Page</a>.</li>
-                    <li>Change your password and security credentials via <a href="{% url 'accounts:settings' %}">Account Settings</a>.</li>
-                    <li>Request closure or deletion of your account and personal data.</li>
-                </ul>
-            </section>
+            </div>
 
-            <section class="doc-section">
-                <h2>8. Contact Us</h2>
-                <p>
-                    If you have questions regarding this Privacy Policy or wish to exercise your privacy rights, please contact our Data Protection Team at:
-                </p>
-                <div class="contact-info-block">
-                    <strong>Virtus Privacy & Compliance Office</strong><br>
-                    Email: <a href="mailto:privacy@virtusdigital.store">privacy@virtusdigital.store</a><br>
-                    Support: <a href="mailto:support@virtusdigital.store">support@virtusdigital.store</a>
-                </div>
-            </section>
-        </div>
+            <!-- Footer Navigation Links -->
+            <footer class="legal-footer-nav">
+                <a href="{% url 'catalog:home' %}" class="btn-legal-back">
+                    {% lucide "arrow-left" size=16 %}
+                    <span>Back to Marketplace</span>
+                </a>
+                <a href="{% url 'terms_of_service' %}" class="btn-legal-next">
+                    <span>Terms of Service</span>
+                    {% lucide "arrow-right" size=16 %}
+                </a>
+            </footer>
 
-        <div class="document-footer-nav">
-            <a href="{% url 'catalog:home' %}" class="button button-secondary">&larr; Back to Home</a>
-            <a href="{% url 'terms_of_service' %}" class="button button-outline">View Terms of Service</a>
-        </div>
-    </article>
+        </article>
+    </div>
 </main>
 {% endblock %}

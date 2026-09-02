@@ -1,63 +1,108 @@
 {% extends "base.html" %}
+{% load lucide %}
 
 {% block title %}Terms of Service | Virtus{% endblock %}
 
 {% block content %}
-<main class="document-page-container">
-    <article class="document-card">
-        <div class="document-header">
-            <span class="document-tag">Legal & Compliance</span>
-            <h1>Terms of Service</h1>
-            <p class="document-meta">Last Updated: August 20, 2026 &bull; Effective Immediately</p>
-        </div>
+<main class="legal-page-wrap">
+    <div class="legal-container">
 
-        <div class="document-intro-box">
-            <p>
-                Welcome to <strong>Virtus</strong>. By accessing our website, creating an account, or purchasing digital goods, you agree to be bound by the following terms and conditions.
-            </p>
-        </div>
+        <!-- Quick Navigation Sidebar (Desktop Sticky) -->
+        <aside class="legal-toc-sidebar" aria-label="Table of Contents">
+            <div class="legal-toc-card">
+                <div class="legal-toc-header">
+                    {% lucide "file-text" size=16 class="legal-toc-icon" %}
+                    <span>Contents</span>
+                </div>
+                <nav class="legal-toc-nav">
+                    <a href="#licensing" class="legal-toc-link">1. Digital Products &amp; Licensing</a>
+                    <a href="#pricing" class="legal-toc-link">2. Payments &amp; Pricing</a>
+                    <a href="#security" class="legal-toc-link">3. Accounts &amp; Security</a>
+                    <a href="#refunds" class="legal-toc-link">4. Refund Policy</a>
+                    <a href="#contact" class="legal-toc-link">5. Inquiries &amp; Support</a>
+                </nav>
+            </div>
+        </aside>
 
-        <div class="document-body">
-            <section class="doc-section">
-                <h2>1. Digital Products & Licensing</h2>
-                <p>
-                    All items sold on Virtus are digital products. Upon successful payment confirmation, you are granted a non-exclusive, non-transferable license to use the purchased digital assets according to the individual product's license tier.
+        <!-- Main Document Article -->
+        <article class="legal-article">
+            <!-- Header -->
+            <header class="legal-header">
+                <div class="legal-eyebrow">
+                    {% lucide "file-text" size=14 %}
+                    <span>Trust &amp; Legal Compliance</span>
+                </div>
+                <h1 class="legal-title">Terms of Service</h1>
+                <p class="legal-meta">
+                    Last updated: <strong>August 2026</strong> &bull; Effective immediately
                 </p>
-            </section>
+            </header>
 
-            <section class="doc-section">
-                <h2>2. Payments & Pricing</h2>
+            <div class="legal-intro-box">
                 <p>
-                    All product prices are quoted in Philippine Pesos (PHP). Payments are processed through our authorized partner <strong>PayMongo Philippines, Inc.</strong> via QR Ph, GCash, Maya, and major credit/debit cards. All transactions are final upon digital fulfillment.
+                    Welcome to <strong>Virtus</strong>. By accessing our platform, creating an account, or purchasing digital goods, you agree to be bound by these Terms of Service.
                 </p>
-            </section>
+            </div>
 
-            <section class="doc-section">
-                <h2>3. User Accounts & Security</h2>
-                <p>
-                    You are responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately if you suspect any unauthorized access to your account.
-                </p>
-            </section>
+            <!-- Content Sections -->
+            <div class="legal-body">
 
-            <section class="doc-section">
-                <h2>4. Refund Policy</h2>
-                <p>
-                    Due to the immediate delivery nature of digital goods, refunds are generally not offered once digital assets have been accessed or downloaded, except in cases where a product is proven to be defective and cannot be resolved by support.
-                </p>
-            </section>
+                <section class="legal-section" id="licensing">
+                    <h2><span class="legal-sec-num">01.</span> Digital Products &amp; Licensing</h2>
+                    <p>
+                        All items sold on Virtus are digital products. Upon successful payment confirmation, you are granted a non-exclusive, non-transferable license to use the purchased digital assets according to the individual product's license tier.
+                    </p>
+                </section>
 
-            <section class="doc-section">
-                <h2>5. Contact & Questions</h2>
-                <p>
-                    For inquiries regarding these Terms of Service, please reach out to us at <a href="mailto:support@virtusdigital.store">support@virtusdigital.store</a>.
-                </p>
-            </section>
-        </div>
+                <section class="legal-section" id="pricing">
+                    <h2><span class="legal-sec-num">02.</span> Payments &amp; Pricing</h2>
+                    <p>
+                        All product prices are quoted in Philippine Pesos (PHP). Payments are processed securely via QR Ph, GCash, Maya, and major Philippine banks. All transactions are settled and granted immediate digital fulfillment.
+                    </p>
+                </section>
 
-        <div class="document-footer-nav">
-            <a href="{% url 'catalog:home' %}" class="button button-secondary">&larr; Back to Home</a>
-            <a href="{% url 'privacy_policy' %}" class="button button-outline">View Privacy Policy</a>
-        </div>
-    </article>
+                <section class="legal-section" id="security">
+                    <h2><span class="legal-sec-num">03.</span> User Accounts &amp; Security</h2>
+                    <p>
+                        You are responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately if you suspect any unauthorized access to your account.
+                    </p>
+                </section>
+
+                <section class="legal-section" id="refunds">
+                    <h2><span class="legal-sec-num">04.</span> Refund Policy</h2>
+                    <p>
+                        Due to the immediate delivery nature of digital goods, refunds are generally not offered once digital assets have been accessed or downloaded, except in cases where a product is proven to be defective and cannot be resolved by support.
+                    </p>
+                </section>
+
+                <section class="legal-section" id="contact">
+                    <h2><span class="legal-sec-num">05.</span> Inquiries &amp; Support</h2>
+                    <p>
+                        For inquiries regarding these Terms of Service, please reach out to us at:
+                    </p>
+                    <div class="legal-contact-card">
+                        <div class="legal-contact-item">
+                            <span class="contact-label">Customer Support:</span>
+                            <a href="mailto:{{ SUPPORT_EMAIL|default:'support@virtusdigital.store' }}" class="contact-val">{{ SUPPORT_EMAIL|default:'support@virtusdigital.store' }}</a>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Footer Navigation Links -->
+            <footer class="legal-footer-nav">
+                <a href="{% url 'catalog:home' %}" class="btn-legal-back">
+                    {% lucide "arrow-left" size=16 %}
+                    <span>Back to Marketplace</span>
+                </a>
+                <a href="{% url 'privacy_policy' %}" class="btn-legal-next">
+                    <span>Privacy Policy</span>
+                    {% lucide "arrow-right" size=16 %}
+                </a>
+            </footer>
+
+        </article>
+    </div>
 </main>
 {% endblock %}

@@ -142,11 +142,220 @@
                 </div>
                 {% endif %}
             </div>
-            <div class="summary-guarantee-box">
-                {% lucide "shield-check" size=18 class="guarantee-icon" %}
-                <div class="guarantee-text"><strong>Need help?</strong><span>Contact support with your order ID for instant assistance.</span></div>
+            <div class="summary-guarantee-box refund-guarantee-box" id="refund-box-root">
+                {% if refunded %}
+                <div class="refund-status-box">
+                    {% lucide "check-circle-2" size=20 class="guarantee-icon text-success" %}
+                    <div class="guarantee-text">
+                        <strong>Refund Processed</strong>
+                        <span>A refund of {{ refunded.amount|centavos }} has been issued for this order.</span>
+                    </div>
+                </div>
+                {% elif pending_refund %}
+                <div class="refund-status-box">
+                    {% lucide "clock" size=20 class="guarantee-icon text-warning" %}
+                    <div class="guarantee-text">
+                        <strong>Refund Requested</strong>
+                        <span>Your request is under review. Our team will contact you at <strong>{{ order.email }}</strong> within 24 hours.</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="refund-status-box" id="refund-standard-prompt">
+                    {% lucide "shield-check" size=20 class="guarantee-icon" %}
+                    <div class="guarantee-text">
+                        <strong>Need help or a refund?</strong>
+                        <span>Item not what you expected? Request a refund directly.</span>
+                        <div>
+                            <button type="button" class="btn-refund-trigger" id="open-refund-modal-btn">
+                                {% lucide "rotate-ccw" size=12 %} Request a Refund
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </aside>
     </div>
+
+    <!-- In-Site Refund Request Modal -->
+    <div class="site-modal-backdrop" id="refund-modal-backdrop" aria-hidden="true">
+        <div class="site-modal-dialog" role="dialog" aria-labelledby="refund-modal-title" aria-modal="true">
+            <button type="button" class="site-modal-close" id="close-refund-modal-btn" aria-label="Close modal">
+                {% lucide "x" size=18 %}
+            </button>
+
+            <!-- Form View -->
+            <div class="refund-modal-body" id="refund-form-view">
+                <div class="site-modal-header">
+                    <span class="refund-tag-pill">{% lucide "rotate-ccw" size=12 %} Order Return</span>
+                    <h2 id="refund-modal-title">Request a Refund</h2>
+                    <p class="modal-subtext">Submit your refund request directly. No external email needed.</p>
+                    <div class="refund-order-summary-chip">
+                        <span>Order #{{ order.id|slice:":8" }}</span>
+                        <span>•</span>
+                        <strong>{{ order.total_amount|php_or_free }}</strong>
+                    </div>
+                </div>
+
+                <form id="in-site-refund-form" method="post" action="{% url 'orders:refund_request' order.id %}">
+                    {% csrf_token %}
+                    <div class="form-group-modal">
+                        <label for="refund-reason-select">Reason for refund <span class="req">*</span></label>
+                        <select id="refund-reason-select" name="reason" class="modal-select-input" required>
+                            <option value="" disabled selected>Select a reason…</option>
+                            <option value="accidental">Accidental purchase / wrong item</option>
+                            <option value="defective">Download or file defect / broken link</option>
+                            <option value="not_as_described">Item does not match description</option>
+                            <option value="duplicate">Duplicate payment / charged twice</option>
+                            <option value="other">Other reason</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-modal">
+                        <label for="refund-details-textarea">Explanation / Details <span class="opt">(Optional)</span></label>
+                        <textarea id="refund-details-textarea" name="details" class="modal-textarea-input" rows="3" placeholder="Please describe the issue or why you'd like a refund…"></textarea>
+                    </div>
+
+                    <div class="form-group-modal">
+                        <label for="refund-email-input">Contact email for updates</label>
+                        <input type="email" id="refund-email-input" name="email" value="{{ order.email }}" class="modal-text-input" placeholder="you@example.com" required>
+                    </div>
+
+                    <div class="refund-terms-note">
+                        {% lucide "lock" size=13 %}
+                        <span>Approved refunds are credited directly back to your original payment channel (GCash, Maya, or bank via QR Ph).</span>
+                    </div>
+
+                    <div class="modal-actions-row">
+                        <button type="button" class="btn-modal-cancel" id="cancel-refund-btn">Cancel</button>
+                        <button type="submit" class="btn-modal-submit" id="submit-refund-btn">
+                            <span>Submit Refund Request</span>
+                            {% lucide "arrow-right" size=15 %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success State View (Revealed after submission without redirect) -->
+            <div class="refund-modal-body refund-success-view" id="refund-success-view" style="display:none;">
+                <div class="refund-success-icon-wrap">
+                    {% lucide "check" size=28 %}
+                </div>
+                <h3>Refund Request Received!</h3>
+                <p class="success-desc">We've logged your request for <strong>Order #{{ order.id|slice:":8" }}</strong>. Our support team will review it and notify you at <strong id="success-contact-email">{{ order.email }}</strong> within 24 hours.</p>
+                <button type="button" class="btn-modal-submit btn-modal-done" id="done-refund-btn">
+                    <span>Back to Receipt</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </main>
+
+<script>
+(function() {
+    var openBtn = document.getElementById("open-refund-modal-btn");
+    var closeBtn = document.getElementById("close-refund-modal-btn");
+    var cancelBtn = document.getElementById("cancel-refund-btn");
+    var doneBtn = document.getElementById("done-refund-btn");
+    var backdrop = document.getElementById("refund-modal-backdrop");
+    var form = document.getElementById("in-site-refund-form");
+    var formView = document.getElementById("refund-form-view");
+    var successView = document.getElementById("refund-success-view");
+    var submitBtn = document.getElementById("submit-refund-btn");
+    var refundBoxRoot = document.getElementById("refund-box-root");
+
+    if (!backdrop) return;
+
+    function openModal() {
+        backdrop.classList.add("is-open");
+        backdrop.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeModal() {
+        backdrop.classList.remove("is-open");
+        backdrop.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+    }
+
+    if (openBtn) openBtn.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+    if (doneBtn) doneBtn.addEventListener("click", closeModal);
+
+    backdrop.addEventListener("click", function(e) {
+        if (e.target === backdrop) closeModal();
+    });
+
+    document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape" && backdrop.classList.contains("is-open")) {
+            closeModal();
+        }
+    });
+
+    if (form) {
+        form.addEventListener("submit", function(e) {
+            e.preventDefault();
+            if (submitBtn.disabled) return;
+
+            var reason = form.querySelector("[name='reason']").value;
+            var details = form.querySelector("[name='details']").value;
+            var email = form.querySelector("[name='email']").value;
+            var csrfToken = form.querySelector("[name='csrfmiddlewaretoken']").value;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Submitting…</span>';
+
+            fetch(form.action, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify({
+                    reason: reason,
+                    details: details,
+                    email: email
+                })
+            })
+            .then(function(res) {
+                return res.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    var emailEl = document.getElementById("success-contact-email");
+                    if (emailEl && email) emailEl.textContent = email;
+
+                    formView.style.display = "none";
+                    successView.style.display = "flex";
+
+                    // Update guarantee box on the receipt page
+                    if (refundBoxRoot) {
+                        refundBoxRoot.innerHTML = '<div class="refund-status-box">' +
+                            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="guarantee-icon text-warning"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+                            '<div class="guarantee-text">' +
+                            '<strong>Refund Requested</strong>' +
+                            '<span>Your request is under review. Our team will contact you at <strong>' + (email || '{{ order.email }}') + '</strong> within 24 hours.</span>' +
+                            '</div></div>';
+                    }
+
+                    if (window.Virtus && typeof window.Virtus.showToast === "function") {
+                        window.Virtus.showToast("Refund request submitted successfully.", "success");
+                    }
+                } else {
+                    alert(data.error || "An error occurred while submitting your refund request.");
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Submit Refund Request</span>';
+                }
+            })
+            .catch(function(err) {
+                alert("Network error. Please try again or refresh the page.");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Submit Refund Request</span>';
+            });
+        });
+    }
+})();
+</script>
 {% endblock %}

@@ -1,107 +1,214 @@
 {% extends "admin/base_site.html" %}
-{% load i18n static %}
+{% load i18n static lucide %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "css/admin_dashboard.css" %}">{% endblock %}
 
-{% block coltype %}colMS{% endblock %}
+{% block coltype %}colM{% endblock %}
 
-{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block bodyclass %}{{ block.super }} dashboard virtus-admin-dashboard{% endblock %}
 
 {% block nav-breadcrumbs %}{% endblock %}
 
 {% block nav-sidebar %}{% endblock %}
 
-{% block content %}
-<div id="content-main">
+{% block sidebar %}{% endblock %}
 
-  {# ---------- Store overview ---------- #}
+{% block content %}
+<div id="content-main" class="rq-content-full">
+
   <div class="rq-dashboard">
 
-    <div class="rq-cards">
+    {# ---------- Toolbar ---------- #}
+    <header class="rq-toolbar">
+      <div class="rq-toolbar-left">
+        <span class="rq-toolbar-title">Store Overview</span>
+        <span class="rq-env-badge {% if dashboard.is_live %}rq-env-badge--live{% else %}rq-env-badge--test{% endif %}">
+          <span class="rq-env-dot"></span>
+          {{ dashboard.gateway_mode }}
+        </span>
+      </div>
+      <div class="rq-toolbar-actions">
+        <a href="{% url 'admin:catalog_product_add' %}" class="rq-btn rq-btn--primary">
+          {% lucide "plus" size=14 %} Add Product
+        </a>
+        <a href="{% url 'admin:coupons_coupon_add' %}" class="rq-btn rq-btn--secondary">
+          {% lucide "tag" size=14 %} New Coupon
+        </a>
+        <a href="/" target="_blank" rel="noopener" class="rq-btn rq-btn--ghost">
+          {% lucide "external-link" size=13 %} Storefront
+        </a>
+        <a href="https://dashboard.paymongo.com/" target="_blank" rel="noopener" class="rq-btn rq-btn--ghost">
+          {% lucide "credit-card" size=13 %} PayMongo
+        </a>
+      </div>
+    </header>
+
+    {# ---------- Metric KPI Cards ---------- #}
+    <div class="rq-metrics-grid">
       {% for card in dashboard.cards %}
-        <a class="rq-card rq-card--{{ card.tone|default:"neutral" }}" href="{% url card.url %}{{ card.query }}">
-          <span class="rq-card__label">{{ card.label }}</span>
-          <span class="rq-card__value">{{ card.value }}</span>
-          <span class="rq-card__sub">{{ card.sub }}</span>
+        <a class="rq-metric-card" href="{% url card.url %}{{ card.query }}">
+          <div class="rq-metric-header">
+            <span class="rq-metric-label">{{ card.label }}</span>
+            <span class="rq-metric-icon">
+              {% if card.icon %}
+                {% lucide card.icon size=15 %}
+              {% endif %}
+            </span>
+          </div>
+          <div class="rq-metric-val">{{ card.value }}</div>
+          <div class="rq-metric-sub">{{ card.sub }}</div>
         </a>
       {% endfor %}
     </div>
 
+    {# ---------- Action Required Banner (Only if pending items exist) ---------- #}
     {% if dashboard.attention %}
-      <div class="rq-panel rq-attention">
-        <h2>Needs attention</h2>
-        <ul>
+      <div class="rq-alert-banner">
+        <div class="rq-alert-header">
+          {% lucide "alert-circle" size=16 class="rq-alert-icon" %}
+          <span>Attention Required</span>
+        </div>
+        <div class="rq-alert-items">
           {% for item in dashboard.attention %}
-            <li class="rq-attention--{{ item.tone }}">
-              <strong>{{ item.count }}</strong>
-              <a href="{% url item.url %}{{ item.query }}">{{ item.label }}</a>
-            </li>
+            <a href="{% url item.url %}{{ item.query }}" class="rq-alert-chip rq-alert-chip--{{ item.tone }}">
+              <strong>{{ item.count }}</strong> {{ item.label }} &rarr;
+            </a>
           {% endfor %}
-        </ul>
+        </div>
       </div>
     {% endif %}
 
-    <div class="rq-panel rq-latest-orders">
-      <h2>Latest orders</h2>
+    {# ---------- Recent Customer Orders ---------- #}
+    <section class="rq-card-section">
+      <div class="rq-section-header">
+        <div class="rq-section-title-group">
+          <h2>Recent Orders</h2>
+          <span class="rq-section-caption">Latest customer checkouts & payment statuses</span>
+        </div>
+        <a href="{% url 'admin:orders_order_changelist' %}" class="rq-text-link">View all orders &rarr;</a>
+      </div>
+
       {% if dashboard.latest_orders %}
-        <table>
-          <thead>
-            <tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Placed</th></tr>
-          </thead>
-          <tbody>
-            {% for order in dashboard.latest_orders %}
+        <div class="rq-table-wrap">
+          <table class="rq-data-table">
+            <thead>
               <tr>
-                <td><a href="{% url 'admin:orders_order_change' order.id %}">{{ order.id|truncatechars:8 }}</a></td>
-                <td>{% firstof order.email "guest" %}</td>
-                <td>₱{{ order.display_total }}</td>
-                <td>{{ order.get_status_display }}</td>
-                <td>{{ order.created_at|date:"M d, H:i" }}</td>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Placed</th>
+                <th class="rq-th-action">Gateway Action</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <p class="rq-more"><a href="{% url 'admin:orders_order_changelist' %}">All orders →</a></p>
+            </thead>
+            <tbody>
+              {% for order in dashboard.latest_orders %}
+                <tr>
+                  <td class="rq-td-id">
+                    <a href="{% url 'admin:orders_order_change' order.id %}">
+                      {{ order.id|truncatechars:12 }}
+                    </a>
+                  </td>
+                  <td class="rq-td-customer">
+                    {% firstof order.email "Guest" %}
+                  </td>
+                  <td class="rq-td-amount">
+                    {{ order.display_total }}
+                  </td>
+                  <td>
+                    <span class="rq-badge rq-badge--{{ order.status }}">
+                      {{ order.get_status_display }}
+                    </span>
+                  </td>
+                  <td class="rq-td-date">
+                    {{ order.created_at|date:"M d, Y · H:i" }}
+                  </td>
+                  <td class="rq-td-action">
+                    <a href="{{ order.paymongo_url }}" target="_blank" rel="noopener" class="rq-btn-table">
+                      {% lucide "credit-card" size=12 %} PayMongo
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% else %}
-        <p>No orders yet — they will appear here the moment buyers check out.</p>
+        <div class="rq-empty-panel">
+          <p>No orders yet. Customer purchases will appear here in real time.</p>
+        </div>
       {% endif %}
-    </div>
+    </section>
+
+    {# ---------- Refunds Queue (if any records exist) ---------- #}
+    {% if dashboard.recent_refunds %}
+      <section class="rq-card-section">
+        <div class="rq-section-header">
+          <div class="rq-section-title-group">
+            <h2>Refunds & Support Queue</h2>
+            <span class="rq-section-caption">Customer return requests & adjustments</span>
+          </div>
+          <a href="{% url 'admin:payments_refund_changelist' %}" class="rq-text-link">All refunds &rarr;</a>
+        </div>
+        <div class="rq-table-wrap">
+          <table class="rq-data-table">
+            <thead>
+              <tr>
+                <th>Order / Refund</th>
+                <th>Amount</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Requested</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for refund in dashboard.recent_refunds %}
+                <tr>
+                  <td class="rq-td-id">
+                    {% if refund.payment and refund.payment.order %}
+                      <a href="{% url 'admin:orders_order_change' refund.payment.order.id %}">
+                        Order #{{ refund.payment.order.id|truncatechars:12 }}
+                      </a>
+                    {% else %}
+                      Refund #{{ refund.id|truncatechars:12 }}
+                    {% endif %}
+                  </td>
+                  <td class="rq-td-amount">
+                    ₱{{ refund.amount|floatformat:2 }}
+                  </td>
+                  <td class="rq-td-customer">
+                    {{ refund.reason|default:"No reason provided" }}
+                  </td>
+                  <td>
+                    <span class="rq-badge rq-badge--{{ refund.status }}">
+                      {{ refund.get_status_display }}
+                    </span>
+                  </td>
+                  <td class="rq-td-date">
+                    {{ refund.created_at|date:"M d, Y · H:i" }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {% endif %}
+
+    {# ---------- Models & Database Catalog ---------- #}
+    <section class="rq-card-section rq-catalog-section">
+      <div class="rq-section-header">
+        <div class="rq-section-title-group">
+          <h2>Marketplace Models & Data</h2>
+          <span class="rq-section-caption">Manage raw database entities and permissions</span>
+        </div>
+      </div>
+      <div class="rq-app-list-wrap">
+        {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+      </div>
+    </section>
 
   </div>
 
-  {# ---------- Model list (default admin) ---------- #}
-  {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
-</div>
-{% endblock %}
-
-{% block sidebar %}
-<div id="content-related">
-    <div class="module" id="recent-actions-module">
-        <h2>{% translate 'Recent actions' %}</h2>
-        <h3>{% translate 'My actions' %}</h3>
-            {% load log %}
-            {% get_admin_log 10 as admin_log for_user user %}
-            {% if not admin_log %}
-            <p>{% translate 'None available' %}</p>
-            {% else %}
-            <ul class="actionlist">
-            {% for entry in admin_log %}
-            <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
-                <span class="visually-hidden">{% if entry.is_addition %}{% translate 'Added:' %}{% elif entry.is_change %}{% translate 'Changed:' %}{% elif entry.is_deletion %}{% translate 'Deleted:' %}{% endif %}</span>
-                {% if entry.is_deletion or not entry.get_admin_url %}
-                    {{ entry.object_repr }}
-                {% else %}
-                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
-                {% endif %}
-                <br>
-                {% if entry.content_type %}
-                    <span class="mini quiet">{% filter capfirst %}{{ entry.content_type.name }}{% endfilter %}</span>
-                {% else %}
-                    <span class="mini quiet">{% translate 'Unknown content' %}</span>
-                {% endif %}
-            </li>
-            {% endfor %}
-            </ul>
-            {% endif %}
-    </div>
 </div>
 {% endblock %}

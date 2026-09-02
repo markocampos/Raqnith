@@ -31,7 +31,7 @@ from apps.orders.validators import (
     validate_product,
     validate_shipping_option,
 )
-from apps.payments.models import PaymentAttempt
+from apps.payments.models import PaymentAttempt, Refund
 from apps.payments.services.payment_service import PaymentService
 from apps.payments.tests.helpers import intent_payload, make_mock_client
 
@@ -711,3 +711,98 @@ class OrderExpirationTests(TestCase):
         self.assertFalse(Order.objects.filter(pk=stale_order.pk).exists())
         self.assertTrue(Order.objects.filter(pk=paid_order.pk).exists())
         self.assertTrue(Order.objects.filter(pk=recent_order.pk).exists())
+
+
+class OrderRefundRequestViewTests(TestCase):
+    def setUp(self):
+        self.session_key = "test-session-refund-123"
+        self.order = Order.objects.create(
+            session_key=self.session_key,
+            email="buyer@example.com",
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.PAID,
+            paid_at=timezone.now(),
+        )
+        self.attempt = PaymentAttempt.objects.create(
+            order=self.order,
+            amount=5000,
+            status=PaymentAttempt.Status.SUCCEEDED,
+            payment_method="GCash",
+            paymongo_payment_id="pay_test_refund_1",
+        )
+
+    def test_refund_request_success_for_paid_order(self):
+        session = self.client.session
+        session.save()
+        # Set session key to match order
+        self.client.cookies[self.client.session.session_key] = self.session_key
+
+        # Re-save with session matching
+        self.order.session_key = self.client.session.session_key
+        self.order.save(update_fields=["session_key"])
+
+        url = reverse("orders:refund_request", args=[self.order.id])
+        payload = {
+            "reason": "accidental",
+            "details": "Bought wrong license",
+            "email": "buyer@example.com",
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data.get("success"))
+
+        refund = Refund.objects.filter(payment__order=self.order).first()
+        self.assertIsNotNone(refund)
+        self.assertEqual(refund.status, Refund.Status.PENDING)
+        self.assertEqual(refund.amount, 5000)
+        self.assertIn("ACCIDENTAL", refund.reason)
+
+    def test_refund_request_duplicate_returns_already_pending(self):
+        self.order.session_key = self.client.session.session_key
+        self.order.save(update_fields=["session_key"])
+
+        Refund.objects.create(
+            payment=self.attempt,
+            amount=5000,
+            status=Refund.Status.PENDING,
+            reason="[ACCIDENTAL] Already pending",
+        )
+
+        url = reverse("orders:refund_request", args=[self.order.id])
+        response = self.client.post(
+            url,
+            data=json.dumps({"reason": "other"}),
+            content_type="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data.get("already_pending"))
+        self.assertEqual(Refund.objects.filter(payment__order=self.order).count(), 1)
+
+    def test_refund_request_unsettled_order_rejected(self):
+        unpaid = Order.objects.create(
+            session_key=self.client.session.session_key,
+            subtotal_amount=5000,
+            total_amount=5000,
+            status=Order.Status.PENDING_PAYMENT,
+        )
+        url = reverse("orders:refund_request", args=[unpaid.id])
+        response = self.client.post(
+            url,
+            data=json.dumps({"reason": "accidental"}),
+            content_type="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn("error", data)

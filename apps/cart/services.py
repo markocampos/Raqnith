@@ -1,19 +1,28 @@
 from apps.cart.models import Cart, CartItem
 
 
-def get_cart(request):
-    """Return the cart for the current user or anonymous session, creating it if needed."""
+def get_cart(request, create=False):
+    """Return the cart for the current user or anonymous session.
+
+    If create=False, returns None when no cart exists yet without creating one.
+    """
     if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        return cart
+        if create:
+            cart, _ = Cart.objects.get_or_create(user=request.user)
+            return cart
+        return Cart.objects.filter(user=request.user).first()
 
     session_key = request.session.session_key
     if not session_key:
+        if not create:
+            return None
         request.session.save()
         session_key = request.session.session_key
 
-    cart, _ = Cart.objects.get_or_create(session_key=session_key)
-    return cart
+    if create:
+        cart, _ = Cart.objects.get_or_create(session_key=session_key)
+        return cart
+    return Cart.objects.filter(session_key=session_key).first()
 
 
 def merge_cart_on_login(request, user, old_session_key=None):

@@ -18,6 +18,11 @@ urlpatterns = [
         name="receipt_pdf",
     ),
     path(
+        "<uuid:order_id>/refund-request/",
+        views.OrderRefundRequestView.as_view(),
+        name="refund_request",
+    ),
+    path(
         "<uuid:order_id>/files/<uuid:file_id>/",
         views.OrderFileView.as_view(),
         name="download_file",

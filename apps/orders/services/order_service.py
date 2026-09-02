@@ -70,6 +70,8 @@ def build_order_from_cart(cart, *, coupon_code=None, shipping_method=None, user_
     ``errors`` payload) and creates nothing if any input is invalid.
     """
     errors = {}
+    if cart is None:
+        raise OrderBuildError({"cart": "The cart is empty."})
 
     items = list(cart.items.select_related("product"))
     if not items:
@@ -194,6 +196,8 @@ def clear_purchased_cart_items(order):
         return
 
     CartItem.objects.filter(cart__in=carts, product_id__in=product_ids).delete()
+    if order.session_key:
+        Cart.objects.filter(session_key=order.session_key, items__isnull=True).delete()
 
 
 def mark_order_paid(order):

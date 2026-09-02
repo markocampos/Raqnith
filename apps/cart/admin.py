@@ -44,12 +44,14 @@ class ActivityFilter(admin.SimpleListFilter):
 @admin.register(Cart, site=admin_site)
 class CartAdmin(admin.ModelAdmin):
     list_display = [
+        "cart_id",
         "owner",
         "item_count",
         "cart_value",
         "updated_at",
         "created_at",
     ]
+    list_display_links = ["cart_id", "owner"]
     list_filter = [ActivityFilter]
     search_fields = [
         "id",
@@ -64,6 +66,15 @@ class CartAdmin(admin.ModelAdmin):
     readonly_fields = ["id", "created_at", "updated_at"]
     inlines = [CartItemInline]
 
+    fieldsets = (
+        (
+            "Cart",
+            {
+                "fields": ("id", "user", "session_key", "created_at", "updated_at"),
+            },
+        ),
+    )
+
     def get_queryset(self, request):
         return (
             super()
@@ -74,12 +85,16 @@ class CartAdmin(admin.ModelAdmin):
             )
         )
 
+    @admin.display(description="Cart ID", ordering="id")
+    def cart_id(self, obj):
+        return str(obj.id)[:8]
+
     @admin.display(description="Shopper")
     def owner(self, obj):
         if obj.user_id:
             return obj.user.get_username()
         suffix = (obj.session_key or "")[:8]
-        return f"Guest ({suffix}\u2026)"
+        return f"Guest ({suffix}…)"
 
     @admin.display(description="Items", ordering="_item_count")
     def item_count(self, obj):

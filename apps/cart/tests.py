@@ -45,10 +45,12 @@ class CartViewTests(TestCase):
         self._add()
         self.assertEqual(CartItem.objects.count(), 1)
 
-    def test_view_cart_empty(self):
+    def test_view_cart_empty_does_not_create_cart_in_db(self):
+        self.assertEqual(Cart.objects.count(), 0)
         resp = self.client.get(reverse("cart:detail"))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Your cart is waiting for something great")
+        self.assertEqual(Cart.objects.count(), 0)
 
     def test_view_cart_shows_items(self):
         self._add()
@@ -62,6 +64,18 @@ class CartViewTests(TestCase):
         item = CartItem.objects.get()
         self.client.post(reverse("cart:remove", args=[item.id]))
         self.assertEqual(CartItem.objects.count(), 0)
+
+    def test_lazy_cart_context_processor(self):
+        from apps.cart.context_processors import cart_context
+        from django.test import RequestFactory
+
+        factory = RequestFactory()
+        request = factory.get("/")
+        request.user = type("AnonUser", (), {"is_authenticated": False})()
+        request.session = self.client.session
+        ctx = cart_context(request)
+        self.assertEqual(ctx["cart_item_count"], 0)
+        self.assertEqual(Cart.objects.count(), 0)
 
 
 class CartAdminTests(TestCase):

@@ -2,20 +2,25 @@
 
 The admin index is not just a model list: it surfaces the numbers staff
 check every morning (revenue, orders awaiting payment, webhook health,
-seller applications) plus the latest orders, so the marketplace can be
-operated without touching the ORM.
+seller applications, refund requests) plus latest activity, so the marketplace
+can be operated smoothly without touching the ORM.
 """
 
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
+from apps.catalog.models import Category, Product
 from apps.coupons.models import Coupon
 from apps.orders.models import DownloadLog, Order
-from apps.payments.models import PaymentAttempt, WebhookEvent
+from apps.payments.models import PaymentAttempt, Refund, WebhookEvent
 from apps.seller.models import SellerApplication
+
+User = get_user_model()
 
 
 def pesos(cents):
@@ -24,9 +29,9 @@ def pesos(cents):
 
 
 class VirtusAdminSite(admin.AdminSite):
-    site_header = "Virtus Admin"
+    site_header = "Virtus Store Console"
     site_title = "Virtus Admin"
-    index_title = "Store overview"
+    index_title = "Marketplace Overview"
 
     def index(self, request, extra_context=None):
         extra_context = {**(extra_context or {}), "dashboard": self._dashboard()}
@@ -46,9 +51,12 @@ class VirtusAdminSite(admin.AdminSite):
                 "total_amount",
                 filter=Q(paid_at__gte=month_ago, status__in=paid_statuses),
             ),
+            revenue_all_time=Sum("total_amount", filter=Q(status__in=paid_statuses)),
             paid_orders_today=Count("id", filter=Q(paid_at__gte=today_start)),
             paid_orders_30d=Count("id", filter=Q(paid_at__gte=month_ago, status__in=paid_statuses)),
+            paid_orders_all_time=Count("id", filter=Q(status__in=paid_statuses)),
             awaiting_payment=Count("id", filter=Q(status=Order.Status.PENDING_PAYMENT)),
+            total_orders=Count("id"),
         )
 
         failed_payments_24h = PaymentAttempt.objects.filter(
@@ -60,58 +68,80 @@ class VirtusAdminSite(admin.AdminSite):
         pending_applications = SellerApplication.objects.filter(
             status=SellerApplication.Status.PENDING
         ).count()
+        pending_refunds = Refund.objects.filter(status=Refund.Status.PENDING).count()
         active_coupons = Coupon.objects.filter(active=True).exclude(expires_at__lte=now).count()
         downloads_today = DownloadLog.objects.filter(created_at__gte=today_start).count()
+        total_downloads = DownloadLog.objects.count()
+        total_products = Product.objects.filter(is_available=True).count()
+        total_categories = Category.objects.count()
+        total_customers = User.objects.filter(is_staff=False).count()
+
+        is_live = getattr(settings, "PAYMONGO_PUBLIC_KEY", "").startswith("pk_live_")
 
         cards = [
             {
-                "label": "Revenue today",
+                "label": "Today's Revenue",
                 "value": pesos(order_stats["revenue_today"]),
                 "sub": f"{order_stats['paid_orders_today']} paid order(s)",
                 "url": "admin:orders_order_changelist",
                 "query": "?paid_at__gte=" + today_start.date().isoformat(),
-                "tone": "good",
+                "tone": "ok",
+                "icon": "circle-dollar-sign",
             },
             {
-                "label": "Revenue · last 30 days",
+                "label": "30-Day Volume",
                 "value": pesos(order_stats["revenue_30d"]),
-                "sub": f"{order_stats['paid_orders_30d']} paid order(s)",
+                "sub": f"{order_stats['paid_orders_30d']} orders · {pesos(order_stats['revenue_all_time'])} all-time",
                 "url": "admin:orders_order_changelist",
                 "query": f"?paid_at__gte={month_ago.date().isoformat()}&status__in=paid%2Cfulfilled",
-                "tone": "",
+                "tone": "default",
+                "icon": "trending-up",
             },
             {
-                "label": "Awaiting payment",
+                "label": "Pending Payment",
                 "value": str(order_stats["awaiting_payment"]),
-                "sub": "Orders waiting on QR scan",
+                "sub": "Awaiting customer QR scan",
                 "url": "admin:orders_order_changelist",
                 "query": "?status__exact=pending_payment",
-                "tone": "warn" if order_stats["awaiting_payment"] else "",
+                "tone": "warn" if order_stats["awaiting_payment"] else "default",
+                "icon": "qr-code",
             },
             {
-                "label": "Downloads today",
+                "label": "Live Products",
+                "value": str(total_products),
+                "sub": f"{total_categories} active categories",
+                "url": "admin:catalog_product_changelist",
+                "query": "?is_available__exact=1",
+                "tone": "default",
+                "icon": "package",
+            },
+            {
+                "label": "Downloads Served",
                 "value": str(downloads_today),
-                "sub": "Files served to buyers",
+                "sub": f"{total_downloads} total delivered",
                 "url": "admin:orders_downloadlog_changelist",
                 "query": "",
-                "tone": "",
-            },
-            {
-                "label": "Active coupons",
-                "value": str(active_coupons),
-                "sub": "Live discount codes",
-                "url": "admin:coupons_coupon_changelist",
-                "query": "?active__exact=1",
-                "tone": "",
+                "tone": "default",
+                "icon": "file-down",
             },
         ]
 
         attention = []
+        if pending_refunds:
+            attention.append(
+                {
+                    "count": pending_refunds,
+                    "label": "refund request(s) awaiting review & processing",
+                    "url": "admin:payments_refund_changelist",
+                    "query": "?status__exact=pending",
+                    "tone": "bad",
+                }
+            )
         if pending_applications:
             attention.append(
                 {
                     "count": pending_applications,
-                    "label": "seller application(s) awaiting review",
+                    "label": "creator seller application(s) awaiting review",
                     "url": "admin:seller_sellerapplication_changelist",
                     "query": "?status__exact=pending",
                     "tone": "warn",
@@ -148,14 +178,35 @@ class VirtusAdminSite(admin.AdminSite):
                 }
             )
 
-        latest = Order.objects.select_related("user").order_by("-created_at")[:8]
+        latest = (
+            Order.objects.select_related("user")
+            .prefetch_related("items", "payment_attempts")
+            .order_by("-created_at")[:8]
+        )
         for order in latest:
             order.display_total = pesos(order.total_amount)
+            attempt = order.payment_attempts.filter(status=PaymentAttempt.Status.SUCCEEDED).first() or order.payment_attempts.first()
+            if attempt and attempt.paymongo_payment_id:
+                order.paymongo_url = f"https://dashboard.paymongo.com/payments/{attempt.paymongo_payment_id}"
+            elif attempt and attempt.paymongo_intent_id:
+                order.paymongo_url = f"https://dashboard.paymongo.com/payments?search={attempt.paymongo_intent_id}"
+            else:
+                order.paymongo_url = "https://dashboard.paymongo.com/payments"
+
+        recent_refunds = (
+            Refund.objects.select_related("payment__order")
+            .order_by("-created_at")[:5]
+        )
 
         return {
+            "is_live": is_live,
+            "gateway_mode": "Live Production" if is_live else "Sandbox / Test",
             "cards": cards,
             "attention": attention,
             "latest_orders": latest,
+            "recent_refunds": recent_refunds,
+            "total_customers": total_customers,
+            "total_products": total_products,
         }
 
 

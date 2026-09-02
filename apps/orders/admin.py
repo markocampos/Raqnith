@@ -133,6 +133,7 @@ class PaymentAttemptInline(admin.TabularInline):
         "status",
         "payment_method",
         "paymongo_intent_id",
+        "paymongo_link",
         "failure_code",
         "failure_message",
     ]
@@ -140,6 +141,22 @@ class PaymentAttemptInline(admin.TabularInline):
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.display(description="PayMongo Dashboard")
+    def paymongo_link(self, obj):
+        if not obj or not obj.id:
+            return "-"
+        if obj.paymongo_payment_id:
+            url = f"https://dashboard.paymongo.com/payments/{obj.paymongo_payment_id}"
+        elif obj.paymongo_intent_id:
+            url = f"https://dashboard.paymongo.com/payments?search={obj.paymongo_intent_id}"
+        else:
+            url = "https://dashboard.paymongo.com/payments"
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;color:#2563eb;font-weight:600;text-decoration:none;">'
+            'Open PayMongo ↗</a>',
+            url,
+        )
 
 
 @admin.register(Order, site=admin_site)
@@ -150,6 +167,7 @@ class OrderAdmin(admin.ModelAdmin):
         "items_count",
         "total_display",
         "status_badge",
+        "paymongo_action",
         "created_at",
         "paid_at",
     ]
@@ -161,6 +179,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_per_page = 25
     readonly_fields = [
         "id",
+        "paymongo_action",
         "created_at",
         "updated_at",
         "paid_at",
@@ -171,13 +190,12 @@ class OrderAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (
-            "Order",
+            "Order & Payment Gateway",
             {
-                "fields": ("id", "status", "created_at", "updated_at", "paid_at"),
+                "fields": ("id", "status", "paymongo_action", "created_at", "updated_at", "paid_at"),
                 "description": (
                     "Status moves along a fixed path: Draft → Pending payment → "
-                    "Paid → Fulfilled. Failed and cancelled orders may be retried "
-                    "back to Pending payment while they are still fresh."
+                    "Paid → Fulfilled. Use the PayMongo button to inspect the payment or issue a refund."
                 ),
             },
         ),
@@ -235,3 +253,23 @@ class OrderAdmin(admin.ModelAdmin):
     def status_badge(self, obj):
         label = obj.get_status_display()
         return status_pill(label, STATUS_COLORS.get(obj.status, "#64748b"))
+
+    @admin.display(description="PayMongo / Refund")
+    def paymongo_action(self, obj):
+        attempt = (
+            obj.payment_attempts.filter(status=PaymentAttempt.Status.SUCCEEDED).first()
+            or obj.payment_attempts.first()
+        )
+        if not attempt:
+            return "-"
+        if attempt.paymongo_payment_id:
+            url = f"https://dashboard.paymongo.com/payments/{attempt.paymongo_payment_id}"
+        elif attempt.paymongo_intent_id:
+            url = f"https://dashboard.paymongo.com/payments?search={attempt.paymongo_intent_id}"
+        else:
+            url = "https://dashboard.paymongo.com/payments"
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;color:#ffffff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;">'
+            '💳 PayMongo (Refund) ↗</a>',
+            url,
+        )

@@ -4,619 +4,228 @@
 {% block title %}Account Settings | Virtus{% endblock %}
 
 {% block content %}
-<main class="dashboard-container settings-page-container">
-    <!-- Header with Back Link -->
-    <div class="settings-page-header">
-        <a href="{% url 'accounts:profile' %}" class="back-link">
-            {% lucide "arrow-left" size=16 %}
+<main class="dashboard-container settings-page">
+
+    <!-- Top Header -->
+    <header class="settings-header">
+        <a href="{% url 'accounts:profile' %}" class="settings-back-link">
+            {% lucide "arrow-left" size=14 %}
             <span>Back to Profile</span>
         </a>
-        <div class="settings-title-row">
+        <div class="settings-header-content">
             <div>
-                <h1>Account Settings</h1>
-                <p class="section-subtext">Manage your personal information, security credentials, and account preferences.</p>
+                <h1 class="settings-page-title">Account Settings</h1>
+                <p class="settings-page-desc">Manage your profile details and account security.</p>
             </div>
-            <!-- Mini Status Badge -->
-            <div class="settings-header-badge">
-                <span class="status-indicator-dot"></span>
-                <span>Account Active & Verified</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Account Summary Banner -->
-    <div class="settings-summary-banner">
-        <div class="settings-user-preview">
-            <div class="settings-avatar-circle">
-                {{ user.first_name|default:user.email|slice:":1"|upper }}
-            </div>
-            <div class="settings-user-meta">
-                <h2>{{ user.get_full_name|default:user.username }}</h2>
-                <div class="user-meta-sub">
-                    <span class="user-username-tag">@{{ user.username }}</span>
-                    <span class="user-email-text">{{ user.email }}</span>
+            <div class="settings-user-badge">
+                <span class="settings-user-avatar">{{ user.first_name|default:user.email|slice:":1"|upper }}</span>
+                <div>
+                    <span class="settings-user-name">{{ user.get_full_name|default:user.username }}</span>
+                    <span class="settings-user-handle">@{{ user.username }}</span>
                 </div>
             </div>
         </div>
-        <div class="settings-quick-metrics">
-            <div class="metric-pill">
-                <span class="metric-label">Member Since</span>
-                <strong class="metric-value">{{ user.date_joined|date:"M Y" }}</strong>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="settings-tabs-nav" aria-label="Settings Navigation" role="tablist">
+        <button type="button" class="settings-tab-btn {% if active_tab == 'profile' or not active_tab %}active{% endif %}" data-tab="tab-profile" role="tab" aria-selected="{% if active_tab == 'profile' or not active_tab %}true{% else %}false{% endif %}">
+            {% lucide "user" size=16 %}
+            <span>Personal Profile</span>
+        </button>
+        <button type="button" class="settings-tab-btn {% if active_tab == 'security' %}active{% endif %}" data-tab="tab-security" role="tab" aria-selected="{% if active_tab == 'security' %}true{% else %}false{% endif %}">
+            {% lucide "lock" size=16 %}
+            <span>Security &amp; Password</span>
+        </button>
+    </nav>
+
+    <!-- TAB 1: Personal Profile -->
+    <div class="settings-tab-panel {% if active_tab == 'profile' or not active_tab %}active{% endif %}" id="tab-profile" role="tabpanel">
+        <section class="settings-card">
+            <div class="settings-card-head">
+                <h2>Personal Profile</h2>
+                <p class="settings-card-desc">Update your name and contact email for digital purchases and receipts.</p>
             </div>
-            <div class="metric-pill">
-                <span class="metric-label">Digital Purchases</span>
-                <strong class="metric-value">{{ paid_orders_count }} Order{{ paid_orders_count|pluralize }}</strong>
+
+            {% if profile_form.non_field_errors %}
+            <div class="auth-error-alert">
+                {% for error in profile_form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
             </div>
-        </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'accounts:settings' %}" class="settings-form" novalidate id="profileForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_first_name">First Name</label>
+                        <input type="text" id="id_first_name" name="first_name" value="{{ user.first_name|default:'' }}" placeholder="Juan" class="form-input" autocomplete="given-name">
+                        {% if profile_form.first_name.errors %}
+                        <span class="field-error">{{ profile_form.first_name.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_last_name">Last Name</label>
+                        <input type="text" id="id_last_name" name="last_name" value="{{ user.last_name|default:'' }}" placeholder="Dela Cruz" class="form-input" autocomplete="family-name">
+                        {% if profile_form.last_name.errors %}
+                        <span class="field-error">{{ profile_form.last_name.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_email">Email Address</label>
+                    <input type="email" id="id_email" name="email" value="{{ user.email }}" placeholder="you@example.com" class="form-input" required autocomplete="email">
+                    {% if profile_form.email.errors %}
+                    <span class="field-error">{{ profile_form.email.errors.0 }}</span>
+                    {% else %}
+                    <span class="field-hint">Your order receipts, product licenses, and instant downloads are delivered to this address.</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label>Account Handle</label>
+                    <div class="input-readonly-wrap">
+                        <span class="input-prefix">@</span>
+                        <input type="text" value="{{ user.username }}" readonly class="form-input form-input-readonly" tabindex="-1">
+                    </div>
+                    <span class="field-hint">Your username is permanent and uniquely identifies your buyer profile.</span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="button button-save">
+                        {% lucide "check" size=15 %}
+                        <span>Save Changes</span>
+                    </button>
+                </div>
+            </form>
+        </section>
     </div>
 
-    <!-- Main Settings App Layout (Tabs + Content) -->
-    <div class="settings-app-layout">
-        <!-- Sidebar Navigation Tabs -->
-        <nav class="settings-sidebar-nav" aria-label="Settings Navigation">
-            <button type="button" class="settings-tab-btn {% if active_tab == 'profile' or not active_tab %}active{% endif %}" data-target-tab="tab-profile">
-                {% lucide "user" size=18 class="tab-icon" %}
-                <span>Personal Profile</span>
-            </button>
-            <button type="button" class="settings-tab-btn {% if active_tab == 'security' %}active{% endif %}" data-target-tab="tab-security">
-                {% lucide "lock" size=18 class="tab-icon" %}
-                <span>Security & Password</span>
-            </button>
-            <button type="button" class="settings-tab-btn {% if active_tab == 'notifications' %}active{% endif %}" data-target-tab="tab-notifications">
-                {% lucide "bell" size=18 class="tab-icon" %}
-                <span>Notifications</span>
-            </button>
-            <button type="button" class="settings-tab-btn {% if active_tab == 'data' %}active{% endif %}" data-target-tab="tab-data">
-                {% lucide "shield-check" size=18 class="tab-icon" %}
-                <span>Account & Data</span>
-            </button>
-        </nav>
-
-        <!-- Tab Content Area -->
-        <div class="settings-content-area">
-            <!-- TAB 1: Personal Profile -->
-            <div class="settings-tab-panel {% if active_tab == 'profile' or not active_tab %}active{% endif %}" id="tab-profile">
-                <section class="card settings-main-card">
-                    <div class="card-header-with-icon">
-                        <div class="settings-header-icon">
-                            {% lucide "user" size=20 %}
-                        </div>
-                        <div>
-                            <h2>Personal Information</h2>
-                            <p class="card-subtitle">Update your personal details associated with invoices and receipts.</p>
-                        </div>
-                    </div>
-
-                    {% if profile_form.non_field_errors %}
-                    <div class="auth-error-alert">
-                        {% for error in profile_form.non_field_errors %}
-                        <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    <form method="post" action="{% url 'accounts:settings' %}" class="settings-form" novalidate id="profileForm">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="update_profile">
-
-                        <div class="form-group">
-                            <label for="id_settings_email">Email Address</label>
-                            <div class="input-with-badge">
-                                <input type="email" id="id_settings_email" name="email" value="{{ user.email }}" required readonly class="input-readonly">
-                                <span class="input-inline-badge">{% lucide "shield-check" size=14 %} Verified</span>
-                            </div>
-                            <span class="field-hint">Email is locked to your account for payment and receipt security.</span>
-                        </div>
-
-                        <div class="form-row-2col">
-                            <div class="form-group">
-                                <label for="id_first_name">First Name</label>
-                                <input type="text" id="id_first_name" name="first_name" value="{{ user.first_name|default:'' }}" placeholder="e.g. Juan">
-                                {% if profile_form.first_name.errors %}
-                                <span class="field-error">{{ profile_form.first_name.errors.0 }}</span>
-                                {% endif %}
-                            </div>
-
-                            <div class="form-group">
-                                <label for="id_last_name">Last Name</label>
-                                <input type="text" id="id_last_name" name="last_name" value="{{ user.last_name|default:'' }}" placeholder="e.g. Dela Cruz">
-                                {% if profile_form.last_name.errors %}
-                                <span class="field-error">{{ profile_form.last_name.errors.0 }}</span>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Username</label>
-                            <input type="text" value="{{ user.username }}" readonly class="input-readonly">
-                            <span class="field-hint">Your unique store handle cannot be changed.</span>
-                        </div>
-
-                        <div class="settings-action-row">
-                            <button type="submit" class="button button-primary button-save-settings">
-                                {% lucide "check" size=16 %}
-                                <span>Save Personal Details</span>
-                            </button>
-                        </div>
-                    </form>
-                </section>
+    <!-- TAB 2: Security & Password -->
+    <div class="settings-tab-panel {% if active_tab == 'security' %}active{% endif %}" id="tab-security" role="tabpanel">
+        <section class="settings-card">
+            <div class="settings-card-head">
+                <h2>Security &amp; Password</h2>
+                <p class="settings-card-desc">Update your password to keep your account safe and secure.</p>
             </div>
 
-            <!-- TAB 2: Security & Password -->
-            <div class="settings-tab-panel {% if active_tab == 'security' %}active{% endif %}" id="tab-security">
-                <section class="card settings-main-card">
-                    <div class="card-header-with-icon header-with-extra">
-                        <div class="header-main-left">
-                            <div class="settings-header-icon">
-                                {% lucide "lock" size=20 %}
-                            </div>
-                            <div>
-                                <h2>Security & Password</h2>
-                                <p class="card-subtitle">Manage your login credentials and enhance your account protection.</p>
-                            </div>
-                        </div>
-                        <button type="button" class="btn-generate-password" id="btnGeneratePassword" title="Generate a strong random password">
-                            {% lucide "sparkles" size=14 %}
-                            <span>Generate Strong Password</span>
+            {% if password_form.non_field_errors %}
+            <div class="auth-error-alert">
+                {% for error in password_form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'accounts:settings' %}" class="settings-form" novalidate id="passwordForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change_password">
+
+                <div class="form-group">
+                    <label for="id_current_password">Current Password</label>
+                    <div class="password-field-wrap">
+                        <input type="password" id="id_current_password" name="current_password" placeholder="Enter current password" class="form-input" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-pw" aria-label="Toggle password visibility" title="Show/Hide password" tabindex="-1">
+                            {% lucide "eye" size=15 class="icon-eye-show" %}
+                            {% lucide "eye-off" size=15 class="icon-eye-hide hidden" %}
                         </button>
                     </div>
-
-                    {% if password_form.non_field_errors %}
-                    <div class="auth-error-alert">
-                        {% for error in password_form.non_field_errors %}
-                        <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
+                    {% if password_form.current_password.errors %}
+                    <span class="field-error">{{ password_form.current_password.errors.0 }}</span>
                     {% endif %}
+                </div>
 
-                    <form method="post" action="{% url 'accounts:settings' %}" class="settings-form" novalidate id="passwordForm">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="change_password">
-
-                        <div class="form-group">
-                            <label for="{{ password_form.current_password.id_for_label }}">Current Password</label>
-                            <div class="password-input-wrap">
-                                {{ password_form.current_password }}
-                                <button type="button" class="btn-toggle-password" aria-label="Toggle password visibility" title="Show/Hide password">
-                                    {% lucide "eye" size=16 class="icon-eye" %}
-                                    {% lucide "eye-off" size=16 class="icon-eye-off hidden" %}
-                                </button>
-                            </div>
-                            {% if password_form.current_password.errors %}
-                            <span class="field-error">{{ password_form.current_password.errors.0 }}</span>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ password_form.new_password.id_for_label }}">New Password</label>
-                            <div class="password-input-wrap">
-                                {{ password_form.new_password }}
-                                <button type="button" class="btn-toggle-password" aria-label="Toggle password visibility" title="Show/Hide password">
-                                    {% lucide "eye" size=16 class="icon-eye" %}
-                                    {% lucide "eye-off" size=16 class="icon-eye-off hidden" %}
-                                </button>
-                            </div>
-
-                            <!-- Live Password Strength Meter -->
-                            <div class="password-strength-container">
-                                <div class="strength-bar-track">
-                                    <div class="strength-bar-fill" id="strengthBar"></div>
-                                </div>
-                                <span class="strength-text-label" id="strengthText">Password Strength</span>
-                            </div>
-
-                            <!-- Interactive Requirement Checklist -->
-                            <div class="password-rules-checklist">
-                                <div class="rule-check-item" id="ruleLength">
-                                    <span class="rule-dot"></span>
-                                    <span>8+ characters</span>
-                                </div>
-                                <div class="rule-check-item" id="ruleCase">
-                                    <span class="rule-dot"></span>
-                                    <span>Upper & lower case</span>
-                                </div>
-                                <div class="rule-check-item" id="ruleNumber">
-                                    <span class="rule-dot"></span>
-                                    <span>Numbers or symbols</span>
-                                </div>
-                            </div>
-
-                            {% if password_form.new_password.errors %}
-                            <span class="field-error">{{ password_form.new_password.errors.0 }}</span>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ password_form.confirm_password.id_for_label }}">Confirm New Password</label>
-                            <div class="password-input-wrap">
-                                {{ password_form.confirm_password }}
-                                <button type="button" class="btn-toggle-password" aria-label="Toggle password visibility" title="Show/Hide password">
-                                    {% lucide "eye" size=16 class="icon-eye" %}
-                                    {% lucide "eye-off" size=16 class="icon-eye-off hidden" %}
-                                </button>
-                            </div>
-                            <!-- Live Password Match Status -->
-                            <div class="match-status-label hidden" id="matchStatus">
-                                <span class="match-text"></span>
-                            </div>
-                            {% if password_form.confirm_password.errors %}
-                            <span class="field-error">{{ password_form.confirm_password.errors.0 }}</span>
-                            {% endif %}
-                        </div>
-
-                        <div class="settings-action-row">
-                            <button type="submit" class="button button-primary button-save-settings">
-                                {% lucide "key-round" size=16 %}
-                                <span>Update Password</span>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_new_password">New Password</label>
+                        <div class="password-field-wrap">
+                            <input type="password" id="id_new_password" name="new_password" placeholder="Enter new password" class="form-input" required autocomplete="new-password">
+                            <button type="button" class="btn-toggle-pw" aria-label="Toggle password visibility" title="Show/Hide password" tabindex="-1">
+                                {% lucide "eye" size=15 class="icon-eye-show" %}
+                                {% lucide "eye-off" size=15 class="icon-eye-hide hidden" %}
                             </button>
                         </div>
-                    </form>
-                </section>
-
-                <!-- Session & Security Rails Box -->
-                <section class="card settings-subcard">
-                    <div class="subcard-header">
-                        {% lucide "shield" size=18 class="subcard-icon" %}
-                        <h3>Active Session & Security Standard</h3>
-                    </div>
-                    <div class="security-features-list">
-                        <div class="security-feature-item">
-                            {% lucide "circle-check" size=16 class="feat-icon-ok" %}
-                            <div>
-                                <strong>Active Browser Session</strong>
-                                <p>Signed in securely. Your session is protected by cryptographic cookie signatures.</p>
-                            </div>
-                        </div>
-                        <div class="security-feature-item">
-                            {% lucide "circle-check" size=16 class="feat-icon-ok" %}
-                            <div>
-                                <strong>256-Bit SSL Encryption</strong>
-                                <p>All data is encrypted with 256-bit SSL. We never see or store your payment details.</p>
-                            </div>
-                        </div>
-                        <div class="security-feature-item">
-                            {% lucide "circle-check" size=16 class="feat-icon-ok" %}
-                            <div>
-                                <strong>Zero Sensitive Financial Data Stored</strong>
-                                <p>Bank and card information never pass through our servers. Secure checkout powered by PayMongo.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <!-- TAB 3: Notifications -->
-            <div class="settings-tab-panel {% if active_tab == 'notifications' %}active{% endif %}" id="tab-notifications">
-                <section class="card settings-main-card">
-                    <div class="card-header-with-icon">
-                        <div class="settings-header-icon">
-                            {% lucide "bell" size=20 %}
-                        </div>
-                        <div>
-                            <h2>Notification Preferences</h2>
-                            <p class="card-subtitle">Choose the notifications and alerts you wish to receive.</p>
-                        </div>
+                        {% if password_form.new_password.errors %}
+                        <span class="field-error">{{ password_form.new_password.errors.0 }}</span>
+                        {% else %}
+                        <span class="field-hint">Must be at least 8 characters long.</span>
+                        {% endif %}
                     </div>
 
-                    <form method="post" action="{% url 'accounts:settings' %}" class="preferences-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="update_preferences">
-
-                        <div class="preference-item">
-                            <label class="toggle-switch-label">
-                                <input type="checkbox" name="receipt_emails" checked disabled class="toggle-checkbox">
-                                <span class="toggle-custom-slider disabled"></span>
-                                <span class="preference-text">
-                                    <strong>Order & Payment Receipts (Required)</strong>
-                                    <small>Instant transaction confirmation and digital product access links.</small>
-                                </span>
-                            </label>
-                        </div>
-
-                        <div class="preference-item">
-                            <label class="toggle-switch-label">
-                                <input type="checkbox" name="security_alerts" checked class="toggle-checkbox">
-                                <span class="toggle-custom-slider"></span>
-                                <span class="preference-text">
-                                    <strong>Security & Login Alerts</strong>
-                                    <small>Notifications when a password change or sensitive account update occurs.</small>
-                                </span>
-                            </label>
-                        </div>
-
-                        <div class="preference-item">
-                            <label class="toggle-switch-label">
-                                <input type="checkbox" name="product_updates" checked class="toggle-checkbox">
-                                <span class="toggle-custom-slider"></span>
-                                <span class="preference-text">
-                                    <strong>Product Releases & Updates</strong>
-                                    <small>Occasional updates when new curated digital items are added.</small>
-                                </span>
-                            </label>
-                        </div>
-
-                        <div class="settings-action-row">
-                            <button type="submit" class="button button-primary button-save-settings">
-                                {% lucide "check" size=16 %}
-                                <span>Save Preferences</span>
+                    <div class="form-group">
+                        <label for="id_confirm_password">Confirm New Password</label>
+                        <div class="password-field-wrap">
+                            <input type="password" id="id_confirm_password" name="confirm_password" placeholder="Confirm new password" class="form-input" required autocomplete="new-password">
+                            <button type="button" class="btn-toggle-pw" aria-label="Toggle password visibility" title="Show/Hide password" tabindex="-1">
+                                {% lucide "eye" size=15 class="icon-eye-show" %}
+                                {% lucide "eye-off" size=15 class="icon-eye-hide hidden" %}
                             </button>
                         </div>
-                    </form>
-                </section>
-            </div>
-
-            <!-- TAB 4: Account & Data -->
-            <div class="settings-tab-panel {% if active_tab == 'data' %}active{% endif %}" id="tab-data">
-                <section class="card settings-main-card">
-                    <div class="card-header-with-icon">
-                        <div class="settings-header-icon">
-                            {% lucide "shield-check" size=20 %}
-                        </div>
-                        <div>
-                            <h2>Account & Security Data</h2>
-                            <p class="card-subtitle">Verified registration metadata and compliance records.</p>
-                        </div>
+                        {% if password_form.confirm_password.errors %}
+                        <span class="field-error">{{ password_form.confirm_password.errors.0 }}</span>
+                        {% endif %}
                     </div>
+                </div>
 
-                    <div class="meta-details-grid">
-                        <div class="meta-row">
-                            <span class="meta-key">Account:</span>
-                            <span class="meta-val"><strong>@{{ user.username }}</strong> <span class="pay-chip-pill" style="margin-left:0.4rem;">{% lucide "shield-check" size=12 %} Secured & Verified</span></span>
-                        </div>
-                        <div class="meta-row">
-                            <span class="meta-key">Member Since:</span>
-                            <span class="meta-val">{{ user.date_joined|date:"F d, Y" }}</span>
-                        </div>
-                        <div class="meta-row">
-                            <span class="meta-key">Checkout:</span>
-                            <span class="meta-val">Secure QR Ph • GCash, Maya & 40+ PH banks</span>
-                        </div>
-                        <div class="meta-row">
-                            <span class="meta-key">Protection:</span>
-                            <span class="meta-val">256-bit SSL • We never store your payment details</span>
-                        </div>
-                    </div>
-
-                    <div class="meta-links-box">
-                        <h3>Legal Policies & Buyer Terms</h3>
-                        <p>Learn more about how we process payments, protect your identity, and safeguard digital licenses.</p>
-                        <div class="meta-links">
-                            <a href="{% url 'privacy_policy' %}" class="button-legal-link">
-                                {% lucide "shield" size=14 %}
-                                <span>Privacy Policy</span>
-                            </a>
-                            <a href="{% url 'terms_of_service' %}" class="button-legal-link">
-                                {% lucide "file-text" size=14 %}
-                                <span>Terms of Service</span>
-                            </a>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </div>
+                <div class="form-actions">
+                    <button type="submit" class="button button-save">
+                        {% lucide "lock" size=15 %}
+                        <span>Update Password</span>
+                    </button>
+                </div>
+            </form>
+        </section>
     </div>
+
 </main>
 
-<!-- Settings Interactive JS: Tabs, Password Show/Hide, Strength Meter, Copy Toast -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     // 1. Tab Switching
-    const tabButtons = document.querySelectorAll(".settings-tab-btn");
+    const tabBtns = document.querySelectorAll(".settings-tab-btn");
     const tabPanels = document.querySelectorAll(".settings-tab-panel");
 
     function activateTab(tabId) {
-        tabButtons.forEach(btn => {
-            btn.classList.toggle("active", btn.dataset.targetTab === tabId);
+        tabBtns.forEach(btn => {
+            const isActive = btn.dataset.tab === tabId;
+            btn.classList.toggle("active", isActive);
+            btn.setAttribute("aria-selected", isActive ? "true" : "false");
         });
         tabPanels.forEach(panel => {
             panel.classList.toggle("active", panel.id === tabId);
         });
-        // Update URL hash without scroll
-        history.replaceState(null, null, "#" + tabId.replace("tab-", ""));
-    }
-
-    tabButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-            activateTab(btn.dataset.targetTab);
-        });
-    });
-
-    // Check hash on load
-    if (window.location.hash) {
-        const hash = window.location.hash.substring(1);
-        const matched = document.getElementById("tab-" + hash);
-        if (matched) {
-            activateTab("tab-" + hash);
+        if (history.replaceState) {
+            const tabKey = tabId.replace("tab-", "");
+            const url = new URL(window.location);
+            url.searchParams.set("tab", tabKey);
+            history.replaceState(null, "", url.toString());
         }
     }
 
-    // 2. Show/Hide Password Toggle
-    document.querySelectorAll(".btn-toggle-password").forEach(btn => {
+    tabBtns.forEach(btn => {
         btn.addEventListener("click", () => {
-            const input = btn.previousElementSibling;
+            activateTab(btn.dataset.tab);
+        });
+    });
+
+    // 2. Password Visibility Toggle
+    document.querySelectorAll(".btn-toggle-pw").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const input = btn.closest(".password-field-wrap")?.querySelector("input");
             if (!input) return;
-            const eyeIcon = btn.querySelector(".icon-eye");
-            const eyeOffIcon = btn.querySelector(".icon-eye-off");
+            const isPassword = input.type === "password";
+            input.type = isPassword ? "text" : "password";
 
-            if (input.type === "password") {
-                input.type = "text";
-                if (eyeIcon) eyeIcon.classList.add("hidden");
-                if (eyeOffIcon) eyeOffIcon.classList.remove("hidden");
-            } else {
-                input.type = "password";
-                if (eyeIcon) eyeIcon.classList.remove("hidden");
-                if (eyeOffIcon) eyeOffIcon.classList.add("hidden");
-            }
-        });
-    });
-
-    // 3. Password Strength Meter & Interactive Rules Checklist
-    const newPassInput = document.querySelector("#passwordForm input[name='new_password']");
-    const confirmPassInput = document.querySelector("#passwordForm input[name='confirm_password']");
-    const strengthBar = document.getElementById("strengthBar");
-    const strengthText = document.getElementById("strengthText");
-    const ruleLength = document.getElementById("ruleLength");
-    const ruleCase = document.getElementById("ruleCase");
-    const ruleNumber = document.getElementById("ruleNumber");
-    const matchStatus = document.getElementById("matchStatus");
-
-    function validatePasswordStrength() {
-        if (!newPassInput) return;
-        const val = newPassInput.value;
-
-        // Rules validation
-        const hasLength = val.length >= 8;
-        const hasCase = /[A-Z]/.test(val) && /[a-z]/.test(val);
-        const hasNumberOrSymbol = /[0-9]/.test(val) || /[^A-Za-z0-9]/.test(val);
-
-        if (ruleLength) ruleLength.classList.toggle("passed", hasLength);
-        if (ruleCase) ruleCase.classList.toggle("passed", hasCase);
-        if (ruleNumber) ruleNumber.classList.toggle("passed", hasNumberOrSymbol);
-
-        if (!val) {
-            if (strengthBar) {
-                strengthBar.style.width = "0%";
-                strengthBar.className = "strength-bar-fill";
-            }
-            if (strengthText) {
-                strengthText.textContent = "Password Strength";
-                strengthText.className = "strength-text-label";
-            }
-            validateMatch();
-            return;
-        }
-
-        let score = 0;
-        if (hasLength) score += 1;
-        if (val.length >= 12) score += 1;
-        if (hasCase) score += 1;
-        if (hasNumberOrSymbol) score += 1;
-
-        if (score <= 1) {
-            if (strengthBar) {
-                strengthBar.style.width = "25%";
-                strengthBar.className = "strength-bar-fill strength-weak";
-            }
-            if (strengthText) {
-                strengthText.textContent = "Weak password";
-                strengthText.className = "strength-text-label strength-weak-text";
-            }
-        } else if (score === 2 || score === 3) {
-            if (strengthBar) {
-                strengthBar.style.width = "60%";
-                strengthBar.className = "strength-bar-fill strength-medium";
-            }
-            if (strengthText) {
-                strengthText.textContent = "Good password";
-                strengthText.className = "strength-text-label strength-medium-text";
-            }
-        } else {
-            if (strengthBar) {
-                strengthBar.style.width = "100%";
-                strengthBar.className = "strength-bar-fill strength-strong";
-            }
-            if (strengthText) {
-                strengthText.textContent = "Strong password ✓";
-                strengthText.className = "strength-text-label strength-strong-text";
-            }
-        }
-
-        validateMatch();
-    }
-
-    function validateMatch() {
-        if (!newPassInput || !confirmPassInput || !matchStatus) return;
-        const pass1 = newPassInput.value;
-        const pass2 = confirmPassInput.value;
-        const matchText = matchStatus.querySelector(".match-text");
-
-        if (!pass2) {
-            matchStatus.classList.add("hidden");
-            return;
-        }
-
-        matchStatus.classList.remove("hidden");
-        if (pass1 === pass2) {
-            matchStatus.className = "match-status-label match-ok";
-            if (matchText) matchText.textContent = "✓ Passwords match";
-        } else {
-            matchStatus.className = "match-status-label match-err";
-            if (matchText) matchText.textContent = "✗ Passwords do not match";
-        }
-    }
-
-    if (newPassInput) newPassInput.addEventListener("input", validatePasswordStrength);
-    if (confirmPassInput) confirmPassInput.addEventListener("input", validateMatch);
-
-    // 4. Generate Strong Password Button
-    const btnGenerate = document.getElementById("btnGeneratePassword");
-    if (btnGenerate && newPassInput && confirmPassInput) {
-        btnGenerate.addEventListener("click", () => {
-            const chars = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*+";
-            let generated = "";
-            const cryptoObj = window.crypto || window.msCrypto;
-            if (cryptoObj) {
-                const values = new Uint32Array(16);
-                cryptoObj.getRandomValues(values);
-                for (let i = 0; i < 16; i++) {
-                    generated += chars[values[i] % chars.length];
-                }
-            } else {
-                for (let i = 0; i < 16; i++) {
-                    generated += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-            }
-
-            newPassInput.value = generated;
-            confirmPassInput.value = generated;
-            newPassInput.type = "text";
-            confirmPassInput.type = "text";
-
-            // Update eye toggle icons to reflect text mode
-            document.querySelectorAll("#passwordForm .btn-toggle-password").forEach(btn => {
-                const eye = btn.querySelector(".icon-eye");
-                const eyeOff = btn.querySelector(".icon-eye-off");
-                if (eye) eye.classList.add("hidden");
-                if (eyeOff) eyeOff.classList.remove("hidden");
-            });
-
-            validatePasswordStrength();
-
-            navigator.clipboard.writeText(generated).then(() => {
-                const span = btnGenerate.querySelector("span");
-                if (span) {
-                    const orig = span.textContent;
-                    span.textContent = "Generated & Copied! ✓";
-                    btnGenerate.classList.add("copied");
-                    setTimeout(() => {
-                        span.textContent = orig;
-                        btnGenerate.classList.remove("copied");
-                    }, 2500);
-                }
-            });
-        });
-    }
-
-    // 5. Interactive Copy Button
-    document.querySelectorAll(".btn-copy-interactive").forEach(btn => {
-        btn.addEventListener("click", async () => {
-            const textToCopy = btn.dataset.copy;
-            if (!textToCopy) return;
-
-            try {
-                await navigator.clipboard.writeText(textToCopy);
-                const label = btn.querySelector(".copy-label");
-                if (label) {
-                    const orig = label.textContent;
-                    label.textContent = "Copied!";
-                    btn.classList.add("copied");
-                    setTimeout(() => {
-                        label.textContent = orig;
-                        btn.classList.remove("copied");
-                    }, 2000);
-                }
-            } catch (err) {
-                console.error("Clipboard copy failed:", err);
+            const showIcon = btn.querySelector(".icon-eye-show");
+            const hideIcon = btn.querySelector(".icon-eye-hide");
+            if (showIcon && hideIcon) {
+                showIcon.classList.toggle("hidden", isPassword);
+                hideIcon.classList.toggle("hidden", !isPassword);
             }
         });
     });

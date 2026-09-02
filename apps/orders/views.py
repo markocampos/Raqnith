@@ -24,7 +24,7 @@ from apps.orders.services.order_service import (
     mark_order_paid,
     settle_free_order,
 )
-from apps.payments.models import PaymentAttempt
+from apps.payments.models import PaymentAttempt, Refund
 from apps.payments.services.payment_service import PaymentService
 from apps.payments.services.paymongo import (
     PayMongoAPIError,
@@ -78,6 +78,13 @@ def _delivery_context(order):
         order_item__order=order, revoked_at__isnull=True
     ).select_related("order_item__product")
 
+    pending_refund = Refund.objects.filter(
+        payment__order=order, status=Refund.Status.PENDING
+    ).first()
+    refunded = Refund.objects.filter(
+        payment__order=order, status=Refund.Status.SUCCEEDED
+    ).first()
+
     return {
         "order": order,
         "items": items,
@@ -87,6 +94,8 @@ def _delivery_context(order):
         "expired_memberships": expired_items,
         "downloads_remaining": delivery.downloads_remaining_today(order),
         "max_downloads_per_day": settings.MAX_DOWNLOADS_PER_DAY_PER_ORDER,
+        "pending_refund": pending_refund,
+        "refunded": refunded,
     }
 
 
@@ -99,7 +108,7 @@ class CreateOrderView(View):
     """
 
     def post(self, request):
-        cart = get_cart(request)
+        cart = get_cart(request, create=False)
 
         try:
             body = json.loads(request.body or b"{}")
@@ -535,3 +544,86 @@ class TrackOrderView(View):
                 order.save(update_fields=["session_key", "updated_at"])
 
         return redirect("orders:status", order_id=order.id)
+
+
+class OrderRefundRequestView(View):
+    """Accept an in-site customer refund request without any external redirect."""
+
+    def post(self, request, order_id):
+        user_or_session = (
+            request.user if request.user.is_authenticated else request.session.session_key
+        )
+        try:
+            order = get_order_for_checkout(order_id, user_or_session)
+        except Order.DoesNotExist:
+            return JsonResponse({"error": "Order not found or unauthorized."}, status=404)
+
+        if order.status not in SETTLED_STATUSES:
+            return JsonResponse(
+                {"error": "Only completed orders can be refunded."}, status=400
+            )
+
+        # Check for existing pending refund
+        existing_pending = Refund.objects.filter(
+            payment__order=order, status=Refund.Status.PENDING
+        ).first()
+        if existing_pending:
+            return JsonResponse(
+                {
+                    "success": True,
+                    "already_pending": True,
+                    "message": "A refund request for this order is already pending review.",
+                }
+            )
+
+        is_json = (
+            request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or request.headers.get("Content-Type") == "application/json"
+        )
+        if is_json:
+            try:
+                data = json.loads(request.body or b"{}")
+            except Exception:
+                data = {}
+        else:
+            data = request.POST
+
+        reason_code = str(data.get("reason") or "requested_by_customer").strip()
+        reason_details = str(data.get("details") or "").strip()
+        contact_email = str(data.get("email") or order.email or "").strip()
+
+        attempt = order.payment_attempts.filter(status=PaymentAttempt.Status.SUCCEEDED).first()
+        if not attempt:
+            attempt = order.payment_attempts.first()
+        if not attempt:
+            attempt = PaymentAttempt.objects.create(
+                order=order,
+                amount=order.total_amount,
+                status=PaymentAttempt.Status.SUCCEEDED,
+                payment_method=_payment_method_for(order) or "standard",
+            )
+
+        full_reason = f"[{reason_code.upper()}] {reason_details}" if reason_details else reason_code
+        refund = Refund.objects.create(
+            payment=attempt,
+            amount=order.total_amount,
+            reason=full_reason[:100],
+            failure_message=f"Contact: {contact_email}\nDetails: {reason_details}",
+            status=Refund.Status.PENDING,
+        )
+
+        logger.info(
+            "in-site refund request submitted order=%s refund=%s email=%s",
+            order.id,
+            refund.id,
+            contact_email,
+        )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Your refund request has been received. Our team will review your request within 24 hours.",
+                "refund_id": str(refund.id),
+                "order_id": str(order.id),
+            }
+        )

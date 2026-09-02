@@ -86,7 +86,7 @@ class CheckoutView(View):
     """Initial checkout screen: validate user data, check login state, and proceed to payment."""
 
     def get(self, request):
-        cart = get_cart(request)
+        cart = get_cart(request, create=False)
         coupon_code = request.GET.get("coupon", "").strip() or request.session.get(
             "checkout_coupon", ""
         )
@@ -110,7 +110,7 @@ class CheckoutView(View):
         return render(request, "checkout/index.html", context)
 
     def post(self, request):
-        cart = get_cart(request)
+        cart = get_cart(request, create=False)
         coupon_code = request.POST.get("coupon", "").strip() or request.session.get(
             "checkout_coupon", ""
         )

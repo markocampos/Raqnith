@@ -169,3 +169,11 @@ class ProductFile(models.Model):
 
     def __str__(self):
         return f"{self.product.name} — {self.name}"
+
+    def save(self, *args, **kwargs):
+        if self.file and hasattr(self.file, "size"):
+            try:
+                self.file_size = self.file.size
+            except (OSError, ValueError):
+                pass
+        super().save(*args, **kwargs)

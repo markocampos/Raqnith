@@ -42,9 +42,8 @@ class PaymentAttemptAdmin(admin.ModelAdmin):
         "order_link",
         "status_badge",
         "amount_display",
-        "currency",
         "payment_method",
-        "paymongo_intent_id",
+        "paymongo_link",
         "created_at",
     ]
     list_filter = ["status", "provider", "payment_method"]
@@ -53,7 +52,7 @@ class PaymentAttemptAdmin(admin.ModelAdmin):
     list_select_related = ["order"]
     ordering = ["-created_at"]
     date_hierarchy = "created_at"
-    readonly_fields = [field.name for field in PaymentAttempt._meta.fields]
+    readonly_fields = [field.name for field in PaymentAttempt._meta.fields] + ["paymongo_link"]
 
     def has_add_permission(self, request):
         return False
@@ -63,6 +62,22 @@ class PaymentAttemptAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    @admin.display(description="PayMongo Dashboard")
+    def paymongo_link(self, obj):
+        if not obj or not obj.id:
+            return "-"
+        if obj.paymongo_payment_id:
+            url = f"https://dashboard.paymongo.com/payments/{obj.paymongo_payment_id}"
+        elif obj.paymongo_intent_id:
+            url = f"https://dashboard.paymongo.com/payments?search={obj.paymongo_intent_id}"
+        else:
+            url = "https://dashboard.paymongo.com/payments"
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;color:#2563eb;font-weight:600;text-decoration:none;">'
+            'Open PayMongo ↗</a>',
+            url,
+        )
 
     @admin.display(description="Attempt")
     def id_short(self, obj):
@@ -163,6 +178,9 @@ class RefundAdmin(admin.ModelAdmin):
         ),
     )
 
+    def has_add_permission(self, request):
+        return False
+
     @admin.display(description="Refund")
     def id_short(self, obj):
         return str(obj.id)[:8]
@@ -191,12 +209,13 @@ class WebhookEventAdmin(admin.ModelAdmin):
 
     list_display = [
         "event_type",
+        "buyer",
+        "order_link",
+        "amount_display",
         "event_id_short",
         "processed_badge",
         "failure_count",
-        "last_error",
         "received_at",
-        "processed_at",
     ]
     list_filter = ["processed", "event_type"]
     search_fields = ["provider_event_id", "event_type"]
@@ -206,6 +225,7 @@ class WebhookEventAdmin(admin.ModelAdmin):
     list_per_page = 50
     readonly_fields = [
         "id",
+        "buyer_info",
         "provider_event_id",
         "event_type",
         "payload",
@@ -224,6 +244,81 @@ class WebhookEventAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def _resolve_attempt(self, obj):
+        if not hasattr(obj, "_cached_attempt"):
+            payload = obj.payload or {}
+            resource = payload.get("data", {}).get("attributes", {}).get("data", {})
+            attrs = resource.get("attributes", {}) or {}
+            intent_id = attrs.get("payment_intent_id")
+            if intent_id:
+                obj._cached_attempt = (
+                    PaymentAttempt.objects.filter(paymongo_intent_id=intent_id)
+                    .select_related("order__user")
+                    .first()
+                )
+            else:
+                obj._cached_attempt = None
+        return obj._cached_attempt
+
+    @admin.display(description="Buyer")
+    def buyer(self, obj):
+        attempt = self._resolve_attempt(obj)
+        if attempt and attempt.order:
+            email = attempt.order.email or (
+                attempt.order.user.email if attempt.order.user else attempt.order.user.username
+            )
+            if email:
+                return email
+        payload = obj.payload or {}
+        resource = payload.get("data", {}).get("attributes", {}).get("data", {})
+        billing = resource.get("attributes", {}).get("billing") or {}
+        if billing.get("email"):
+            return billing["email"]
+        return "-"
+
+    @admin.display(description="Order")
+    def order_link(self, obj):
+        attempt = self._resolve_attempt(obj)
+        if attempt and attempt.order_id:
+            url = reverse("admin:orders_order_change", args=[attempt.order_id])
+            return format_html('<a href="{}">#{}</a>', url, str(attempt.order_id)[:8])
+        return "-"
+
+    @admin.display(description="Amount")
+    def amount_display(self, obj):
+        attempt = self._resolve_attempt(obj)
+        if attempt:
+            return pesos(attempt.amount)
+        payload = obj.payload or {}
+        resource = payload.get("data", {}).get("attributes", {}).get("data", {})
+        amt = resource.get("attributes", {}).get("amount")
+        if amt is not None:
+            return pesos(amt)
+        return "-"
+
+    @admin.display(description="Buyer & Order Summary")
+    def buyer_info(self, obj):
+        attempt = self._resolve_attempt(obj)
+        if attempt and attempt.order:
+            order = attempt.order
+            email = order.email or (order.user.email if order.user else "-")
+            url = reverse("admin:orders_order_change", args=[order.id])
+            items = ", ".join(i.product_name for i in order.items.all()) or "Digital Goods"
+            return format_html(
+                '<div style="line-height: 1.6;">'
+                '<strong>Customer Email:</strong> {}<br>'
+                '<strong>Order:</strong> <a href="{}">#{}</a><br>'
+                '<strong>Amount:</strong> {}<br>'
+                '<strong>Items:</strong> {}'
+                '</div>',
+                email,
+                url,
+                order.id,
+                pesos(order.total_amount),
+                items,
+            )
+        return "No linked order found in payload."
 
     @admin.display(description="Provider Event ID")
     def event_id_short(self, obj):

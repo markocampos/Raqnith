@@ -343,7 +343,7 @@
         if (!video) return;
 
         var startTime = 1;
-        var endTime = 6;
+        var endTime = 15;
 
         function checkTime() {
             if (video.currentTime >= endTime || video.currentTime < startTime) {

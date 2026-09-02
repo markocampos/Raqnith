@@ -23,6 +23,11 @@ class AppConfigSmokeTests(TestCase):
 
 
 class RegistrationTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+
+        cache.clear()
+
     def test_get_registration_page(self):
         resp = self.client.get(reverse("accounts:register"))
         self.assertEqual(resp.status_code, 200)

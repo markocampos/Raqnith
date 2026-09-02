@@ -30,34 +30,38 @@
             </div>
         </form>
 
-        {% if search_query %}
-        <p class="catalog-search-feedback">
-            {{ products.paginator.count }} result{{ products.paginator.count|pluralize }} for &ldquo;<strong>{{ search_query }}</strong>&rdquo;
-        </p>
+        {% if search_query or selected_category and selected_category != 'all' %}
+        <div class="catalog-active-filter-row">
+            {% if search_query %}
+            <span class="catalog-search-feedback">
+                {{ products.paginator.count|default:products|length }} result{{ products.paginator.count|default:products|length|pluralize }} for &ldquo;<strong>{{ search_query }}</strong>&rdquo;
+            </span>
+            {% endif %}
+            <a href="{% url 'catalog:product_list' %}" class="catalog-reset-filters-btn" aria-label="Clear all filters">
+                {% lucide "rotate-ccw" size=12 %} Reset filter{% if search_query and selected_category and selected_category != 'all' %}s{% endif %}
+            </a>
+        </div>
         {% endif %}
 
         {% if categories %}
         <!-- Category Filter Tabs -->
-        <nav class="catalog-category-nav" aria-label="Filter by Category">
-            <a href="{% url 'catalog:product_list' %}" class="category-pill-tab {% if not selected_category or selected_category == 'all' %}active{% endif %}">
-                <span>All</span>
-                <span class="category-count-badge">{{ total_count }}</span>
-            </a>
-            {% for cat in categories %}
-            <a href="?category={{ cat.slug }}" class="category-pill-tab {% if selected_category == cat.slug %}active{% endif %}">
-                <span>{{ cat.name }}</span>
-                <span class="category-count-badge">{{ cat.products.count }}</span>
-            </a>
-            {% endfor %}
-        </nav>
-        {% endif %}
-        <div class="catalog-perks-bar">
-            <span class="catalog-perk-item">{% lucide "zap" size=14 class="perk-icon" %} Instant Download</span>
-            <span class="catalog-perk-dot">•</span>
-            <span class="catalog-perk-item">{% lucide "shield-check" size=14 class="perk-icon" %} Secure Checkout</span>
-            <span class="catalog-perk-dot">•</span>
-            <span class="catalog-perk-item">{% lucide "file-check" size=14 class="perk-icon" %} Receipt Included</span>
+        <div class="catalog-category-scroll-wrap">
+            <nav class="catalog-category-nav" aria-label="Filter by Category">
+                <a href="{% url 'catalog:product_list' %}{% if search_query %}?q={{ search_query|urlencode }}{% endif %}"
+                   class="category-pill-tab {% if not selected_category or selected_category == 'all' %}active{% endif %}">
+                    <span>All</span>
+                    <span class="category-count-badge">{{ total_count }}</span>
+                </a>
+                {% for cat in categories %}
+                <a href="?category={{ cat.slug }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+                   class="category-pill-tab {% if selected_category == cat.slug %}active{% endif %}">
+                    <span>{{ cat.name }}</span>
+                    <span class="category-count-badge">{{ cat.num_available_products|default:cat.products.count }}</span>
+                </a>
+                {% endfor %}
+            </nav>
         </div>
+        {% endif %}
     </header>
 
     <!-- Responsive Product Grid -->
@@ -128,11 +132,14 @@
         </article>
         {% empty %}
         <div class="empty-state-card empty-catalog-card">
-            <div class="empty-icon-wrap" style="margin:0 auto 1rem;">{% lucide "package-open" size=32 %}</div>
+            <div class="empty-icon-wrap">
+                {% lucide "package-open" size=36 class="empty-icon" %}
+            </div>
             <h3>No products found</h3>
             <p>Nothing here yet. New products are added regularly.</p>
-            <a href="{% url 'catalog:product_list' %}" class="button button-outline" style="margin-top:1rem; display:inline-flex; align-items:center; gap:0.4rem;">
-                {% lucide "arrow-right" size=16 %} <span>Browse Latest Products</span>
+            <a href="{% url 'catalog:product_list' %}" class="button button-outline">
+                <span>Browse Latest Products</span>
+                {% lucide "arrow-right" size=16 %}
             </a>
         </div>
         {% endfor %}

@@ -14,7 +14,7 @@ def add_to_cart(request):
     form = AddToCartForm(request.POST)
     if form.is_valid():
         product = form.cleaned_data["product"]
-        cart = get_cart(request)
+        cart = get_cart(request, create=True)
 
         # Digital products: one row per (cart, product); adding again is a no-op.
         CartItem.objects.get_or_create(cart=cart, product=product)
@@ -32,9 +32,13 @@ def add_to_cart(request):
 
 
 def view_cart(request):
-    cart = get_cart(request)
-    items = list(cart.items.select_related("product"))
-    subtotal_cents = sum(item.line_total_cents for item in items)
+    cart = get_cart(request, create=False)
+    if cart is None:
+        items = []
+        subtotal_cents = 0
+    else:
+        items = list(cart.items.select_related("product"))
+        subtotal_cents = sum(item.line_total_cents for item in items)
     return render(
         request,
         "cart/detail.html",
@@ -44,6 +48,7 @@ def view_cart(request):
 
 @require_POST
 def remove_from_cart(request, item_id):
-    cart = get_cart(request)
-    CartItem.objects.filter(cart=cart, id=item_id).delete()
+    cart = get_cart(request, create=False)
+    if cart is not None:
+        CartItem.objects.filter(cart=cart, id=item_id).delete()
     return redirect("cart:detail")

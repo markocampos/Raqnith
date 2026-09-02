@@ -6,15 +6,23 @@ SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 DEBUG = False
 
-ALLOWED_HOSTS = config(
-    "DJANGO_ALLOWED_HOSTS",
-    default="virtus.duckdns.org",
-).split(",")
-CSRF_TRUSTED_ORIGINS = config(
-    "DJANGO_CSRF_TRUSTED_ORIGINS",
-    default="https://virtus.duckdns.org",
-).split(",")
-BASE_URL = config("DJANGO_BASE_URL", default="https://virtus.duckdns.org")
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in config(
+        "DJANGO_ALLOWED_HOSTS",
+        default="virtusdigital.store,www.virtusdigital.store,localhost,127.0.0.1",
+    ).split(",")
+    if h.strip()
+]
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in config(
+        "DJANGO_CSRF_TRUSTED_ORIGINS",
+        default="https://virtusdigital.store,https://www.virtusdigital.store,http://localhost:8000,http://127.0.0.1:8000",
+    ).split(",")
+    if o.strip()
+]
+BASE_URL = config("DJANGO_BASE_URL", default="https://virtusdigital.store")
 
 SECURE_SSL_REDIRECT = config("DJANGO_SECURE_SSL_REDIRECT", default=True, cast=bool)
 SESSION_COOKIE_SECURE = True

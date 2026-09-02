@@ -46,6 +46,7 @@ def build_confirmation_context(order):
         "access_url": f"{base}{reverse('orders:access', args=[token])}",
         "receipt_url": f"{base}{reverse('orders:receipt', args=[order.id])}",
         "track_url": f"{base}{reverse('orders:track')}",
+        "support_email": getattr(settings, "SUPPORT_EMAIL", "support@virtusdigital.store"),
     }
 
 
