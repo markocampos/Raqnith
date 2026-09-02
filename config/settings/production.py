@@ -8,13 +8,13 @@ DEBUG = False
 
 ALLOWED_HOSTS = config(
     "DJANGO_ALLOWED_HOSTS",
-    default="raqnith.duckdns.org",
+    default="virtus.duckdns.org",
 ).split(",")
 CSRF_TRUSTED_ORIGINS = config(
     "DJANGO_CSRF_TRUSTED_ORIGINS",
-    default="https://raqnith.duckdns.org",
+    default="https://virtus.duckdns.org",
 ).split(",")
-BASE_URL = config("DJANGO_BASE_URL", default="https://raqnith.duckdns.org")
+BASE_URL = config("DJANGO_BASE_URL", default="https://virtus.duckdns.org")
 
 SECURE_SSL_REDIRECT = config("DJANGO_SECURE_SSL_REDIRECT", default=True, cast=bool)
 SESSION_COOKIE_SECURE = True

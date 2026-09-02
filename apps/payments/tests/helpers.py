@@ -51,12 +51,11 @@ def sign_payload(raw_body, secret, timestamp="1700000000", live=True):
     """Return the PayMongo webhook Paymongo-Signature header string for ``raw_body``."""
     if isinstance(raw_body, str):
         raw_body = raw_body.encode("utf-8")
-    to_sign = f"{timestamp}.".encode("utf-8") + raw_body
+    to_sign = f"{timestamp}.".encode() + raw_body
     sig = hmac.new(secret.encode("utf-8"), to_sign, hashlib.sha256).hexdigest()
     if live:
         return f"t={timestamp},te=,li={sig}"
     return f"t={timestamp},te={sig},li="
-
 
 
 def make_mock_client(handler):

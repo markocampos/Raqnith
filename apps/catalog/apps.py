@@ -7,6 +7,7 @@ def auto_seed_default_categories(sender, **kwargs):
         return
     try:
         from apps.catalog.models import Category
+
         default_categories = [
             {"name": "Smoke & Test Products", "slug": "smoke-test", "icon": "zap"},
             {"name": "Templates & Themes", "slug": "templates-themes", "icon": "panels-top-left"},

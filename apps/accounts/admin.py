@@ -4,12 +4,12 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.db.models import Count, Q, Sum
 
-from config.admin import admin_site, pesos
 from apps.orders.models import Order
+from config.admin import admin_site, pesos
 
 from .models import User
 
-# Nothing in Raqnith uses permission groups; hide them to keep the
+# Nothing in Virtus uses permission groups; hide them to keep the
 # admin index clean. Re-register if role-based staff access is needed.
 try:
     admin_site.unregister(Group)
@@ -31,7 +31,7 @@ class OrderInline(admin.TabularInline):
 
 
 @admin.register(User, site=admin_site)
-class RaqnithUserAdmin(UserAdmin):
+class VirtusUserAdmin(UserAdmin):
     ordering = ["-date_joined"]
     list_display = [
         "email",

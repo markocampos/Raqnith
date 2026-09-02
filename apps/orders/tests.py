@@ -198,9 +198,7 @@ class ValidatorTests(TestCase):
 
 class OrderServiceTests(TestCase):
     def setUp(self):
-        self.product = Product.objects.create(
-            name="Widget", slug="widget", price_cents=1000
-        )
+        self.product = Product.objects.create(name="Widget", slug="widget", price_cents=1000)
         self.cart = Cart.objects.create(session_key="cart-session-1")
         CartItem.objects.create(cart=self.cart, product=self.product)
 
@@ -312,9 +310,7 @@ class OrderSelectorTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="owner", email="o@x.com")
         self.other = get_user_model().objects.create_user(username="other", email="x@o.com")
-        self.order = Order.objects.create(
-            subtotal_amount=1000, total_amount=1000, user=self.user
-        )
+        self.order = Order.objects.create(subtotal_amount=1000, total_amount=1000, user=self.user)
 
     def test_returns_order_for_owner(self):
         self.assertEqual(get_order_for_checkout(self.order.id, self.user), self.order)
@@ -332,9 +328,7 @@ class OrderSelectorTests(TestCase):
             get_order_for_checkout(self.order.id, None)
 
     def test_session_owned_order(self):
-        order = Order.objects.create(
-            subtotal_amount=1000, total_amount=1000, session_key="sess-1"
-        )
+        order = Order.objects.create(subtotal_amount=1000, total_amount=1000, session_key="sess-1")
         self.assertEqual(get_order_for_checkout(order.id, "sess-1"), order)
 
     def test_nonexistent_order(self):
@@ -347,18 +341,12 @@ class MarkOrderPaidCartTests(TestCase):
     buyer's cart; unrelated items and other buyers' carts stay untouched."""
 
     def setUp(self):
-        self.purchased = Product.objects.create(
-            name="Widget", slug="widget", price_cents=1000
-        )
-        self.extra = Product.objects.create(
-            name="Gadget", slug="gadget", price_cents=2000
-        )
+        self.purchased = Product.objects.create(name="Widget", slug="widget", price_cents=1000)
+        self.extra = Product.objects.create(name="Gadget", slug="gadget", price_cents=2000)
 
     def _pending_session_order(self, session_key, cart):
         CartItem.objects.get_or_create(cart=cart, product=self.purchased)
-        order = build_order_from_cart(
-            cart, shipping_method="standard", user_or_session=session_key
-        )
+        order = build_order_from_cart(cart, shipping_method="standard", user_or_session=session_key)
         order.transition_to(Order.Status.PENDING_PAYMENT)
         return order
 
@@ -390,9 +378,7 @@ class MarkOrderPaidCartTests(TestCase):
         )
         cart = Cart.objects.create(user=user)
         CartItem.objects.get_or_create(cart=cart, product=self.purchased)
-        order = build_order_from_cart(
-            cart, shipping_method="standard", user_or_session=user
-        )
+        order = build_order_from_cart(cart, shipping_method="standard", user_or_session=user)
         order.transition_to(Order.Status.PENDING_PAYMENT)
         self.assertEqual(cart.items.count(), 1)
 
@@ -414,9 +400,7 @@ class MarkOrderPaidCartTests(TestCase):
 
 class CreateOrderViewTests(TestCase):
     def setUp(self):
-        self.product = Product.objects.create(
-            name="Widget", slug="co-widget", price_cents=100000
-        )
+        self.product = Product.objects.create(name="Widget", slug="co-widget", price_cents=100000)
         self.user = get_user_model().objects.create_user(
             username="marko", email="marko@example.com", password="password123"
         )
@@ -596,6 +580,7 @@ class OrderStatusViewTests(TestCase):
     def _mock_service(self, status):
         def handler(request):
             return httpx.Response(200, json=intent_payload(status=status))
+
         return PaymentService(client=make_mock_client(handler))
 
     def test_processing_attempt_reconciles_to_succeeded(self):

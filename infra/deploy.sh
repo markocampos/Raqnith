@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Raqnith Smooth Deployment & Reload Script
+# Virtus Smooth Deployment & Reload Script
 set -euo pipefail
 
 GREEN='\033[0;32m'
@@ -14,13 +14,13 @@ DEPLOY_DIR="/home/ubuntu/deploy/docker"
 VENV_PYTHON="${PROJECT_DIR}/.venv/bin/python"
 SERVICE_NAME="raqnith.service"
 NGINX_CONTAINER="portfolio-nginx-1"
-HOST_HEADER="${DJANGO_ALLOWED_HOSTS:-raqnith.duckdns.org}"
+HOST_HEADER="${DJANGO_ALLOWED_HOSTS:-virtus.duckdns.org}"
 PORT="8002"
 
 cd "${PROJECT_DIR}"
 
 echo -e "${BOLD}==============================================${NC}"
-echo -e "${BOLD}       Raqnith Production Deployment          ${NC}"
+echo -e "${BOLD}       Virtus Production Deployment          ${NC}"
 echo -e "${BOLD}==============================================${NC}"
 
 # 1. Ensure online Nginx configuration is applied

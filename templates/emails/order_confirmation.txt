@@ -1,6 +1,6 @@
 {% load money_tags %}Hi there!
 
-Payment confirmed. Thank you for shopping at Raqnith!
+Payment confirmed. Thank you for shopping at Virtus!
 
 Order #{{ order.id|slice:":8" }}
 {% if order.paid_at %}Paid on {{ order.paid_at|date:"M d, Y h:i A" }}{% endif %}
@@ -36,8 +36,8 @@ A full receipt is always available at:
 Need help? Just reply to this email with your order number.
 
 Happy creating!
-The Raqnith Team
+The Virtus Team
 
 ---
-Raqnith. Instant digital products, PH payments.
+Virtus. Instant digital products, PH payments.
 Secure checkout powered by PayMongo · QR Ph · GCash · Maya

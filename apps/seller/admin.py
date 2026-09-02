@@ -2,9 +2,8 @@ from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
 
-from config.admin import admin_site
-
 from apps.seller.models import SellerApplication
+from config.admin import admin_site
 
 
 @admin.register(SellerApplication, site=admin_site)
@@ -45,20 +44,29 @@ class SellerApplicationAdmin(admin.ModelAdmin):
         ]
 
     fieldsets = (
-        ("Applicant", {
-            "fields": ("full_name", "email", "brand_name"),
-        }),
-        ("Work & Products", {
-            "fields": ("portfolio_url", "social_url", "category", "message"),
-        }),
-        ("Review", {
-            "fields": ("status", "reviewed_at", "created_at"),
-            "description": (
-                "The only editable section. Approved creators are onboarded "
-                "by the store team; their products are curated and published "
-                "via the admin, never self-serve."
-            ),
-        }),
+        (
+            "Applicant",
+            {
+                "fields": ("full_name", "email", "brand_name"),
+            },
+        ),
+        (
+            "Work & Products",
+            {
+                "fields": ("portfolio_url", "social_url", "category", "message"),
+            },
+        ),
+        (
+            "Review",
+            {
+                "fields": ("status", "reviewed_at", "created_at"),
+                "description": (
+                    "The only editable section. Approved creators are onboarded "
+                    "by the store team; their products are curated and published "
+                    "via the admin, never self-serve."
+                ),
+            },
+        ),
     )
 
     @admin.display(description="Status", ordering="status")

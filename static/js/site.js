@@ -1,4 +1,4 @@
-// Raqnith UI & Mobile Interaction Controller
+// Virtus UI & Mobile Interaction Controller
 (function () {
     "use strict";
 
@@ -325,8 +325,18 @@
 
     // Expose global Toast helper
     window.showToast = showToast;
-    window.Raqnith = window.Raqnith || {};
-    window.Raqnith.showToast = showToast;
+    window.Virtus = window.Virtus || {};
+    window.Virtus.showToast = showToast;
+
+    function initScrollIndicator() {
+        var indicator = document.querySelector(".hero-scroll-indicator");
+        if (!indicator) return;
+        var featured = document.getElementById("featured-products");
+        if (!featured) return;
+        indicator.addEventListener("click", function () {
+            featured.scrollIntoView({ behavior: "smooth" });
+        });
+    }
 
     // Initialize when DOM is ready
     if (document.readyState === "loading") {
@@ -337,6 +347,7 @@
             initGlobalCopyButtons();
             initAddToCartLoading();
             initPromoInlineError();
+            initScrollIndicator();
         });
     } else {
         initUserDropdown();
@@ -345,5 +356,6 @@
         initGlobalCopyButtons();
         initAddToCartLoading();
         initPromoInlineError();
+        initScrollIndicator();
     }
 })();

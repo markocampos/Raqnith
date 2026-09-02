@@ -68,7 +68,9 @@ class ApplyCouponView(View):
             return redirect("checkout:index")
 
         request.session["checkout_coupon"] = coupon.code
-        messages.success(request, f"Promo code '{coupon.code}' applied! ({coupon.discount_percent}% off)")
+        messages.success(
+            request, f"Promo code '{coupon.code}' applied! ({coupon.discount_percent}% off)"
+        )
         return redirect("checkout:index")
 
 
@@ -85,7 +87,9 @@ class CheckoutView(View):
 
     def get(self, request):
         cart = get_cart(request)
-        coupon_code = request.GET.get("coupon", "").strip() or request.session.get("checkout_coupon", "")
+        coupon_code = request.GET.get("coupon", "").strip() or request.session.get(
+            "checkout_coupon", ""
+        )
         try:
             context = build_checkout_context(cart, coupon_code=coupon_code)
         except OrderBuildError:
@@ -107,7 +111,9 @@ class CheckoutView(View):
 
     def post(self, request):
         cart = get_cart(request)
-        coupon_code = request.POST.get("coupon", "").strip() or request.session.get("checkout_coupon", "")
+        coupon_code = request.POST.get("coupon", "").strip() or request.session.get(
+            "checkout_coupon", ""
+        )
 
         is_json = (
             request.headers.get("X-Requested-With") == "XMLHttpRequest"
@@ -122,10 +128,12 @@ class CheckoutView(View):
             contact = body.get("contact", {}) if isinstance(body.get("contact"), dict) else {}
             email = str(contact.get("email") or body.get("email") or "").strip()
             terms_val = body.get("terms")
-            terms_accepted = (terms_val in (True, "true", "on", "1", 1)) if "terms" in body else True
+            terms_accepted = (
+                (terms_val in (True, "true", "on", "1", 1)) if "terms" in body else True
+            )
         else:
             email = request.POST.get("email", "").strip()
-            terms_accepted = (request.POST.get("terms") in ("on", "true", "1", True))
+            terms_accepted = request.POST.get("terms") in ("on", "true", "1", True)
 
         # 1. Validate user data (email and terms acceptance)
         form_errors = {}
@@ -142,7 +150,9 @@ class CheckoutView(View):
 
         if form_errors:
             if is_json:
-                return JsonResponse({"error": "validation_error", "errors": form_errors}, status=400)
+                return JsonResponse(
+                    {"error": "validation_error", "errors": form_errors}, status=400
+                )
             try:
                 context = build_checkout_context(cart, coupon_code=coupon_code)
             except OrderBuildError:
@@ -164,9 +174,7 @@ class CheckoutView(View):
             request.session.save()
 
         user_or_session = (
-            request.user
-            if request.user.is_authenticated
-            else request.session.session_key
+            request.user if request.user.is_authenticated else request.session.session_key
         )
 
         try:
@@ -196,6 +204,7 @@ class CheckoutView(View):
 
         # Cancel any previous unpaid/pending orders for this user, session, or email
         from django.db.models import Q
+
         q = Q()
         if request.user.is_authenticated:
             q |= Q(user=request.user)
@@ -204,7 +213,9 @@ class CheckoutView(View):
         if email:
             q |= Q(email__iexact=email)
 
-        prev_orders = Order.objects.filter(q, status=Order.Status.PENDING_PAYMENT).exclude(id=order.id)
+        prev_orders = Order.objects.filter(q, status=Order.Status.PENDING_PAYMENT).exclude(
+            id=order.id
+        )
 
         service = PaymentService()
         for prev in prev_orders:
@@ -226,7 +237,6 @@ class CheckoutView(View):
             return JsonResponse({"order_id": str(order.id)}, status=201)
 
         return redirect("checkout:order", order_id=order.id)
-
 
 
 class OrderCheckoutView(View):
@@ -257,10 +267,9 @@ class OrderCheckoutView(View):
         request.session["active_order_id"] = str(order.id)
         request.session.modified = True
 
-
         order.expire_if_overdue()
-        is_paid = (order.status == Order.Status.PAID)
-        is_order_cancelled = (order.status == Order.Status.CANCELLED)
+        is_paid = order.status == Order.Status.PAID
+        is_order_cancelled = order.status == Order.Status.CANCELLED
         service = PaymentService()
         attempt = order.payment_attempts.order_by("-created_at").first()
 
@@ -277,12 +286,24 @@ class OrderCheckoutView(View):
                 except (PayMongoTimeoutError, PayMongoNetworkError, PayMongoAPIError):
                     pass
 
-                if order.status == Order.Status.PAID or attempt.status == PaymentAttempt.Status.SUCCEEDED:
+                if (
+                    order.status == Order.Status.PAID
+                    or attempt.status == PaymentAttempt.Status.SUCCEEDED
+                ):
                     is_paid = True
                     is_order_cancelled = False
 
         # If not paid and not cancelled, create a fresh QR Ph attempt if needed
-        if not is_paid and not is_order_cancelled and (attempt is None or attempt.is_expired or not attempt.qr_url or attempt.status == PaymentAttempt.Status.FAILED):
+        if (
+            not is_paid
+            and not is_order_cancelled
+            and (
+                attempt is None
+                or attempt.is_expired
+                or not attempt.qr_url
+                or attempt.status == PaymentAttempt.Status.FAILED
+            )
+        ):
             try:
                 attempt = service.initiate_payment(
                     order=order, payment_method="qrph", replace_stale=True
@@ -305,12 +326,13 @@ class OrderCheckoutView(View):
             "qr_url": attempt.qr_url if attempt else "",
             "is_paid": is_paid,
             "is_order_cancelled": is_order_cancelled,
-            "is_expired": False if (is_paid or is_order_cancelled) else (attempt.is_expired if attempt else False),
-            "seconds_remaining": 0 if (is_paid or is_order_cancelled) else (attempt.seconds_remaining if attempt else 0),
+            "is_expired": False
+            if (is_paid or is_order_cancelled)
+            else (attempt.is_expired if attempt else False),
+            "seconds_remaining": 0
+            if (is_paid or is_order_cancelled)
+            else (attempt.seconds_remaining if attempt else 0),
             "error_map": FRIENDLY_ERROR_MESSAGES,
             "error_map_default": DEFAULT_ERROR_MESSAGE,
         }
         return render(request, "checkout/payment.html", context)
-
-
-

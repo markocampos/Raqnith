@@ -1,4 +1,4 @@
-# AGENTS.md — Raqnith Marketplace Guide
+# AGENTS.md — Virtus Marketplace Guide
 
 > **For all agents working on this codebase: Build the user-facing marketplace, not the backend.**
 > This document defines what the *buyer* sees, feels, and trusts. No infrastructure jargon should leak into the UI.
@@ -7,7 +7,7 @@
 
 ## 1. Mission: Safe Marketplace for Digital Products
 
-**Raqnith is a curated digital product marketplace** — developer kits, boilerplates, templates, and digital assets for instant download.
+**Virtus is a curated digital product marketplace** — developer kits, boilerplates, templates, and digital assets for instant download.
 
 The buyer should understand in 5 seconds:
 - This is a **real marketplace** with purchasable products (not a demo/payment test)
@@ -29,10 +29,10 @@ Landing → Browse Catalog → Product Detail → Cart → Checkout → Confirma
 | Page | Buyer Question | Must Answer Instantly |
 |------|---------------|-----------------------|
 | **Header** | Can I navigate and trust this store? | Logo, Home, Products, Cart (count), Sign In / Register |
-| **Hero** | What is Raqnith? | "Digital products, instant checkout with QR Ph & e-wallets" + 2 CTAs: Browse / Create Account |
+| **Hero** | What is Virtus? | "Digital products, instant checkout with QR Ph & e-wallets" + 2 CTAs: Browse / Create Account |
 | **Metrics Bar (hero)** | Why trust this new place? | 3 proof pills — see §3 |
 | **Featured Products** | Is this marketplace alive? | 6+ real cards with price, category, image, "In Stock", Add to Cart + Details |
-| **Why Raqnith / How It Works / Trust** | Is checkout safe and easy? | PH-specific, no jargon. 3 steps: Select → Scan → Instant Access |
+| **Why Virtus / How It Works / Trust** | Is checkout safe and easy? | PH-specific, no jargon. 3 steps: Select → Scan → Instant Access |
 | **Testimonials** | Do others buy here? | Social proof, PH names/cities, 5-star |
 | **Cart** | What am I buying? | Line items, total, trust footer (GCash/Maya/banks/SSL) |
 | **Checkout** | Is my money safe? | Order summary, email for delivery, QR Ph preview, terms, Pay button with total |
@@ -148,7 +148,7 @@ Problem: New store looks empty. Solution: Design for activity, not just inventor
 
 **Header (`base.html`):** Logo responsive, `Home` `Products` `Cart` `Sign In` `Register` — no overflow on 320px. Cart badge always visible.
 **Footer:** Tagline "Instant digital products with frictionless PH payments. Powered by PayMongo, QR Ph, GCash, Maya…" + columns `Explore / Account / Trust & Legal` + copyright.
-**Landing (`catalog/landing.html`):** Hero (title + subtitle + 2 CTAs + 3 metrics), Featured (6 cards), Why Raqnith (4 features), How It Works (3 steps), Trust Banner (4 chips + privacy/terms links), Testimonials (3), CTA Banner.
+**Landing (`catalog/landing.html`):** Hero (title + subtitle + 2 CTAs + 3 metrics), Featured (6 cards), Why Virtus (4 features), How It Works (3 steps), Trust Banner (4 chips + privacy/terms links), Testimonials (3), CTA Banner.
 **Catalog (`catalog/product_list.html`):** Title + count pill, category nav, perks bar, grid (1 col mobile → 2 tablet → 3/4 desktop), card banner + price + `Add to Cart`/`Details`.
 **Product Detail (`catalog/product_detail.html`):** Breadcrumb, visual banner + perks card, panel with title/category/price card + features row + `Add to Cart` + payment strip + back link.
 **Cart (`cart/detail.html`):** Header with count, grid items + guarantee box, sticky summary with total + `Checkout` primary + `Continue shopping` + payment badges. Empty state with browse CTA.
@@ -166,7 +166,7 @@ Problem: New store looks empty. Solution: Design for activity, not just inventor
 
 Before any PR, verify buyer sees:
 
-- [ ] Can a first-time visitor state what Raqnith sells + how they pay in <7s?
+- [ ] Can a first-time visitor state what Virtus sells + how they pay in <7s?
 - [ ] Are the 3 pillars visible above the fold and at checkout?
 - [ ] Does every pay button show the exact total (`Pay ₱499`)?
 - [ ] Is there a visible trust signal within 200px of the pay button?

@@ -73,9 +73,7 @@ class RegistrationTests(TestCase):
         }
         resp = self.client.post(reverse("accounts:register"), data)
         self.assertEqual(resp.status_code, 400)
-        self.assertContains(
-            resp, "A user with that username already exists", status_code=400
-        )
+        self.assertContains(resp, "A user with that username already exists", status_code=400)
 
     def test_duplicate_email_fails(self):
         User.objects.create_user(
@@ -117,34 +115,46 @@ class LoginAndLogoutTests(TestCase):
     def test_get_login_page(self):
         resp = self.client.get(reverse("accounts:login"))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "Sign in to Raqnith")
+        self.assertContains(resp, "Sign in to Virtus")
 
     def test_login_with_username(self):
-        resp = self.client.post(reverse("accounts:login"), {
-            "username_or_email": "testuser",
-            "password": "SecurePassword123!",
-        })
+        resp = self.client.post(
+            reverse("accounts:login"),
+            {
+                "username_or_email": "testuser",
+                "password": "SecurePassword123!",
+            },
+        )
         self.assertRedirects(resp, reverse("accounts:profile"))
 
     def test_login_with_email(self):
-        resp = self.client.post(reverse("accounts:login"), {
-            "username_or_email": "testuser@example.com",
-            "password": "SecurePassword123!",
-        })
+        resp = self.client.post(
+            reverse("accounts:login"),
+            {
+                "username_or_email": "testuser@example.com",
+                "password": "SecurePassword123!",
+            },
+        )
         self.assertRedirects(resp, reverse("accounts:profile"))
 
     def test_login_with_next_param(self):
-        resp = self.client.post(reverse("accounts:login") + "?next=/privacy/", {
-            "username_or_email": "testuser",
-            "password": "SecurePassword123!",
-        })
+        resp = self.client.post(
+            reverse("accounts:login") + "?next=/privacy/",
+            {
+                "username_or_email": "testuser",
+                "password": "SecurePassword123!",
+            },
+        )
         self.assertRedirects(resp, "/privacy/")
 
     def test_login_invalid_password(self):
-        resp = self.client.post(reverse("accounts:login"), {
-            "username_or_email": "testuser",
-            "password": "WrongPassword!",
-        })
+        resp = self.client.post(
+            reverse("accounts:login"),
+            {
+                "username_or_email": "testuser",
+                "password": "WrongPassword!",
+            },
+        )
         self.assertEqual(resp.status_code, 400)
         self.assertContains(resp, "Invalid username/email or password", status_code=400)
 
@@ -173,10 +183,13 @@ class CartMigrationOnAuthTests(TestCase):
             email="shopper@example.com",
             password="SecurePassword123!",
         )
-        self.client.post(reverse("accounts:login"), {
-            "username_or_email": "shopper",
-            "password": "SecurePassword123!",
-        })
+        self.client.post(
+            reverse("accounts:login"),
+            {
+                "username_or_email": "shopper",
+                "password": "SecurePassword123!",
+            },
+        )
 
         # 3. User's cart now contains the item
         user_cart = Cart.objects.get(user=user)
@@ -252,7 +265,7 @@ class ProfileAndSettingsTests(TestCase):
     def test_profile_status_filtering_and_pagination(self):
         self.client.login(username="juan", password="SecurePassword123!")
         # Create multiple orders to test pagination (page size 6)
-        for i in range(8):
+        for _i in range(8):
             Order.objects.create(
                 user=self.user,
                 subtotal_amount=1000,
@@ -273,12 +286,15 @@ class ProfileAndSettingsTests(TestCase):
 
     def test_settings_personal_details_update(self):
         self.client.login(username="juan", password="SecurePassword123!")
-        resp = self.client.post(reverse("accounts:settings"), {
-            "action": "update_profile",
-            "first_name": "Juanito",
-            "last_name": "Santos",
-            "email": "juanito@example.com",
-        })
+        resp = self.client.post(
+            reverse("accounts:settings"),
+            {
+                "action": "update_profile",
+                "first_name": "Juanito",
+                "last_name": "Santos",
+                "email": "juanito@example.com",
+            },
+        )
         self.assertRedirects(resp, reverse("accounts:settings") + "?tab=profile")
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, "Juanito")
@@ -287,24 +303,30 @@ class ProfileAndSettingsTests(TestCase):
 
     def test_settings_password_change(self):
         self.client.login(username="juan", password="SecurePassword123!")
-        resp = self.client.post(reverse("accounts:settings"), {
-            "action": "change_password",
-            "current_password": "SecurePassword123!",
-            "new_password": "NewUltraPassword456!",
-            "confirm_password": "NewUltraPassword456!",
-        })
+        resp = self.client.post(
+            reverse("accounts:settings"),
+            {
+                "action": "change_password",
+                "current_password": "SecurePassword123!",
+                "new_password": "NewUltraPassword456!",
+                "confirm_password": "NewUltraPassword456!",
+            },
+        )
         self.assertRedirects(resp, reverse("accounts:settings") + "?tab=security")
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("NewUltraPassword456!"))
 
     def test_settings_wrong_current_password(self):
         self.client.login(username="juan", password="SecurePassword123!")
-        resp = self.client.post(reverse("accounts:settings"), {
-            "action": "change_password",
-            "current_password": "WrongPassword!",
-            "new_password": "NewUltraPassword456!",
-            "confirm_password": "NewUltraPassword456!",
-        })
+        resp = self.client.post(
+            reverse("accounts:settings"),
+            {
+                "action": "change_password",
+                "current_password": "WrongPassword!",
+                "new_password": "NewUltraPassword456!",
+                "confirm_password": "NewUltraPassword456!",
+            },
+        )
         self.assertEqual(resp.status_code, 400)
         self.assertContains(resp, "Incorrect current password", status_code=400)
 
@@ -370,7 +392,7 @@ class UserAdminTests(TestCase):
     def test_deactivate_action(self):
         self._login_admin()
         change_url = reverse("admin:accounts_user_changelist")
-        resp = self.client.post(
+        self.client.post(
             change_url,
             {
                 "action": "deactivate_users",
@@ -393,9 +415,40 @@ class AdminDashboardTests(TestCase):
         self.client.force_login(self.admin)
         resp = self.client.get(reverse("admin:index"))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "Raqnith Admin")
+        self.assertContains(resp, "Virtus Admin")
         self.assertNotContains(resp, "Django administration")
         # Unused auth machinery stays out of the dashboard.
         self.assertNotContains(resp, "Authentication and Authorization")
         self.assertNotContains(resp, "Access &amp; Roles")
         self.assertNotContains(resp, "/admin/auth/group/")
+
+
+class RateLimitTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+
+        cache.clear()
+
+    def test_login_rate_limit(self):
+        url = reverse("accounts:login")
+        # The limit is 10/m. We hit it 10 times, all should be 200 (form errors).
+        for _ in range(10):
+            resp = self.client.post(url, {"username": "foo", "password": "bar"})
+            self.assertNotEqual(resp.status_code, 429)
+
+        # The 11th request should be blocked.
+        resp = self.client.post(url, {"username": "foo", "password": "bar"})
+        self.assertEqual(resp.status_code, 429)
+        self.assertContains(resp, "Too many login attempts", status_code=429)
+
+    def test_register_rate_limit(self):
+        url = reverse("accounts:register")
+        # The limit is 5/h. We hit it 5 times.
+        for _ in range(5):
+            resp = self.client.post(url, {})
+            self.assertNotEqual(resp.status_code, 429)
+
+        # The 6th request should be blocked.
+        resp = self.client.post(url, {})
+        self.assertEqual(resp.status_code, 429)
+        self.assertContains(resp, "Too many registration attempts", status_code=429)

@@ -7,13 +7,14 @@ Covers:
 * settle_free_order end-to-end settlement + idempotency
 * paid orders never free-settle
 """
+
 from django.core import mail
 from django.test import TestCase
 
 from apps.cart.models import Cart, CartItem
 from apps.catalog.models import Product
 from apps.orders.exceptions import OrderBuildError
-from apps.orders.models import LicenseKey, Order, OrderItem
+from apps.orders.models import LicenseKey, Order
 from apps.orders.services.order_service import (
     build_order_from_cart,
     is_free_order,
@@ -42,9 +43,7 @@ class FreeCheckoutTestBase(TestCase):
 
 class IsFreeOrderTests(TestCase):
     def make_order(self, total_amount):
-        return Order.objects.create(
-            subtotal_amount=total_amount, total_amount=total_amount
-        )
+        return Order.objects.create(subtotal_amount=total_amount, total_amount=total_amount)
 
     def test_zero_total_is_free(self):
         self.assertTrue(is_free_order(self.make_order(0)))
@@ -96,9 +95,7 @@ class SettleFreeOrderTests(FreeCheckoutTestBase):
 
         self.assertEqual(settled.status, Order.Status.PAID)
         self.assertIsNotNone(settled.paid_at)
-        self.assertTrue(
-            LicenseKey.objects.filter(order_item__order=settled).exists()
-        )
+        self.assertTrue(LicenseKey.objects.filter(order_item__order=settled).exists())
         # Cart cleared after free settlement.
         self.assertEqual(CartItem.objects.count(), 0)
 

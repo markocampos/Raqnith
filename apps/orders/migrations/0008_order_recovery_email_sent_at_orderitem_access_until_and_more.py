@@ -7,48 +7,80 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('catalog', '0007_product_membership_duration_days_and_more'),
-        ('orders', '0007_order_confirmation_sent_at'),
+        ("catalog", "0007_product_membership_duration_days_and_more"),
+        ("orders", "0007_order_confirmation_sent_at"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='order',
-            name='recovery_email_sent_at',
+            model_name="order",
+            name="recovery_email_sent_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='orderitem',
-            name='access_until',
+            model_name="orderitem",
+            name="access_until",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.CreateModel(
-            name='DownloadLog',
+            name="DownloadLog",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
-                ('user_agent', models.CharField(blank=True, max_length=300)),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('file', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='download_logs', to='catalog.productfile')),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='download_logs', to='orders.order')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("ip_address", models.GenericIPAddressField(blank=True, null=True)),
+                ("user_agent", models.CharField(blank=True, max_length=300)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                (
+                    "file",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="download_logs",
+                        to="catalog.productfile",
+                    ),
+                ),
+                (
+                    "order",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="download_logs",
+                        to="orders.order",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='LicenseKey',
+            name="LicenseKey",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('key', models.CharField(db_index=True, max_length=40, unique=True)),
-                ('issued_at', models.DateTimeField(auto_now_add=True)),
-                ('revoked_at', models.DateTimeField(blank=True, null=True)),
-                ('order_item', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='license_key', to='orders.orderitem')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("key", models.CharField(db_index=True, max_length=40, unique=True)),
+                ("issued_at", models.DateTimeField(auto_now_add=True)),
+                ("revoked_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "order_item",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="license_key",
+                        to="orders.orderitem",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['issued_at'],
+                "ordering": ["issued_at"],
             },
         ),
     ]

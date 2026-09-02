@@ -20,5 +20,3 @@ def get_order_for_checkout(order_id, user_or_session):
         raise Order.DoesNotExist("Order not found.")
 
     return order
-
-

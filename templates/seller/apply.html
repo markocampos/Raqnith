@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load lucide %}
 
-{% block title %}Apply as Seller | Raqnith{% endblock %}
+{% block title %}Apply as Seller | Virtus{% endblock %}
 
 {% block content %}
 <main class="dashboard-container">
@@ -13,7 +13,7 @@
         </a>
         <div class="settings-title-row">
             <div>
-                <h1>Sell on Raqnith</h1>
+                <h1>Sell on Virtus</h1>
                 <p class="section-subtext">We carefully pick every creator we work with. Tell us what you make and if it fits, we'll list your products with instant QR Ph, GCash and Maya checkout.</p>
             </div>
         </div>
@@ -153,7 +153,7 @@
                 <label for="{{ form.message.id_for_label }}">Tell Us About Your Products <span class="required-star">*</span></label>
                 {{ form.message }}
                 {% if form.message.errors %}<span class="field-error">{{ form.message.errors.0 }}</span>
-                {% else %}<span class="field-hint">What do you make, who is it for, and why will Raqnith buyers love it?</span>{% endif %}
+                {% else %}<span class="field-hint">What do you make, who is it for, and why will Virtus buyers love it?</span>{% endif %}
             </div>
         </section>
 
@@ -198,7 +198,7 @@
     if (!form) return;
 
     var TOTAL = 3;
-    var DRAFT_KEY = "raqnith_seller_apply_draft";
+    var DRAFT_KEY = "virtus_seller_apply_draft";
     var DRAFT_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // one week
     var panels = form.querySelectorAll(".apply-panel");
     var dots = document.querySelectorAll(".apply-step-dot");

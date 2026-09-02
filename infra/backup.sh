@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Raqnith PostgreSQL daily backup.
+# Virtus PostgreSQL daily backup.
 set -euo pipefail
 
 BACKUP_DIR="${RAQNITH_BACKUP_DIR:-/opt/raqnith/backups}"

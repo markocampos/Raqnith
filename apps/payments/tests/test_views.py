@@ -225,9 +225,7 @@ class PaymentReturnViewTests(TestCase):
             resp = self._get()
 
         self.assertEqual(resp.status_code, 302)
-        self.assertEqual(
-            resp.url, reverse("orders:success", args=[self.order.id])
-        )
+        self.assertEqual(resp.url, reverse("orders:success", args=[self.order.id]))
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, Order.Status.PAID)
         self.assertIsNotNone(self.order.paid_at)

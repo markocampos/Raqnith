@@ -1,4 +1,4 @@
-// Raqnith Checkout & QR Ph Payment Controller
+// Virtus Checkout & QR Ph Payment Controller
 (function () {
     "use strict";
 

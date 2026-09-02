@@ -1,65 +1,94 @@
 {% extends "base.html" %}
+{% load static %}
 {% load money_tags %}
 {% load lucide %}
-
-{% block title %}Raqnith | Instant Digital Products & Secure Checkout{% endblock %}
+{% block title %}Virtus | Instant Digital Products & Secure Checkout{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <section class="landing-hero">
+    <!-- Subtle dot-grid texture -->
+    <div class="hero-grid-texture" aria-hidden="true"></div>
+
+    <!-- Depth gradient — center pull -->
+    <div class="hero-depth-gradient" aria-hidden="true"></div>
+
+    <!-- Ambient amber glow — bottom left -->
+    <div class="hero-glow-amber" aria-hidden="true"></div>
+
+    <!-- Background Video — used as subtle texture, heavily dimmed -->
+    <video class="hero-bg-video" autoplay muted loop playsinline preload="auto">
+        <source src="{% static 'video/hero-bg.mp4' %}" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+
     <div class="hero-container">
-        <h1 class="hero-title">Digital Products Ready to Download Instantly</h1>
-        <p class="hero-subtitle">
-            Find templates, kits, and creative tools you can use right away.
-            Pay easily with <strong>GCash, Maya, or your bank app</strong>, no hidden fees.
+
+        <!-- Eyebrow -->
+        <div class="hero-eyebrow hero-animate" style="--delay:0" aria-hidden="true">
+            <span class="hero-eyebrow-dot"></span>
+            <span>Digital Marketplace</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="hero-title hero-animate" style="--delay:1">
+            Premium Digital Assets.<br>
+            <span class="hero-accent-word">Instant</span> checkout.
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="hero-subtitle hero-animate" style="--delay:2">
+            Templates, kits &amp; dev tools — pay with <strong>GCash, Maya or any QR&nbsp;Ph app</strong> and download the moment you check out. No waiting.
         </p>
 
-        <div class="hero-actions">
-            <a href="{% url 'catalog:product_list' %}" class="button button-hero-primary">
-                <span>Browse Products</span>
-                {% lucide "arrow-right" size=18 %}
+        <!-- CTAs -->
+        <div class="hero-actions hero-animate" style="--delay:3">
+            <a href="{% url 'catalog:product_list' %}" class="btn-hero-primary">
+                Browse Products
+                {% lucide "arrow-right" size=17 %}
             </a>
             {% if not user.is_authenticated %}
-            <a href="{% url 'accounts:register' %}" class="button button-hero-secondary">
-                {% lucide "user-plus" size=16 %}
-                <span>Create Free Account</span>
+            <a href="{% url 'accounts:register' %}" class="btn-hero-ghost">
+                {% lucide "user-plus" size=15 %}
+                Create Free Account
             </a>
             {% else %}
-            <a href="{% url 'accounts:profile' %}" class="button button-hero-secondary">
-                {% lucide "user" size=16 %}
-                <span>My Profile & Orders</span>
+            <a href="{% url 'accounts:profile' %}" class="btn-hero-ghost">
+                {% lucide "user" size=15 %}
+                My Orders
             </a>
             {% endif %}
         </div>
 
-        <div class="hero-metrics">
-            <div class="metric-item">
-                <div class="metric-icon">
-                    {% lucide "zap" size=22 %}
-                </div>
-                <div class="metric-text">
-                    <strong>Instant Delivery</strong>
-                    <span>Direct downloads & receipts</span>
-                </div>
-            </div>
-            <div class="metric-item">
-                <div class="metric-icon">
-                    {% lucide "qr-code" size=22 %}
-                </div>
-                <div class="metric-text">
-                    <strong>QR Ph & E-Wallets</strong>
-                    <span>GCash, Maya & 40+ PH banks</span>
-                </div>
-            </div>
-            <div class="metric-item">
-                <div class="metric-icon">
-                    {% lucide "shield-check" size=22 %}
-                </div>
-                <div class="metric-text">
-                    <strong>Safe & Secure</strong>
-                    <span>Your payment stays private</span>
-                </div>
-            </div>
+        <!-- Trust pills row -->
+        <div class="hero-trust-row hero-animate" style="--delay:4">
+            <span class="hero-trust-pill">
+                {% lucide "zap" size=13 %}
+                Instant delivery
+            </span>
+            <span class="hero-trust-sep" aria-hidden="true">·</span>
+            <span class="hero-trust-pill">
+                {% lucide "qr-code" size=13 %}
+                GCash &amp; Maya
+            </span>
+            <span class="hero-trust-sep" aria-hidden="true">·</span>
+            <span class="hero-trust-pill">
+                {% lucide "shield-check" size=13 %}
+                100% Protected
+            </span>
+            <span class="hero-trust-sep" aria-hidden="true">·</span>
+            <span class="hero-trust-pill">
+                {% lucide "lock" size=13 %}
+                256-bit SSL
+            </span>
+        </div>
+
+    </div>
+
+    <!-- Scroll cue -->
+    <div class="hero-scroll-cue hero-animate" style="--delay:5" aria-hidden="true">
+        <div class="hero-scroll-track">
+            <div class="hero-scroll-thumb"></div>
         </div>
     </div>
 </section>
@@ -76,46 +105,67 @@
         <div class="product-grid">
             {% for product in featured_products %}
             <article class="product-card product-card-modern" data-category="{{ product.category.slug|default:'' }}">
-                <!-- Card Thumbnail / Visual Area -->
-                <div class="product-visual-banner">
-                    <div class="product-visual-top">
-                        <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
-                        <span class="product-status-pill">✓ In Stock</span>
+
+                {% if product.primary_image %}
+                <!-- Cover Image Preview -->
+                <a href="{{ product.get_absolute_url }}" class="pc-cover-wrap" aria-label="{{ product.name }}">
+                    <img src="{{ product.primary_image.image.url }}" alt="{{ product.name }}" class="pc-cover-img" loading="lazy">
+                </a>
+                <div class="pc-meta-row">
+                    <span class="pc-category">{{ product.category.name|default:"Digital Asset" }}</span>
+                    {% if product.is_available %}
+                    <span class="pc-stock">✓ In Stock</span>
+                    {% else %}
+                    <span class="pc-stock pc-stock-out">Sold Out</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <!-- Fallback Header with Icon Chip -->
+                <div class="pc-header">
+                    <div class="pc-icon-chip">
+                        {% include "includes/product_icon.html" with product=product size=18 %}
                     </div>
-                    <div class="product-visual-center">
-                        <div class="product-visual-icon">
-                            {% include "includes/product_icon.html" with product=product size=26 %}
-                        </div>
+                    <div class="pc-meta">
+                        <span class="pc-category">{{ product.category.name|default:"Digital Asset" }}</span>
+                        {% if product.is_available %}
+                        <span class="pc-stock">✓ In Stock</span>
+                        {% else %}
+                        <span class="pc-stock pc-stock-out">Sold Out</span>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="product-card-body">
-                    <h3 class="product-title">
+                {% endif %}
+
+                <!-- Body -->
+                <div class="pc-body">
+                    <h3 class="pc-title">
                         <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
                     </h3>
-                    <p class="product-desc">{{ product.description|default:"Instant digital license with automated receipt confirmation and download access." }}</p>
+                    <p class="pc-desc">{{ product.description|default:"Instant digital license with automated receipt confirmation and download access." }}</p>
                 </div>
-                <div class="product-card-footer">
-                    <div class="product-price-block">
-                        <span class="price-label">Price</span>
-                        <span class="price-val">{{ product.price_cents|php_or_free }}</span>
+
+                <!-- Footer -->
+                <div class="pc-foot">
+                    <div class="pc-price-block">
+                        <span class="pc-price">{{ product.price_cents|php_or_free }}</span>
                     </div>
-                    <div class="product-card-buttons">
+                    <div class="pc-actions">
                         {% if product.is_available %}
                         <form method="post" action="{% url 'cart:add' %}" class="form-add-to-cart">
                             {% csrf_token %}
                             <input type="hidden" name="product" value="{{ product.id }}">
                             <button type="submit" class="btn-add-cart">
-                                {% lucide "shopping-cart" size=15 class="btn-cart-icon-inline" %}
-                                <span>Add to Cart</span>
+                                {% lucide "shopping-cart" size=14 %}
+                                Add to Cart
                             </button>
                         </form>
                         {% endif %}
-                        <a href="{{ product.get_absolute_url }}" class="btn-view-details" title="View details for {{ product.name }}">
-                            <span>Details</span>
-                            {% lucide "arrow-right" size=14 %}
+                        <a href="{{ product.get_absolute_url }}" class="pc-details-link" title="View {{ product.name }}">
+                            Details {% lucide "arrow-right" size=13 %}
                         </a>
                     </div>
                 </div>
+
             </article>
             {% empty %}
             <div class="empty-state-card">
@@ -144,49 +194,67 @@
 <section class="landing-section section-alternate" id="features">
     <div class="section-container">
         <div class="section-header">
-            <span class="section-tag">Why Raqnith</span>
-            <h2 class="section-heading">What Makes Raqnith Different</h2>
+            <span class="section-tag">Why Virtus</span>
+            <h2 class="section-heading">What Makes Virtus Different</h2>
             <p class="section-subtext">Everything is quick, safe, and made for how you already pay in the Philippines.</p>
         </div>
 
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon-wrapper icon-qr">
-                    {% lucide "qr-code" size=22 class="feature-icon-svg" %}
+        <div class="bento-features-grid">
+            <!-- Card 1: Wide (2 cols) -->
+            <div class="bento-card wide-1">
+                <div class="bento-visual">
+                    <div class="bento-icon-glow">
+                        {% lucide "qr-code" size=26 %}
+                    </div>
+                    <div style="position:absolute; top: -1rem; right: 2rem; opacity: 0.1; color: #f5a623; transform: rotate(15deg);">
+                        {% lucide "smartphone" size=120 stroke_width=1 %}
+                    </div>
                 </div>
-                <div class="feature-content">
+                <div class="bento-content">
                     <h3>Pay with Apps You Trust</h3>
                     <p>Just scan to pay with <strong>GCash, Maya, BPI, BDO, UnionBank, ShopeePay</strong> and 40+ banks. No typing, no extra fees.</p>
                 </div>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon-wrapper icon-secure">
-                    {% lucide "shield-check" size=22 class="feature-icon-svg" %}
+            <!-- Card 2: Square (1 col) -->
+            <div class="bento-card">
+                <div class="bento-visual">
+                    <div class="bento-icon-glow" style="background: rgba(245, 166, 35, 0.1); color: #f5a623; box-shadow: 0 0 30px rgba(245, 166, 35, 0.15); border-color: rgba(245, 166, 35, 0.25);">
+                        {% lucide "shield-check" size=26 %}
+                    </div>
                 </div>
-                <div class="feature-content">
+                <div class="bento-content">
                     <h3>Your Payment Stays Private</h3>
-                    <p>You pay safely with the apps you already use. <strong>We never see or keep</strong> your payment details. Everything stays private.</p>
+                    <p>You pay safely with the apps you already use. <strong>We never see or keep</strong> your payment details.</p>
                 </div>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon-wrapper icon-instant">
-                    {% lucide "zap" size=22 class="feature-icon-svg" %}
+            <!-- Card 3: Square (1 col) -->
+            <div class="bento-card">
+                <div class="bento-visual">
+                    <div class="bento-icon-glow" style="background: rgba(245, 166, 35, 0.1); color: #f5a623; box-shadow: 0 0 30px rgba(245, 166, 35, 0.15); border-color: rgba(245, 166, 35, 0.25);">
+                        {% lucide "zap" size=26 %}
+                    </div>
                 </div>
-                <div class="feature-content">
+                <div class="bento-content">
                     <h3>Get It Right Away</h3>
                     <p>Your <strong>download and receipt</strong> arrive right after you pay. No waiting, no extra steps.</p>
                 </div>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon-wrapper icon-portal">
-                    {% lucide "layout-dashboard" size=22 class="feature-icon-svg" %}
+            <!-- Card 4: Wide (2 cols) -->
+            <div class="bento-card wide-2">
+                <div class="bento-visual">
+                    <div class="bento-icon-glow" style="background: rgba(245, 166, 35, 0.1); color: #f5a623; box-shadow: 0 0 30px rgba(245, 166, 35, 0.15); border-color: rgba(245, 166, 35, 0.25);">
+                        {% lucide "layout-dashboard" size=26 %}
+                    </div>
+                    <div style="position:absolute; bottom: -2rem; right: -1rem; opacity: 0.04; color: #f5a623;">
+                        {% lucide "layers" size=180 stroke_width=1 %}
+                    </div>
                 </div>
-                <div class="feature-content">
+                <div class="bento-content">
                     <h3>All Your Orders in One Place</h3>
-                    <p>Find your downloads, receipts, and order history <strong>anytime in your account</strong>.</p>
+                    <p>Find your downloads, receipts, and order history <strong>anytime in your account</strong>. Always accessible.</p>
                 </div>
             </div>
         </div>
@@ -194,72 +262,104 @@
 </section>
 
 <!-- How It Works Section -->
-<section class="landing-section" id="how-it-works">
+<section class="landing-section hiw-section" id="how-it-works">
     <div class="section-container">
-        <div class="section-header">
-            <span class="section-tag">Three Simple Steps</span>
-            <h2 class="section-heading">How Checkout Works</h2>
-            <p class="section-subtext">From picking your item to getting it, in under 30 seconds.</p>
+
+        <div class="hiw-header">
+            <span class="section-tag">How it works</span>
+            <h2 class="hiw-heading">From browse to download<br>in under 30 seconds.</h2>
         </div>
 
-        <div class="steps-grid">
-            <div class="step-card">
-                <div class="step-number-wrap">
-                    <span class="step-number">1</span>
-                    <span class="step-icon" aria-hidden="true">{% lucide "shopping-bag" size=16 %}</span>
+        <div class="hiw-steps">
+
+            <!-- Step 1 -->
+            <div class="hiw-step">
+                <div class="hiw-step-left">
+                    <span class="hiw-num">01</span>
+                    <div class="hiw-connector" aria-hidden="true"></div>
                 </div>
-                <div class="step-content">
-                    <h3>Select Your Products</h3>
-                    <p>Browse our catalog of digital products, add items to your cart, and head to checkout. Guest or account, no friction.</p>
+                <div class="hiw-step-body">
+                    <div class="hiw-step-icon">{% lucide "shopping-bag" size=20 %}</div>
+                    <h3>Pick what you need</h3>
+                    <p>Browse the catalog, add to cart. No account required — guest checkout works on every product.</p>
                 </div>
             </div>
 
-            <div class="step-card">
-                <div class="step-number-wrap">
-                    <span class="step-number">2</span>
-                    <span class="step-icon" aria-hidden="true">{% lucide "qr-code" size=16 %}</span>
+            <!-- Step 2 -->
+            <div class="hiw-step">
+                <div class="hiw-step-left">
+                    <span class="hiw-num">02</span>
+                    <div class="hiw-connector" aria-hidden="true"></div>
                 </div>
-                <div class="step-content">
-                    <h3>Scan to Pay</h3>
-                    <p>Scan the QR code with <strong>GCash, Maya, BPI, BDO, UnionBank</strong> or your usual banking app. Zero fees.</p>
+                <div class="hiw-step-body">
+                    <div class="hiw-step-icon">{% lucide "qr-code" size=20 %}</div>
+                    <h3>Scan &amp; pay</h3>
+                    <p>A QR code appears at checkout. Scan it with any payment app you already have. Zero extra fees.</p>
+                    <div class="hiw-pay-rail" aria-label="Accepted payment apps">
+                        <span class="hiw-pay-chip">GCash</span>
+                        <span class="hiw-pay-chip">Maya</span>
+                        <span class="hiw-pay-chip">BPI</span>
+                        <span class="hiw-pay-chip">BDO</span>
+                        <span class="hiw-pay-chip">UnionBank</span>
+                        <span class="hiw-pay-chip hiw-pay-chip-more">+40 more</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="step-card">
-                <div class="step-number-wrap">
-                    <span class="step-number">3</span>
-                    <span class="step-icon" aria-hidden="true">{% lucide "zap" size=16 %}</span>
+            <!-- Step 3 -->
+            <div class="hiw-step hiw-step-last">
+                <div class="hiw-step-left">
+                    <span class="hiw-num">03</span>
                 </div>
-                <div class="step-content">
-                    <h3>Instant Access</h3>
-                    <p>Payment verified in seconds. Download files + receipt sent to your email immediately. No waiting.</p>
+                <div class="hiw-step-body">
+                    <div class="hiw-step-icon hiw-step-icon-done">{% lucide "zap" size=20 %}</div>
+                    <h3>Instant access</h3>
+                    <p>Payment confirms in seconds. Your download link and receipt land in your inbox — no waiting, no manual approval.</p>
                 </div>
             </div>
-        </div>
+
+        </div><!-- /hiw-steps -->
     </div>
 </section>
 
-<!-- Security & Trust Banner -->
-<section class="landing-section section-trust">
-    <div class="section-container">
-        <div class="trust-box">
-            <div class="trust-text">
-                <span class="trust-pill">🛡️ Safe & Trusted</span>
-                <h2>Your Information Stays Safe & Private</h2>
-                <p>
-                    Pay the way you already do, with <strong>GCash, Maya, or your banking app</strong>. Your details stay private and are never stored. Every purchase is quick, safe, and confirmed right away, just like shopping with a trusted store.
-                </p>
-                <div class="trust-links">
-                    <a href="{% url 'privacy_policy' %}" class="trust-link">Privacy Policy &rarr;</a>
-                    <a href="{% url 'terms_of_service' %}" class="trust-link">Terms of Service &rarr;</a>
-                </div>
+<!-- Security & Trust Banner Section -->
+<section class="premium-trust-section">
+    <div class="premium-trust-container">
+        <div class="premium-trust-content">
+            <span class="trust-tag">
+                {% lucide "shield" size=14 %}
+                Safe & Trusted
+            </span>
+            <h2>Your Information Stays Safe & Private</h2>
+            <p>
+                Pay the way you already do, with <strong>GCash, Maya, or your banking app</strong>. Your details stay private and are never stored. Every purchase is quick, safe, and confirmed right away, just like shopping with a trusted store.
+            </p>
+            <div class="premium-trust-links">
+                <a href="{% url 'accounts:privacy' %}" class="trust-link">Privacy Policy &rarr;</a>
+                <a href="{% url 'accounts:terms' %}" class="trust-link">Terms of Service &rarr;</a>
             </div>
-            <div class="trust-logos-card">
-                <div class="trust-badge-row">
-                    <span class="security-chip">✓ Pay with GCash & Maya</span>
-                    <span class="security-chip">✓ Private & Protected</span>
-                    <span class="security-chip">✓ Instant Confirmation</span>
-                    <span class="security-chip">✓ Safe & Secure Checkout</span>
+        </div>
+
+        <div class="premium-trust-visual">
+            <div class="trust-shield-center">
+                {% lucide "shield-check" size=36 %}
+            </div>
+            <div class="trust-badges-grid">
+                <div class="premium-trust-badge">
+                    <span class="badge-icon">{% lucide "qr-code" size=28 %}</span>
+                    <span>Pay with GCash & Maya</span>
+                </div>
+                <div class="premium-trust-badge">
+                    <span class="badge-icon">{% lucide "lock" size=28 %}</span>
+                    <span>Private & Protected</span>
+                </div>
+                <div class="premium-trust-badge">
+                    <span class="badge-icon">{% lucide "zap" size=28 %}</span>
+                    <span>Instant Confirmation</span>
+                </div>
+                <div class="premium-trust-badge">
+                    <span class="badge-icon">{% lucide "circle-check-big" size=28 %}</span>
+                    <span>Safe & Secure Checkout</span>
                 </div>
             </div>
         </div>
@@ -275,39 +375,66 @@
             <p class="section-subtext">Feedback from people who bought here recently.</p>
         </div>
 
-        <div class="testimonials-grid">
-            <div class="testimonial-card">
-                <div class="testimonial-rating">★★★★★</div>
-                <p class="testimonial-quote">“Scanning QR Ph with GCash took literally 5 seconds, and my download was instantly confirmed. The smoothest checkout I’ve seen in PH.”</p>
-                <div class="testimonial-author">
-                    <div class="author-avatar">MR</div>
-                    <div class="author-info">
+        <div class="premium-testimonial-grid">
+            <div class="premium-testimonial-card">
+                <div class="premium-testimonial-rating">
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                </div>
+                <p class="premium-testimonial-quote">“Scanning QR Ph with GCash took literally 5 seconds, and my download was instantly confirmed. The smoothest checkout I’ve seen in PH.”</p>
+                <div class="premium-testimonial-author">
+                    <div class="premium-author-avatar">MR</div>
+                    <div class="premium-author-info">
                         <strong>Mark Rivera</strong>
                         <span>Full-Stack Engineer, Manila</span>
+                        <div class="premium-verified-badge">
+                            {% lucide "check" size=12 %} Verified Buyer
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="testimonial-card">
-                <div class="testimonial-rating">★★★★★</div>
-                <p class="testimonial-quote">“The site is clean and receipts arrive right away. My orders are saved in my profile, so tracking purchases is easy.”</p>
-                <div class="testimonial-author">
-                    <div class="author-avatar">CL</div>
-                    <div class="author-info">
+            <div class="premium-testimonial-card">
+                <div class="premium-testimonial-rating">
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                </div>
+                <p class="premium-testimonial-quote">“The site is clean and receipts arrive right away. My orders are saved in my profile, so tracking purchases is easy.”</p>
+                <div class="premium-testimonial-author">
+                    <div class="premium-author-avatar">CL</div>
+                    <div class="premium-author-info">
                         <strong>Christine Lim</strong>
                         <span>Product Designer, Cebu</span>
+                        <div class="premium-verified-badge">
+                            {% lucide "check" size=12 %} Verified Buyer
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="testimonial-card">
-                <div class="testimonial-rating">★★★★★</div>
-                <p class="testimonial-quote">“Payment was instant. I scanned the QR with Maya and my license + receipt arrived right away. No waiting, super reliable.”</p>
-                <div class="testimonial-author">
-                    <div class="author-avatar">JS</div>
-                    <div class="author-info">
+            <div class="premium-testimonial-card">
+                <div class="premium-testimonial-rating">
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                    {% lucide "star" size=16 fill="#f5a623" %}
+                </div>
+                <p class="premium-testimonial-quote">“Payment was instant. I scanned the QR with Maya and my license + receipt arrived right away. No waiting, super reliable.”</p>
+                <div class="premium-testimonial-author">
+                    <div class="premium-author-avatar">JS</div>
+                    <div class="premium-author-info">
                         <strong>Joshua Santos</strong>
                         <span>Tech Lead, Davao</span>
+                        <div class="premium-verified-badge">
+                            {% lucide "check" size=12 %} Verified Buyer
+                        </div>
                     </div>
                 </div>
             </div>
@@ -316,16 +443,19 @@
 </section>
 
 <!-- Call to Action Banner -->
-<section class="landing-cta-banner">
-    <div class="cta-banner-container">
+<section class="premium-cta-section">
+    <div class="premium-cta-background"></div>
+    <div class="premium-cta-container">
+        <span class="cta-eyebrow">{% lucide "zap" size=16 %} Start Building Today</span>
         <h2>Find Your Next Download</h2>
-        <p>Browse our products or create your free Raqnith account in seconds.</p>
-        <div class="cta-banner-buttons">
-            <a href="{% url 'catalog:product_list' %}" class="button button-cta-white">Explore All Products</a>
+        <p>Browse our curated products or create your free Virtus account in seconds. Instant access, zero waiting.</p>
+        <div class="premium-cta-buttons">
+            <a href="{% url 'catalog:product_list' %}" class="btn-premium-solid">Explore All Products</a>
             {% if not user.is_authenticated %}
-            <a href="{% url 'accounts:register' %}" class="button button-cta-outline">Create Free Account</a>
+            <a href="{% url 'accounts:register' %}" class="btn-premium-glass">Create Free Account</a>
             {% endif %}
         </div>
     </div>
 </section>
+
 {% endblock %}

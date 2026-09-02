@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('payments', '0002_paymentattempt_client_key'),
+        ("payments", "0002_paymentattempt_client_key"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='paymentattempt',
-            name='qr_url',
+            model_name="paymentattempt",
+            name="qr_url",
             field=models.URLField(blank=True),
         ),
     ]

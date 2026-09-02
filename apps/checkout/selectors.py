@@ -21,9 +21,7 @@ def build_checkout_context(cart, coupon_code=None, shipping_method="standard"):
             coupon = None
 
     products = unique_products(items)
-    subtotal, discount, shipping, tax, total = compute_totals(
-        products, coupon, shipping_method
-    )
+    subtotal, discount, shipping, tax, total = compute_totals(products, coupon, shipping_method)
 
     return {
         "cart_id": str(cart.id),

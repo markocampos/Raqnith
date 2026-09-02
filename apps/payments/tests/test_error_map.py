@@ -7,8 +7,7 @@ class ErrorMapTests(SimpleTestCase):
     def test_insufficient_funds(self):
         self.assertEqual(
             translate_error("insufficient_funds"),
-            "Your card doesn't have enough available funds. "
-            "Try another card or payment method.",
+            "Your card doesn't have enough available funds. Try another card or payment method.",
         )
 
     def test_invalid_cvc(self):

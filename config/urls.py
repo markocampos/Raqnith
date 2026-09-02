@@ -1,4 +1,6 @@
-from django.urls import include, path
+from django.conf import settings
+from django.urls import include, path, re_path
+from django.views.static import serve
 
 from apps.accounts.views import PrivacyPolicyView, TermsView
 from apps.payments.views import PayMongoWebhookView
@@ -23,6 +25,6 @@ urlpatterns = [
     path("webhooks/paymongo/", PayMongoWebhookView.as_view(), name="webhook_alias_2"),
 ]
 
-
-
-
+urlpatterns += [
+    re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+]

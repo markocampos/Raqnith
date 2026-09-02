@@ -9,6 +9,7 @@ Eligible order = still PENDING_PAYMENT, has an email, is 15-50 minutes old
 (fresh enough that the payment window hasn't closed at 60), no recovery
 email sent yet. Each buyer gets exactly one nudge with a fresh-QR link.
 """
+
 import logging
 from datetime import timedelta
 
@@ -70,7 +71,5 @@ class Command(BaseCommand):
                 skipped += 1
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Recovery run complete: {sent} sent, {skipped} skipped."
-            )
+            self.style.SUCCESS(f"Recovery run complete: {sent} sent, {skipped} skipped.")
         )

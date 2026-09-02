@@ -3,6 +3,7 @@
 Also regression-covers the settlement crash that 500'd the receipt page:
 money arriving for an order locally CANCELLED/FULFILLED must settle cleanly.
 """
+
 from unittest.mock import patch
 
 from django.core import signing
@@ -38,8 +39,12 @@ def make_paid_order(session_key, **kwargs):
 def attach_file(order, product=None, **file_kwargs):
     items = list(order.items.select_related("product"))
     if product is None:
-        product = items[0].product if items else Product.objects.create(
-            name="Starter Kit", slug=f"kit-{str(order.id)[:8]}", price_cents=100000
+        product = (
+            items[0].product
+            if items
+            else Product.objects.create(
+                name="Starter Kit", slug=f"kit-{str(order.id)[:8]}", price_cents=100000
+            )
         )
     if not any(item.product_id == product.id for item in items):
         OrderItem.objects.create(
@@ -148,9 +153,7 @@ class DownloadViewTests(SessionClientMixin):
     def test_other_session_gets_404(self):
         other = make_paid_order("someone-else-session")
         foreign_file = attach_file(other)
-        resp = self.client.get(
-            reverse("orders:download_file", args=[other.id, foreign_file.id])
-        )
+        resp = self.client.get(reverse("orders:download_file", args=[other.id, foreign_file.id]))
         self.assertEqual(resp.status_code, 404)
 
     def test_unpaid_order_redirects_to_status(self):
@@ -173,9 +176,7 @@ class DownloadViewTests(SessionClientMixin):
             kind=ProductFile.Kind.STREAM,
             external_url="https://video.example.com/lesson-1",
         )
-        resp = self.client.get(
-            reverse("orders:download_file", args=[self.order.id, stream.id])
-        )
+        resp = self.client.get(reverse("orders:download_file", args=[self.order.id, stream.id]))
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp["Location"], "https://video.example.com/lesson-1")
 
@@ -247,7 +248,7 @@ class ConfirmationEmailTests(SessionClientMixin):
         self.assertIn("juan@example.com", msg.to)
         self.assertIn("#" + str(self.order.id)[:8], msg.subject)
         body = msg.body
-        self.assertIn("/orders/a/", body)          # signed magic link
+        self.assertIn("/orders/a/", body)  # signed magic link
         self.assertIn("/orders/" + str(self.order.id)[:8], body[:0] + body)  # receipt link present
         self.assertEqual(len(msg.alternatives), 1)  # HTML alternative attached
 
@@ -303,9 +304,7 @@ class CheckoutCancelGuardTests(SessionClientMixin):
         from apps.cart.models import Cart, CartItem
 
         cart, _ = Cart.objects.get_or_create(session_key=self.session_key)
-        product = Product.objects.create(
-            name="Guard Kit", slug="guard-kit", price_cents=1000
-        )
+        product = Product.objects.create(name="Guard Kit", slug="guard-kit", price_cents=1000)
         CartItem.objects.create(cart=cart, product=product)
         return product
 

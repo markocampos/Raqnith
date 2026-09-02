@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static money_tags lucide %}
 
-{% block title %}Pay with QR Ph | Order #{{ order_id|slice:":8" }} | Raqnith{% endblock %}
+{% block title %}Pay with QR Ph | Order #{{ order_id|slice:":8" }} | Virtus{% endblock %}
 
 {% block content %}
 <main class="checkout payment-screen checkout-modern" id="order-checkout"
@@ -175,7 +175,7 @@
 
             <!-- Single-Device Mobile Helper Buttons -->
             <div class="qr-actions-row" {% if is_paid or is_order_cancelled %}hidden{% endif %}>
-                <a id="btn-download-qr" href="{{ qr_url }}" download="Raqnith-QRPh-{{ order_id|slice:':8' }}.png" target="_blank" rel="noopener" class="btn-qr-action btn-save-photo">
+                <a id="btn-download-qr" href="{{ qr_url }}" download="Virtus-QRPh-{{ order_id|slice:':8' }}.png" target="_blank" rel="noopener" class="btn-qr-action btn-save-photo">
                     {% lucide "download" size=16 %}
                     <span>Save QR to Photos</span>
                 </a>

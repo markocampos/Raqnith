@@ -6,31 +6,32 @@
     {% load lucide %}
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <title>{% block title %}Raqnith | Digital Commerce & Payments{% endblock %}</title>
+    <title>{% block title %}Virtus | Digital Commerce & Payments{% endblock %}</title>
 
     <!-- SEO & Social Sharing -->
     <meta name="description" content="{% block meta_description %}Buy curated digital products: developer kits, boilerplates, templates and digital assets. Instant checkout with QR Ph, GCash and Maya. Download the moment you pay.{% endblock %}">
     <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-    <meta property="og:site_name" content="Raqnith">
-    <meta property="og:title" content="{% block og_title %}Raqnith | Digital Products, Instant Checkout{% endblock %}">
+    <meta property="og:site_name" content="Virtus">
+    <meta property="og:title" content="{% block og_title %}Virtus | Digital Products, Instant Checkout{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Curated digital products with instant QR Ph & e-wallet checkout. Download the moment your payment confirms.{% endblock %}">
     <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'image/logo.svg' %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'image/new_logo.svg' %}{% endblock %}">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'image/new_logo.svg' %}{% endblock %}">
     <meta name="twitter:title" content="{% block twitter_title %}{{ block.super }}{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}{{ block.super }}{% endblock %}">
     {% block structured_data %}{% endblock %}
     <link rel="preload" href="{% static 'fonts/PlusJakartaSansVariable.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{% static 'fonts/InterVariable.woff2' %}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20260825_09">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20260902_prodimg">
 </head>
 <body>
     <header class="site-header">
         <div class="header-container">
             <div class="header-brand-wrap">
-                <a href="{% url 'catalog:home' %}" class="brand-logo" aria-label="Raqnith Home">
-                    <img src="{% static 'image/logo.svg' %}" alt="Raqnith Logo" class="brand-logo-img" width="86" height="48">
+                <a href="{% url 'catalog:home' %}" class="brand-logo" aria-label="Virtus Home">
+                    <img src="{% static 'image/logo.svg' %}" alt="Virtus Logo" class="brand-logo-img" width="98" height="60">
                 </a>
             </div>
 
@@ -133,7 +134,7 @@
             <div class="footer-grid">
                 <div class="footer-col brand-col">
                     <div class="footer-logo">
-                        <img src="{% static 'image/logo.svg' %}" alt="Raqnith Logo" class="footer-logo-img brand-logo-img" width="93" height="52">
+                        <img src="{% static 'image/logo.svg' %}" alt="Virtus Logo" class="footer-logo-img brand-logo-img" width="104" height="64">
                     </div>
                     <p class="footer-tagline">
                         Instant digital products with frictionless Philippine payments. Powered by PayMongo, QR Ph, GCash, Maya, and major Philippine banks.
@@ -180,7 +181,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p class="copyright">© 2026 Raqnith Commerce. All rights reserved.</p>
+                <p class="copyright">© 2026 Virtus Commerce. All rights reserved.</p>
             </div>
         </div>
     </footer>

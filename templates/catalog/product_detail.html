@@ -2,7 +2,7 @@
 {% load money_tags %}
 {% load lucide %}
 
-{% block title %}{{ product.name }} | Digital Product | Raqnith{% endblock %}
+{% block title %}{{ product.name }} | Digital Product | Virtus{% endblock %}
 
 {% block meta_description %}{{ product.description|default:"Instant digital download with receipt included."|truncatechars:155 }}{% if product.price_cents < 100 %} Get it free — instant download, no payment needed.{% else %} Buy now for {{ product.price_cents|centavos }} with instant QR Ph, GCash and Maya checkout.{% endif %}{% endblock %}
 
@@ -20,7 +20,7 @@
   "name": "{{ product.name|escapejs }}",
   "description": "{{ product.description|default:'Instant digital download with receipt included.'|escapejs }}",
   "category": "{{ product.category.name|default:'Digital Product' }}",
-  "brand": { "@type": "Brand", "name": "Raqnith" },
+  "brand": { "@type": "Brand", "name": "Virtus" },
   "offers": {
     "@type": "Offer",
     "url": "{{ request.build_absolute_uri }}",
@@ -50,21 +50,46 @@
     <div class="product-showcase-grid">
         <!-- Left: Product Showcase Visual Card -->
         <div class="product-showcase-visual">
-            <div class="product-visual-banner product-showcase-banner" data-category="{{ product.category.slug|default:'' }}">
-                <div class="product-visual-top">
-                    <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
+            <div class="product-showcase-media">
+                <div class="product-showcase-badge-bar">
+                    <span class="pc-category">{{ product.category.name|default:"Digital Asset" }}</span>
                     {% if product.is_available %}
-                    <span class="product-status-pill">✓ In Stock</span>
+                    <span class="pc-stock">✓ In Stock</span>
                     {% else %}
-                    <span class="product-status-pill out-of-stock">Sold Out</span>
+                    <span class="pc-stock pc-stock-out">Sold Out</span>
                     {% endif %}
                 </div>
-                <div class="product-visual-center">
-                    <div class="product-visual-icon showcase-icon">
-                        {% include "includes/product_icon.html" with product=product size=44 %}
+
+                {% if product.primary_image %}
+                <div class="product-showcase-img-wrap">
+                    <img id="mainProductImage" src="{{ product.primary_image.image.url }}" alt="{{ product.name }}" class="product-showcase-main-img">
+                </div>
+                {% else %}
+                <div class="product-showcase-placeholder">
+                    <div class="product-showcase-placeholder-icon">
+                        {% include "includes/product_icon.html" with product=product size=40 %}
                     </div>
                 </div>
+                {% endif %}
             </div>
+
+            {% if product.images.count > 1 %}
+            <div class="product-gallery-strip" aria-label="Product Image Gallery">
+                {% for img in product.images.all %}
+                <button type="button" class="gallery-thumb-btn {% if forloop.first %}active{% endif %}" onclick="selectGalleryImage(this, '{{ img.image.url }}')" aria-label="View image {{ forloop.counter }}">
+                    <img src="{{ img.image.url }}" alt="{{ product.name }} thumbnail {{ forloop.counter }}" class="gallery-thumb-img">
+                </button>
+                {% endfor %}
+            </div>
+            <script>
+            function selectGalleryImage(btn, url) {
+                var mainImg = document.getElementById('mainProductImage');
+                if (mainImg) { mainImg.src = url; }
+                document.querySelectorAll('.gallery-thumb-btn').forEach(function(el) { el.classList.remove('active'); });
+                btn.classList.add('active');
+            }
+            </script>
+            {% endif %}
 
             <!-- Guarantee Perks Box -->
             <div class="showcase-perks-card">
@@ -78,7 +103,7 @@
                 <div class="showcase-perk-item">
                     {% lucide "file-check" size=18 class="perk-icon" %}
                     <div>
-                        <strong>Commercial & Personal License</strong>
+                        <strong>Commercial &amp; Personal License</strong>
                         <span>Official digital license certificate and automated receipt</span>
                     </div>
                 </div>
@@ -86,7 +111,7 @@
                     {% lucide "shield-check" size=18 class="perk-icon" %}
                     <div>
                         <strong>100% Protected Transaction</strong>
-                        <span>Official PayMongo QR Ph & Philippine e-wallet rails</span>
+                        <span>Official PayMongo QR Ph &amp; Philippine e-wallet rails</span>
                     </div>
                 </div>
             </div>
@@ -112,7 +137,6 @@
                     <span class="price-figure">{{ product.price_cents|php_or_free }}</span>
                     {% if product.price_cents >= 100 %}<span class="price-currency-badge">PHP</span>{% endif %}
                 </div>
-                <p class="price-note">One-time digital purchase • Instant automated access • No recurring fees</p>
             </div>
 
             <!-- Product Description -->

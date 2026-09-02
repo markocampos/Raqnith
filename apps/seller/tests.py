@@ -75,13 +75,15 @@ class SellerApplicationFormTests(TestCase):
         self.assertEqual(SellerApplication.objects.count(), 1)
 
     def test_duplicate_check_ignores_old_or_closed_applications(self):
-        existing = SellerApplication.objects.create(**{
-            "full_name": "Juan Dela Cruz",
-            "email": "juan@pixelforge.dev",
-            "brand_name": "PixelForge Studio",
-            "message": "We make premium Notion templates for freelancers.",
-            "status": SellerApplication.Status.APPROVED,
-        })
+        existing = SellerApplication.objects.create(
+            **{
+                "full_name": "Juan Dela Cruz",
+                "email": "juan@pixelforge.dev",
+                "brand_name": "PixelForge Studio",
+                "message": "We make premium Notion templates for freelancers.",
+                "status": SellerApplication.Status.APPROVED,
+            }
+        )
         form = SellerApplicationForm(data=valid_payload())
         self.assertTrue(form.is_valid(), form.errors)
         existing.delete()
@@ -94,7 +96,7 @@ class SellerApplyViewTests(TestCase):
     def test_page_loads_for_guests(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Sell on Raqnith")
+        self.assertContains(response, "Sell on Virtus")
         self.assertContains(response, "Submit Application")
 
     def test_form_is_phased(self):
@@ -108,7 +110,7 @@ class SellerApplyViewTests(TestCase):
 
     def test_form_autosaves_draft_across_refresh(self):
         response = self.client.get(self.url)
-        self.assertContains(response, "raqnith_seller_apply_draft")
+        self.assertContains(response, "virtus_seller_apply_draft")
         self.assertContains(response, "restoreDraft")
 
     def test_footer_links_to_apply_page(self):

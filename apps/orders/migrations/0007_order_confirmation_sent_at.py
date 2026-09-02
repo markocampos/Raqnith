@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('orders', '0006_remove_orderitem_quantity'),
+        ("orders", "0006_remove_orderitem_quantity"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='order',
-            name='confirmation_sent_at',
+            model_name="order",
+            name="confirmation_sent_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

@@ -15,9 +15,7 @@ User = get_user_model()
 
 class CheckoutViewTests(TestCase):
     def setUp(self):
-        self.product = Product.objects.create(
-            name="Widget", slug="co-widget", price_cents=100000
-        )
+        self.product = Product.objects.create(name="Widget", slug="co-widget", price_cents=100000)
         self.user = User.objects.create_user(
             username="marko", email="markocamposmail@gmail.com", password="password123"
         )
@@ -96,7 +94,9 @@ class CheckoutViewTests(TestCase):
             data={"email": "markocamposmail@gmail.com", "terms": "off"},
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertContains(resp, "You must agree to the terms and conditions to proceed.", status_code=400)
+        self.assertContains(
+            resp, "You must agree to the terms and conditions to proceed.", status_code=400
+        )
 
     def test_authenticated_user_checkout_creates_order(self):
         self.client.force_login(self.user)
@@ -198,6 +198,7 @@ class CheckoutViewTests(TestCase):
 
     def test_apply_coupon_success(self):
         from apps.coupons.models import Coupon
+
         Coupon.objects.create(code="SAVE20", discount_percent=20)
         self._cart()
         resp = self.client.post(reverse("checkout:apply_coupon"), data={"coupon_code": "SAVE20"})
@@ -221,6 +222,7 @@ class CheckoutViewTests(TestCase):
 
     def test_checkout_renders_with_coupon_discount(self):
         from apps.coupons.models import Coupon
+
         Coupon.objects.create(code="SAVE10", discount_percent=10)
         self._cart()
         session = self.client.session
@@ -235,6 +237,7 @@ class CheckoutViewTests(TestCase):
         # The checkout page's JS posts to /orders/; the coupon applied in the
         # UI (stored in the session) must reach the order's final total.
         from apps.coupons.models import Coupon
+
         Coupon.objects.create(code="SAVE20", discount_percent=20)
         self._cart()  # ₱1,000.00 subtotal
         session = self.client.session
@@ -254,6 +257,7 @@ class CheckoutViewTests(TestCase):
 
     def test_success_page_clears_session_coupon(self):
         from apps.coupons.models import Coupon
+
         Coupon.objects.create(code="SAVE10", discount_percent=10)
         self._cart()
         session = self.client.session
@@ -271,8 +275,6 @@ class CheckoutViewTests(TestCase):
         resp = self.client.get(reverse("orders:success", args=[order.id]))
         self.assertEqual(resp.status_code, 200)
         self.assertNotIn("checkout_coupon", self.client.session)
-
-
 
 
 class FreeCheckoutFlowTests(TestCase):
@@ -303,7 +305,6 @@ class FreeCheckoutFlowTests(TestCase):
         )
 
     def test_free_order_settles_immediately_and_redirects_to_success(self):
-        from django.core import mail
 
         self._add_to_cart(self.free_product)
         resp = self._json_post(reverse("orders:create"))

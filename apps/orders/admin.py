@@ -4,8 +4,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
-from config.admin import pesos, admin_site
 from apps.payments.models import PaymentAttempt
+from config.admin import admin_site, pesos
 
 from .models import DownloadLog, LicenseKey, Order, OrderItem
 
@@ -53,17 +53,23 @@ class LicenseKeyAdmin(admin.ModelAdmin):
     readonly_fields = ["id", "key", "order_item", "issued_at", "revoked_at"]
 
     fieldsets = (
-        ("License key", {
-            "fields": ("key", "order_item", "issued_at"),
-            "description": (
-                "Issued automatically the moment an order settles. Shown on "
-                "the receipt page and confirmation email."
-            ),
-        }),
-        ("Revocation", {
-            "fields": ("revoked_at",),
-            "description": "Revoking blocks further use of this key. It cannot be undone here.",
-        }),
+        (
+            "License key",
+            {
+                "fields": ("key", "order_item", "issued_at"),
+                "description": (
+                    "Issued automatically the moment an order settles. Shown on "
+                    "the receipt page and confirmation email."
+                ),
+            },
+        ),
+        (
+            "Revocation",
+            {
+                "fields": ("revoked_at",),
+                "description": "Revoking blocks further use of this key. It cannot be undone here.",
+            },
+        ),
     )
 
     def has_add_permission(self, request):
@@ -87,9 +93,7 @@ class LicenseKeyAdmin(admin.ModelAdmin):
 
     @admin.action(description="Revoke selected keys")
     def revoke_keys(self, request, queryset):
-        count = queryset.filter(revoked_at__isnull=True).update(
-            revoked_at=timezone.now()
-        )
+        count = queryset.filter(revoked_at__isnull=True).update(revoked_at=timezone.now())
         self.message_user(request, f"{count} license key(s) revoked.")
 
 
@@ -166,35 +170,46 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline, PaymentAttemptInline]
 
     fieldsets = (
-        ("Order", {
-            "fields": ("id", "status", "created_at", "updated_at", "paid_at"),
-            "description": (
-                "Status moves along a fixed path: Draft → Pending payment → "
-                "Paid → Fulfilled. Failed and cancelled orders may be retried "
-                "back to Pending payment while they are still fresh."
-            ),
-        }),
-        ("Customer contact", {
-            "fields": ("email", "shipping_name", "shipping_phone"),
-        }),
-        ("Billing address", {
-            "fields": ("shipping_address", "shipping_city", "shipping_postal"),
-        }),
-        ("Amounts (PHP)", {
-            "fields": ("subtotal_amount", "discount_amount", "total_amount", "currency"),
-        }),
-        ("Delivery emails", {
-            "fields": ("confirmation_sent_at", "recovery_email_sent_at"),
-            "classes": ("collapse",),
-        }),
+        (
+            "Order",
+            {
+                "fields": ("id", "status", "created_at", "updated_at", "paid_at"),
+                "description": (
+                    "Status moves along a fixed path: Draft → Pending payment → "
+                    "Paid → Fulfilled. Failed and cancelled orders may be retried "
+                    "back to Pending payment while they are still fresh."
+                ),
+            },
+        ),
+        (
+            "Customer contact",
+            {
+                "fields": ("email", "shipping_name", "shipping_phone"),
+            },
+        ),
+        (
+            "Billing address",
+            {
+                "fields": ("shipping_address", "shipping_city", "shipping_postal"),
+            },
+        ),
+        (
+            "Amounts (PHP)",
+            {
+                "fields": ("subtotal_amount", "discount_amount", "total_amount", "currency"),
+            },
+        ),
+        (
+            "Delivery emails",
+            {
+                "fields": ("confirmation_sent_at", "recovery_email_sent_at"),
+                "classes": ("collapse",),
+            },
+        ),
     )
 
     def get_queryset(self, request):
-        return (
-            super()
-            .get_queryset(request)
-            .annotate(_item_count=Count("items", distinct=True))
-        )
+        return super().get_queryset(request).annotate(_item_count=Count("items", distinct=True))
 
     @admin.display(description="Order ID", ordering="id")
     def order_id(self, obj):

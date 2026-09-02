@@ -44,9 +44,7 @@ SETTLED_STATUSES = (Order.Status.PAID, Order.Status.FULFILLED)
 
 def _payment_method_for(order):
     """Return the masked payment method from the succeeded attempt, if any."""
-    attempt = order.payment_attempts.filter(
-        status=PaymentAttempt.Status.SUCCEEDED
-    ).first()
+    attempt = order.payment_attempts.filter(status=PaymentAttempt.Status.SUCCEEDED).first()
     return attempt.payment_method if attempt else ""
 
 
@@ -62,9 +60,9 @@ def _delivery_context(order):
     product_ids = [item.product_id for item in items]
     files_by_product = {}
     if product_ids:
-        files = ProductFile.objects.filter(
-            product_id__in=product_ids, is_active=True
-        ).order_by("sort_order", "created_at")
+        files = ProductFile.objects.filter(product_id__in=product_ids, is_active=True).order_by(
+            "sort_order", "created_at"
+        )
         for f in files:
             files_by_product.setdefault(f.product_id, []).append(f)
     expired_items = []
@@ -111,9 +109,7 @@ class CreateOrderView(View):
         contact = body.get("contact") or {}
         if not isinstance(contact, dict):
             contact = {}
-        normalized = {
-            field: str(contact.get(field) or "") for field in CHECKOUT_CONTACT_FIELDS
-        }
+        normalized = {field: str(contact.get(field) or "") for field in CHECKOUT_CONTACT_FIELDS}
         email = normalized.get("email", "").strip()
         terms_val = body.get("terms")
         terms_accepted = (terms_val in (True, "true", "on", "1", 1)) if "terms" in body else True
@@ -124,6 +120,7 @@ class CreateOrderView(View):
             try:
                 from django.core.exceptions import ValidationError
                 from django.core.validators import validate_email
+
                 validate_email(email)
             except ValidationError:
                 form_errors["email"] = "Please enter a valid email address."
@@ -132,9 +129,7 @@ class CreateOrderView(View):
             form_errors["terms"] = "You must agree to the terms and conditions to proceed."
 
         if form_errors:
-            return JsonResponse(
-                {"error": "validation_error", "errors": form_errors}, status=400
-            )
+            return JsonResponse({"error": "validation_error", "errors": form_errors}, status=400)
 
         if email:
             request.session["checkout_contact"] = {"email": email}
@@ -156,9 +151,7 @@ class CreateOrderView(View):
                 user_or_session=user_or_session,
             )
         except OrderBuildError as exc:
-            return JsonResponse(
-                {"error": "invalid_order", "errors": exc.errors}, status=400
-            )
+            return JsonResponse({"error": "invalid_order", "errors": exc.errors}, status=400)
 
         if email:
             order.email = email
@@ -184,7 +177,6 @@ class CreateOrderView(View):
         request.session["active_order_id"] = str(order.id)
         request.session.modified = True
         return JsonResponse({"order_id": str(order.id)}, status=201)
-
 
 
 class OrderStatusView(View):
@@ -214,9 +206,7 @@ class OrderStatusView(View):
 
         attempt = order.payment_attempts.first()
         if attempt is None:
-            return render(
-                request, "orders/detail.html", {"order": order, "state": "failed"}
-            )
+            return render(request, "orders/detail.html", {"order": order, "state": "failed"})
 
         if attempt.paymongo_intent_id and attempt.status not in (
             PaymentAttempt.Status.FAILED,
@@ -227,9 +217,7 @@ class OrderStatusView(View):
             try:
                 service.reconcile_payment(attempt)
             except (PayMongoTimeoutError, PayMongoNetworkError, PayMongoAPIError):
-                return render(
-                    request, "orders/detail.html", {"order": order, "state": "pending"}
-                )
+                return render(request, "orders/detail.html", {"order": order, "state": "pending"})
 
         attempt.refresh_from_db()
 
@@ -248,11 +236,7 @@ class OrderStatusView(View):
                 {"order": order, "state": "failed", "retry_attempt_id": str(attempt.id)},
             )
 
-        return render(
-            request, "orders/detail.html", {"order": order, "state": "pending"}
-        )
-
-
+        return render(request, "orders/detail.html", {"order": order, "state": "pending"})
 
 
 class OrderSuccessView(View):
@@ -283,8 +267,6 @@ class OrderSuccessView(View):
             "orders/success.html",
             _delivery_context(order),
         )
-
-
 
 
 class OrderReceiptView(View):
@@ -340,9 +322,7 @@ class OrderFileView(View):
             return redirect("orders:status", order_id=order.id)
 
         try:
-            file_obj = ProductFile.objects.select_related("product").get(
-                id=file_id, is_active=True
-            )
+            file_obj = ProductFile.objects.select_related("product").get(id=file_id, is_active=True)
         except ProductFile.DoesNotExist:
             return HttpResponseNotFound("That file is no longer available.")
 
@@ -353,9 +333,7 @@ class OrderFileView(View):
 
             for item in order.items.select_related("product"):
                 if item.product_id == file_obj.product_id and not item.has_active_access:
-                    expiry = date_format(
-                        timezone.localtime(item.access_until), "M j, Y"
-                    )
+                    expiry = date_format(timezone.localtime(item.access_until), "M j, Y")
                     messages.warning(
                         request,
                         f"Your access to {item.product_name} ended on "
@@ -461,7 +439,7 @@ class OrderReceiptPdfView(View):
             content_type="application/pdf",
         )
         response["Content-Disposition"] = (
-            f'attachment; filename="Raqnith-Receipt-{str(order.id)[:8]}.pdf"'
+            f'attachment; filename="Virtus-Receipt-{str(order.id)[:8]}.pdf"'
         )
         logger.info("receipt pdf served order=%s", order.id)
         return response
@@ -536,10 +514,7 @@ class TrackOrderView(View):
         if order is None and len(candidate) >= 8:
             order = orders.filter(id__istartswith=candidate[:8]).first()
 
-        if (
-            order is None
-            or order.status not in (Order.Status.PAID, Order.Status.FULFILLED)
-        ):
+        if order is None or order.status not in (Order.Status.PAID, Order.Status.FULFILLED):
             context["error"] = (
                 "We couldn't find a completed order with that email and order "
                 "number. Double-check the confirmation email we sent you."

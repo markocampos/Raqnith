@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('payments', '0006_alter_paymentattempt_qr_url_and_more'),
+        ("payments", "0006_alter_paymentattempt_qr_url_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='webhookevent',
-            name='failure_count',
+            model_name="webhookevent",
+            name="failure_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='webhookevent',
-            name='last_error',
+            model_name="webhookevent",
+            name="last_error",
             field=models.TextField(blank=True),
         ),
     ]

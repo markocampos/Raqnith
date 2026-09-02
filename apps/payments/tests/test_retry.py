@@ -56,9 +56,7 @@ class InitiatePaymentHardeningTests(TestCase):
             status=PaymentAttempt.Status.PROCESSING,
         )
         with self.assertRaises(ActiveAttemptExists):
-            self._service(self._ok_handler()).initiate_payment(
-                order=self.order, replace_stale=True
-            )
+            self._service(self._ok_handler()).initiate_payment(order=self.order, replace_stale=True)
 
     def test_replace_stale_cancels_abandoned_awaiting_action(self):
         # QR/e-wallet only: an un-authenticated awaiting_action attempt is
@@ -101,9 +99,7 @@ class CreateIntentDoublePostTests(TestCase):
             self.assertEqual(second.status_code, 409)
 
         self.assertEqual(PaymentAttempt.objects.count(), 1)
-        self.assertEqual(
-            PaymentAttempt.objects.get().status, PaymentAttempt.Status.AWAITING_ACTION
-        )
+        self.assertEqual(PaymentAttempt.objects.get().status, PaymentAttempt.Status.AWAITING_ACTION)
 
 
 class RetryPaymentViewTests(TestCase):
@@ -184,6 +180,7 @@ class RetryPaymentViewTests(TestCase):
 
     def test_retry_on_expired_order_rejected(self):
         from django.utils import timezone
+
         self.order.created_at = timezone.now() - timezone.timedelta(minutes=65)
         self.order.save(update_fields=["created_at"])
         resp = self.client.post(self._url())

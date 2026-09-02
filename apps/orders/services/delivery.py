@@ -19,7 +19,7 @@ from apps.orders.models import DownloadLog, Order
 
 logger = logging.getLogger(__name__)
 
-ACCESS_SALT = "raqnith.order-access"
+ACCESS_SALT = "virtus.order-access"
 # Confirmation emails stay useful for a month before the link expires.
 ACCESS_TOKEN_MAX_AGE = 60 * 60 * 24 * 30
 
@@ -32,9 +32,9 @@ def settled(order):
 def order_files(order):
     """Return active ProductFiles for every product in the order."""
     product_ids = order.items.values_list("product_id", flat=True)
-    return ProductFile.objects.filter(
-        product_id__in=product_ids, is_active=True
-    ).select_related("product")
+    return ProductFile.objects.filter(product_id__in=product_ids, is_active=True).select_related(
+        "product"
+    )
 
 
 def can_access_file(order, file_obj):
@@ -64,9 +64,7 @@ def expired_membership_items(order):
 def downloads_today(order):
     """Downloads already served for this order since midnight (local tz)."""
     start_of_day = timezone.localdate()
-    return DownloadLog.objects.filter(
-        order=order, created_at__date=start_of_day
-    ).count()
+    return DownloadLog.objects.filter(order=order, created_at__date=start_of_day).count()
 
 
 def downloads_remaining_today(order):

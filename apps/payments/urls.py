@@ -12,4 +12,3 @@ urlpatterns = [
     path("webhooks/paymongo/", views.PayMongoWebhookView.as_view(), name="webhook"),
     path("webhook/paymongo/", views.PayMongoWebhookView.as_view(), name="webhook_singular"),
 ]
-

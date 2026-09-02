@@ -9,32 +9,57 @@ import apps.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('payments', '0003_paymentattempt_qr_url'),
+        ("payments", "0003_paymentattempt_qr_url"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='paymentattempt',
-            name='paymongo_payment_id',
+            model_name="paymentattempt",
+            name="paymongo_payment_id",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.CreateModel(
-            name='Refund',
+            name="Refund",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('amount', apps.fields.MoneyField()),
-                ('provider_refund_id', models.CharField(blank=True, max_length=100, null=True, unique=True)),
-                ('reason', models.CharField(blank=True, max_length=100)),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('succeeded', 'Succeeded'), ('failed', 'Failed')], default='pending', max_length=30)),
-                ('failure_message', models.TextField(blank=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('payment', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='refunds', to='payments.paymentattempt')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("amount", apps.fields.MoneyField()),
+                (
+                    "provider_refund_id",
+                    models.CharField(blank=True, max_length=100, null=True, unique=True),
+                ),
+                ("reason", models.CharField(blank=True, max_length=100)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("succeeded", "Succeeded"),
+                            ("failed", "Failed"),
+                        ],
+                        default="pending",
+                        max_length=30,
+                    ),
+                ),
+                ("failure_message", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "payment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="refunds",
+                        to="payments.paymentattempt",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
     ]

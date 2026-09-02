@@ -25,18 +25,23 @@ class WebhookService:
     """
 
     def __init__(self, payment_service=None):
-        self.payment_service = (
-            payment_service if payment_service is not None else PaymentService()
-        )
+        self.payment_service = payment_service if payment_service is not None else PaymentService()
 
     def process_event(self, payload, webhook_event):
         """Dispatch ``payload`` by event type; all supported events are processed."""
         event_type = self._event_type(payload) or ""
 
         KNOWN_EVENTS = {
-            "payment.paid", "payment.failed", "payment.refunded", "payment.refund.updated",
-            "qrph.expired", "qr.expired", "qr.paid", "checkout_session.payment.paid",
-            "source.chargeable", "link.payment.paid",
+            "payment.paid",
+            "payment.failed",
+            "payment.refunded",
+            "payment.refund.updated",
+            "qrph.expired",
+            "qr.expired",
+            "qr.paid",
+            "checkout_session.payment.paid",
+            "source.chargeable",
+            "link.payment.paid",
         }
 
         if event_type in ("payment.paid", "qr.paid", "checkout_session.payment.paid"):
@@ -55,8 +60,6 @@ class WebhookService:
             logger.info("Unrecognized webhook type %s acknowledged.", event_type)
             self._mark_processed(webhook_event)
 
-
-
     # ---- helpers ----
 
     @staticmethod
@@ -66,12 +69,7 @@ class WebhookService:
     @staticmethod
     def _extract_payment(payload):
         """Return payment attributes from a payment.paid/payment.failed event."""
-        resource = (
-            (payload or {})
-            .get("data", {})
-            .get("attributes", {})
-            .get("data", {})
-        )
+        resource = (payload or {}).get("data", {}).get("attributes", {}).get("data", {})
         attrs = resource.get("attributes", {}) or {}
         source = attrs.get("source") or {}
         return {
@@ -99,28 +97,20 @@ class WebhookService:
 
         attempt = PaymentAttempt.objects.filter(paymongo_intent_id=intent_id).first()
         if attempt is None:
-            logger.warning(
-                "payment.paid for unknown intent %s; event acknowledged.", intent_id
-            )
+            logger.warning("payment.paid for unknown intent %s; event acknowledged.", intent_id)
             self._mark_processed(webhook_event)
             return
 
-        if (
-            attempt.amount != payment["amount"]
-            or attempt.currency != payment["currency"]
-        ):
+        if attempt.amount != payment["amount"] or attempt.currency != payment["currency"]:
             logger.warning(
-                "payment.paid amount/currency mismatch for attempt %s: "
-                "expected %s %s, got %s %s.",
+                "payment.paid amount/currency mismatch for attempt %s: expected %s %s, got %s %s.",
                 attempt.id,
                 attempt.amount,
                 attempt.currency,
                 payment["amount"],
                 payment["currency"],
             )
-            raise WebhookMismatch(
-                f"amount/currency mismatch for attempt {attempt.id}"
-            )
+            raise WebhookMismatch(f"amount/currency mismatch for attempt {attempt.id}")
 
         with transaction.atomic():
             attempt = PaymentAttempt.objects.select_for_update().get(pk=attempt.pk)
@@ -154,9 +144,7 @@ class WebhookService:
 
         attempt = PaymentAttempt.objects.filter(paymongo_intent_id=intent_id).first()
         if attempt is None:
-            logger.warning(
-                "payment.failed for unknown intent %s; event acknowledged.", intent_id
-            )
+            logger.warning("payment.failed for unknown intent %s; event acknowledged.", intent_id)
             self._mark_processed(webhook_event)
             return
 
@@ -167,11 +155,8 @@ class WebhookService:
                 PaymentAttempt.Status.FAILED,
             ):
                 msg = "QR code expired." if failure_code == "qr_expired" else "Payment failed."
-                self.payment_service.mark_payment_failed(
-                    attempt, code=failure_code, message=msg
-                )
+                self.payment_service.mark_payment_failed(attempt, code=failure_code, message=msg)
             self._mark_processed(webhook_event)
-
 
     def _handle_refunded(self, payload, webhook_event):
         # Placeholder — refunds are implemented in Phase 15.

@@ -1,4 +1,5 @@
 """Webhook monitoring: self-healing replays, failure tracking, admin alerts."""
+
 import json
 from unittest.mock import patch
 
@@ -124,12 +125,12 @@ class WebhookMonitoringTests(TestCase):
             self._post(payload)
         self.assertEqual(len(mail.outbox), 1)
 
-    @override_settings(ADMIN_NOTIFY_EMAIL="ops@raqnith.test", ADMINS=[])
+    @override_settings(ADMIN_NOTIFY_EMAIL="ops@virtus.test", ADMINS=[])
     def test_alert_recipient_from_env_setting(self):
         sent = notify_webhook_failures(_fake_event(failure_count=3), threshold=3)
         self.assertTrue(sent)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, ["ops@raqnith.test"])
+        self.assertEqual(mail.outbox[0].to, ["ops@virtus.test"])
 
     @override_settings(ADMIN_NOTIFY_EMAIL="", ADMINS=[])
     def test_no_recipients_logs_instead_of_emailing(self):

@@ -40,9 +40,7 @@ class PaymentServiceTests(TestCase):
 
     def test_initiate_gcash_stores_redirect_url(self):
         attempt = service_with(
-            intent_flow_handler(
-                payment_type="gcash", redirect_url="https://pay.gcash.example/auth"
-            )
+            intent_flow_handler(payment_type="gcash", redirect_url="https://pay.gcash.example/auth")
         ).initiate_payment(order=self.order, payment_method="gcash")
 
         self.assertEqual(attempt.qr_url, "")
@@ -55,9 +53,7 @@ class PaymentServiceTests(TestCase):
             if path.endswith("/payment_methods"):
                 return httpx.Response(201, json=payment_method_payload())
             if "/attach" in path:
-                return httpx.Response(
-                    200, json=intent_payload(status="awaiting_payment_method")
-                )
+                return httpx.Response(200, json=intent_payload(status="awaiting_payment_method"))
             return httpx.Response(201, json=intent_payload(status="awaiting_payment_method"))
 
         attempt = service_with(handler).initiate_payment(order=self.order)

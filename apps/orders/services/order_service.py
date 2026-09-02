@@ -265,9 +265,7 @@ def fulfill_order_items(order):
 
     issued = issue_license_keys(order)
     if issued:
-        logger.info(
-            "license keys issued order=%s count=%s", order.id, len(issued)
-        )
+        logger.info("license keys issued order=%s count=%s", order.id, len(issued))
 
 
 def _queue_confirmation_email(order):

@@ -21,9 +21,7 @@ class PaymentAttemptTransitionTests(TestCase):
         self.order = Order.objects.create(subtotal_amount=10000, total_amount=10000)
 
     def _attempt(self, status):
-        return PaymentAttempt.objects.create(
-            order=self.order, amount=10000, status=status
-        )
+        return PaymentAttempt.objects.create(order=self.order, amount=10000, status=status)
 
     def test_expected_transition_map(self):
         expected = {

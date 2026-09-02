@@ -9,47 +9,81 @@ import apps.fields
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('orders', '0001_initial'),
+        ("orders", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='WebhookEvent',
+            name="WebhookEvent",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('provider_event_id', models.CharField(max_length=150, unique=True)),
-                ('event_type', models.CharField(max_length=100)),
-                ('payload', models.JSONField()),
-                ('processed', models.BooleanField(default=False)),
-                ('received_at', models.DateTimeField(auto_now_add=True)),
-                ('processed_at', models.DateTimeField(blank=True, null=True)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("provider_event_id", models.CharField(max_length=150, unique=True)),
+                ("event_type", models.CharField(max_length=100)),
+                ("payload", models.JSONField()),
+                ("processed", models.BooleanField(default=False)),
+                ("received_at", models.DateTimeField(auto_now_add=True)),
+                ("processed_at", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                'ordering': ['-received_at'],
+                "ordering": ["-received_at"],
             },
         ),
         migrations.CreateModel(
-            name='PaymentAttempt',
+            name="PaymentAttempt",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('provider', models.CharField(default='paymongo', max_length=30)),
-                ('paymongo_intent_id', models.CharField(blank=True, max_length=100, null=True, unique=True)),
-                ('amount', apps.fields.MoneyField()),
-                ('currency', models.CharField(default='PHP', max_length=3)),
-                ('status', models.CharField(choices=[('created', 'Created'), ('awaiting_method', 'Awaiting method'), ('awaiting_action', 'Awaiting action'), ('processing', 'Processing'), ('succeeded', 'Succeeded'), ('failed', 'Failed'), ('cancelled', 'Cancelled')], default='created', max_length=30)),
-                ('payment_method', models.CharField(blank=True, max_length=30)),
-                ('failure_code', models.CharField(blank=True, max_length=100)),
-                ('failure_message', models.TextField(blank=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='payment_attempts', to='orders.order')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("provider", models.CharField(default="paymongo", max_length=30)),
+                (
+                    "paymongo_intent_id",
+                    models.CharField(blank=True, max_length=100, null=True, unique=True),
+                ),
+                ("amount", apps.fields.MoneyField()),
+                ("currency", models.CharField(default="PHP", max_length=3)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("created", "Created"),
+                            ("awaiting_method", "Awaiting method"),
+                            ("awaiting_action", "Awaiting action"),
+                            ("processing", "Processing"),
+                            ("succeeded", "Succeeded"),
+                            ("failed", "Failed"),
+                            ("cancelled", "Cancelled"),
+                        ],
+                        default="created",
+                        max_length=30,
+                    ),
+                ),
+                ("payment_method", models.CharField(blank=True, max_length=30)),
+                ("failure_code", models.CharField(blank=True, max_length=100)),
+                ("failure_message", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "order",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="payment_attempts",
+                        to="orders.order",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
     ]

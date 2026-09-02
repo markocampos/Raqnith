@@ -10,4 +10,3 @@ urlpatterns = [
     path("coupon/remove/", views.RemoveCouponView.as_view(), name="remove_coupon"),
     path("<uuid:order_id>/", views.OrderCheckoutView.as_view(), name="order"),
 ]
-

@@ -4,40 +4,39 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('orders', '0004_order_session_key'),
+        ("orders", "0004_order_session_key"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='order',
-            name='email',
+            model_name="order",
+            name="email",
             field=models.CharField(blank=True, max_length=254),
         ),
         migrations.AddField(
-            model_name='order',
-            name='shipping_name',
+            model_name="order",
+            name="shipping_name",
             field=models.CharField(blank=True, max_length=200),
         ),
         migrations.AddField(
-            model_name='order',
-            name='shipping_phone',
+            model_name="order",
+            name="shipping_phone",
             field=models.CharField(blank=True, max_length=30),
         ),
         migrations.AddField(
-            model_name='order',
-            name='shipping_address',
+            model_name="order",
+            name="shipping_address",
             field=models.CharField(blank=True, max_length=200),
         ),
         migrations.AddField(
-            model_name='order',
-            name='shipping_city',
+            model_name="order",
+            name="shipping_city",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.AddField(
-            model_name='order',
-            name='shipping_postal',
+            model_name="order",
+            name="shipping_postal",
             field=models.CharField(blank=True, max_length=10),
         ),
     ]

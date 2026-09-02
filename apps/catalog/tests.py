@@ -75,15 +75,13 @@ class PricingTests(TestCase):
 
 class CatalogViewTests(TestCase):
     def setUp(self):
-        self.product = Product.objects.create(
-            name="Widget", slug="view-widget", price_cents=2500
-        )
+        self.product = Product.objects.create(name="Widget", slug="view-widget", price_cents=2500)
 
     def test_landing_page_renders(self):
         resp = self.client.get(reverse("catalog:home"))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Widget")
-        self.assertContains(resp, "Digital Products Ready to Download Instantly")
+        self.assertContains(resp, "Premium Digital Assets")
 
     def test_product_list_renders(self):
         resp = self.client.get(reverse("catalog:product_list"))
@@ -94,8 +92,10 @@ class CatalogViewTests(TestCase):
         cat1 = Category.objects.create(name="Templates", slug="templates")
         cat2 = Category.objects.create(name="Plugins", slug="plugins")
 
-        p1 = Product.objects.create(name="Theme Kit", slug="theme-kit", price_cents=3000, category=cat1)
-        p2 = Product.objects.create(name="Auth Plugin", slug="auth-plugin", price_cents=4000, category=cat2)
+        Product.objects.create(name="Theme Kit", slug="theme-kit", price_cents=3000, category=cat1)
+        Product.objects.create(
+            name="Auth Plugin", slug="auth-plugin", price_cents=4000, category=cat2
+        )
 
         # Filter by templates
         resp = self.client.get(reverse("catalog:product_list"), {"category": "templates"})
@@ -115,6 +115,24 @@ class CatalogViewTests(TestCase):
         self.assertContains(resp, "Widget")
         self.assertContains(resp, "₱25.00")
 
+    def test_product_with_image_renders(self):
+        from apps.catalog.models import ProductImage
+
+        ProductImage.objects.create(
+            product=self.product,
+            image="product_gallery/test_preview.jpg",
+        )
+        # Detail view should render mainProductImage
+        resp_detail = self.client.get(reverse("catalog:product_detail", args=["view-widget"]))
+        self.assertEqual(resp_detail.status_code, 200)
+        self.assertContains(resp_detail, 'id="mainProductImage"')
+        self.assertContains(resp_detail, "test_preview.jpg")
+
+        # Landing & catalog should render pc-cover-img
+        resp_landing = self.client.get(reverse("catalog:home"))
+        self.assertEqual(resp_landing.status_code, 200)
+        self.assertContains(resp_landing, "pc-cover-img")
+        self.assertContains(resp_landing, "test_preview.jpg")
 
 
 class CatalogAdminTests(TestCase):
@@ -130,9 +148,7 @@ class CatalogAdminTests(TestCase):
         self.priced = Product.objects.create(
             name="Priced Kit", slug="priced-kit", price_cents=49_900
         )
-        self.bare = Product.objects.create(
-            name="Bare Kit", slug="bare-kit", price_cents=10_000
-        )
+        self.bare = Product.objects.create(name="Bare Kit", slug="bare-kit", price_cents=10_000)
 
     def _login(self):
         self.client.force_login(self.admin)
@@ -159,6 +175,10 @@ class CatalogAdminTests(TestCase):
                 "files-INITIAL_FORMS": "0",
                 "files-MIN_NUM_FORMS": "0",
                 "files-MAX_NUM_FORMS": "1000",
+                "images-TOTAL_FORMS": "0",
+                "images-INITIAL_FORMS": "0",
+                "images-MIN_NUM_FORMS": "0",
+                "images-MAX_NUM_FORMS": "1000",
             },
         )
         self.assertEqual(resp.status_code, 302)
@@ -167,9 +187,7 @@ class CatalogAdminTests(TestCase):
 
     def test_change_page_prefills_peso_price(self):
         self._login()
-        resp = self.client.get(
-            reverse("admin:catalog_product_change", args=[self.priced.pk])
-        )
+        resp = self.client.get(reverse("admin:catalog_product_change", args=[self.priced.pk]))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'value="499.00"')
 
@@ -178,9 +196,7 @@ class CatalogAdminTests(TestCase):
 
         ProductFile.objects.create(product=self.priced, name="Main", kind="download")
         self._login()
-        resp = self.client.get(
-            reverse("admin:catalog_product_changelist") + "?files=missing"
-        )
+        resp = self.client.get(reverse("admin:catalog_product_changelist") + "?files=missing")
         self.assertContains(resp, "Bare Kit")
         self.assertNotContains(resp, "Priced Kit")
 
@@ -189,9 +205,7 @@ class CatalogAdminTests(TestCase):
 
         category = Category.objects.create(name="Admin Cat", slug="admin-cat")
         Product.objects.filter(slug="priced-kit").update(category=category)
-        Product.objects.filter(slug="bare-kit").update(
-            category=category, is_available=False
-        )
+        Product.objects.filter(slug="bare-kit").update(category=category, is_available=False)
 
         self._login()
         resp = self.client.get(reverse("admin:catalog_category_changelist"))

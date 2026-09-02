@@ -1,11 +1,10 @@
-from django.conf import settings
 from django.db import models
 
 from apps.fields import HTTPSURLField
 
 
 class SellerApplication(models.Model):
-    """An application from a third-party creator who wants to sell on Raqnith.
+    """An application from a third-party creator who wants to sell on Virtus.
 
     Applications are reviewed by the store team. Approved creators get their
     products curated and published by the store via admin, they never touch
@@ -40,7 +39,7 @@ class SellerApplication(models.Model):
         help_text="Category the applicant plans to sell in.",
     )
     message = models.TextField(
-        help_text="What the creator wants to sell and why it fits Raqnith.",
+        help_text="What the creator wants to sell and why it fits Virtus.",
     )
     status = models.CharField(
         max_length=20,

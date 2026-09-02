@@ -12,7 +12,7 @@ ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1").sp
 
 INSTALLED_APPS = [
     "django.contrib.admin",
-    "apps.accounts.apps.RaqnithAuthConfig",
+    "apps.accounts.apps.VirtusAuthConfig",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
@@ -103,16 +103,14 @@ BASE_URL = config("DJANGO_BASE_URL", default="http://localhost:8000")
 # Email — console backend by default (prints to runserver output); switch to
 # SMTP in production by setting EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 # plus the EMAIL_HOST* variables in .env.
-EMAIL_BACKEND = config(
-    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
-)
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = config("EMAIL_HOST", default="")
 EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 EMAIL_TIMEOUT = 10
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Raqnith <receipts@raqnith.com>")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Virtus <receipts@raqnith.com>")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Ops alerting: where webhook-failure alarms go (empty = log only).
@@ -127,7 +125,7 @@ MAX_DOWNLOADS_PER_DAY_PER_ORDER = config("MAX_DOWNLOADS_PER_DAY", default=20, ca
 
 # Buyer-uploaded product files live outside staticfiles and are served only
 # through the permission-checked orders download view.
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 LOGGING = {

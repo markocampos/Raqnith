@@ -29,9 +29,7 @@ class CartTests(TestCase):
 
 class CartViewTests(TestCase):
     def setUp(self):
-        self.product = Product.objects.create(
-            name="Widget", slug="view-widget", price_cents=2500
-        )
+        self.product = Product.objects.create(name="Widget", slug="view-widget", price_cents=2500)
 
     def _add(self):
         return self.client.post(reverse("cart:add"), {"product": self.product.id})
@@ -73,7 +71,7 @@ class CartAdminTests(TestCase):
         User = get_user_model()
         self.admin = User.objects.create_superuser(
             username="admin",
-            email="admin@raqnith.test",
+            email="admin@virtus.test",
             password="AdminPass123!",
         )
         self.product = Product.objects.create(
@@ -105,19 +103,16 @@ class CartAdminTests(TestCase):
         self.assertContains(resp, "Guest (abcdefgh\u2026)")
 
     def test_stale_activity_filter(self):
-        from django.utils import timezone
         from datetime import timedelta
 
+        from django.utils import timezone
+
         old = Cart.objects.create(session_key="old-cart")
-        Cart.objects.filter(pk=old.pk).update(
-            updated_at=timezone.now() - timedelta(days=45)
-        )
-        fresh = Cart.objects.create(session_key="fresh-cart")
+        Cart.objects.filter(pk=old.pk).update(updated_at=timezone.now() - timedelta(days=45))
+        Cart.objects.create(session_key="fresh-cart")
 
         self._login()
-        resp = self.client.get(
-            reverse("admin:cart_cart_changelist") + "?activity=stale"
-        )
+        resp = self.client.get(reverse("admin:cart_cart_changelist") + "?activity=stale")
         self.assertContains(resp, "old-cart")
         self.assertNotContains(resp, "fresh-cart")
 
@@ -125,8 +120,6 @@ class CartAdminTests(TestCase):
         cart = Cart.objects.create(session_key="inline-check")
         CartItem.objects.create(cart=cart, product=self.product)
         self._login()
-        resp = self.client.get(
-            reverse("admin:cart_cart_change", args=[cart.pk])
-        )
+        resp = self.client.get(reverse("admin:cart_cart_change", args=[cart.pk]))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Admin Kit")

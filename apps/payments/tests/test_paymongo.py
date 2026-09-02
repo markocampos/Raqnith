@@ -61,9 +61,7 @@ class PayMongoClientTests(TestCase):
         client = make_mock_client(handler)
         intent = client.attach_payment_method("pi_test_1", "pm_test_1")
         self.assertEqual(intent["status"], "awaiting_next_action")
-        self.assertEqual(
-            intent["next_action"]["code"]["image_url"], "data:image/png;base64,QR"
-        )
+        self.assertEqual(intent["next_action"]["code"]["image_url"], "data:image/png;base64,QR")
 
     def test_attach_payment_method_returns_redirect(self):
         def handler(request):
@@ -102,6 +100,7 @@ class PayMongoClientTests(TestCase):
 
     def test_api_error_401_429_500(self):
         for status in (401, 429, 500):
+
             def handler(request, status=status):
                 return httpx.Response(
                     status, json={"errors": [{"code": f"err_{status}", "detail": "boom"}]}
@@ -141,7 +140,9 @@ class VerifyWebhookSignatureTests(TestCase):
         verify_webhook_signature(raw_body, signature, "whsec_test_stub")  # no raise
 
     def test_valid_bare_hex_signature(self):
-        import hashlib, hmac
+        import hashlib
+        import hmac
+
         raw_body = b'{"data": {"id": "evt_1"}}'
         signature = hmac.new(b"whsec_test_stub", raw_body, hashlib.sha256).hexdigest()
         verify_webhook_signature(raw_body, signature, "whsec_test_stub")  # no raise
@@ -160,4 +161,3 @@ class VerifyWebhookSignatureTests(TestCase):
         raw_body = b'{"data": {"id": "evt_1"}}'
         with self.assertRaises(InvalidWebhookSignature):
             verify_webhook_signature(raw_body, "sig", "")
-

@@ -30,7 +30,14 @@ class ExpiryFilter(admin.SimpleListFilter):
 
 @admin.register(Coupon, site=admin_site)
 class CouponAdmin(admin.ModelAdmin):
-    list_display = ["code", "discount_percent", "status_badge", "active", "expires_at", "created_at"]
+    list_display = [
+        "code",
+        "discount_percent",
+        "status_badge",
+        "active",
+        "expires_at",
+        "created_at",
+    ]
     list_editable = ["active"]
     list_filter = ["active", ExpiryFilter]
     search_fields = ["code"]
@@ -39,14 +46,20 @@ class CouponAdmin(admin.ModelAdmin):
     actions = ["mark_active", "mark_inactive"]
 
     fieldsets = (
-        ("Discount", {
-            "fields": ("code", "discount_percent", "active"),
-            "description": "Buyers enter this code at checkout for a percentage off their order total.",
-        }),
-        ("Availability", {
-            "fields": ("expires_at", "created_at"),
-            "description": "Leave the expiry empty for a coupon that never expires.",
-        }),
+        (
+            "Discount",
+            {
+                "fields": ("code", "discount_percent", "active"),
+                "description": "Buyers enter this code at checkout for a percentage off their order total.",
+            },
+        ),
+        (
+            "Availability",
+            {
+                "fields": ("expires_at", "created_at"),
+                "description": "Leave the expiry empty for a coupon that never expires.",
+            },
+        ),
     )
 
     @admin.display(description="Status", ordering="active")

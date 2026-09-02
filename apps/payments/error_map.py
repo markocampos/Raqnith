@@ -15,12 +15,9 @@ customer — those deliberately fall through to the generic decline message.
 FRIENDLY_ERROR_MESSAGES = {
     # Decline reasons
     "insufficient_funds": (
-        "Your card doesn't have enough available funds. "
-        "Try another card or payment method."
+        "Your card doesn't have enough available funds. Try another card or payment method."
     ),
-    "credit_limit_exceeded": (
-        "Your card has reached its credit limit. Try another card."
-    ),
+    "credit_limit_exceeded": ("Your card has reached its credit limit. Try another card."),
     "generic_decline": "Your card was declined. Try another card or payment method.",
     "do_not_honor": "Your card was declined. Try another card or payment method.",
     "payment_refused": "Your card was declined. Try another card or payment method.",
@@ -30,9 +27,7 @@ FRIENDLY_ERROR_MESSAGES = {
     "issuer_declined": (
         "Your card was declined by your bank. Please contact them for more information."
     ),
-    "card_not_supported": (
-        "This card isn't supported for this purchase. Try another card."
-    ),
+    "card_not_supported": ("This card isn't supported for this purchase. Try another card."),
     # Invalid card details
     "card_number_invalid": "Enter a valid card number.",
     "card_type_mismatch": "This card type doesn't match the card number entered.",
@@ -53,7 +48,6 @@ FRIENDLY_ERROR_MESSAGES = {
 DEFAULT_ERROR_MESSAGE = (
     "We couldn't process your payment. Please try again or generate a fresh QR code."
 )
-
 
 
 def translate_error(code):

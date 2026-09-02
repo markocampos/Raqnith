@@ -2,7 +2,7 @@
 {% load money_tags %}
 {% load lucide %}
 
-{% block title %}Store Catalog | Digital Products & Assets | Raqnith{% endblock %}
+{% block title %}Store Catalog | Digital Products & Assets | Virtus{% endblock %}
 
 {% block content %}
 <main class="page-container catalog-page-container">
@@ -64,52 +64,64 @@
     <div class="product-grid catalog-grid">
         {% for product in products %}
         <article class="product-card product-card-modern product-card-catalog" data-category="{{ product.category.slug|default:'' }}">
-            <!-- Card Thumbnail / Visual Area -->
-            <div class="product-visual-banner">
-                <div class="product-visual-top">
-                    <span class="product-category-tag">{{ product.category.name|default:"Digital Asset" }}</span>
+            {% if product.primary_image %}
+            <!-- Cover Image Preview -->
+            <a href="{{ product.get_absolute_url }}" class="pc-cover-wrap" aria-label="{{ product.name }}">
+                <img src="{{ product.primary_image.image.url }}" alt="{{ product.name }}" class="pc-cover-img" loading="lazy">
+            </a>
+            <div class="pc-meta-row">
+                <span class="pc-category">{{ product.category.name|default:"Digital Asset" }}</span>
+                {% if product.is_available %}
+                <span class="pc-stock">✓ In Stock</span>
+                {% else %}
+                <span class="pc-stock pc-stock-out">Sold Out</span>
+                {% endif %}
+            </div>
+            {% else %}
+            <!-- Fallback Header with Icon Chip -->
+            <div class="pc-header">
+                <div class="pc-icon-chip">
+                    {% include "includes/product_icon.html" with product=product size=18 %}
+                </div>
+                <div class="pc-meta">
+                    <span class="pc-category">{{ product.category.name|default:"Digital Asset" }}</span>
                     {% if product.is_available %}
-                    <span class="product-status-pill">✓ In Stock</span>
+                    <span class="pc-stock">✓ In Stock</span>
                     {% else %}
-                    <span class="product-status-pill out-of-stock">Sold Out</span>
+                    <span class="pc-stock pc-stock-out">Sold Out</span>
                     {% endif %}
                 </div>
-                <div class="product-visual-center">
-                    <div class="product-visual-icon">
-                        {% include "includes/product_icon.html" with product=product size=26 %}
-                    </div>
-                </div>
             </div>
+            {% endif %}
 
             <!-- Card Content -->
-            <div class="product-card-body">
-                <h2 class="product-title">
+            <div class="pc-body">
+                <h2 class="pc-title">
                     <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
                 </h2>
-                <p class="product-desc">{{ product.description|default:"Download right after checkout. Receipt included." }}</p>
+                <p class="pc-desc">{{ product.description|default:"Download right after checkout. Receipt included." }}</p>
             </div>
 
             <!-- Card Footer -->
-            <div class="product-card-footer">
-                <div class="product-price-box">
-                    <span class="price-label">Price</span>
-                    <strong class="product-price">{{ product.price_cents|php_or_free }}</strong>
+            <div class="pc-foot">
+                <div class="pc-price-block">
+                    <span class="pc-price">{{ product.price_cents|php_or_free }}</span>
                 </div>
                 
-                <div class="product-card-buttons">
+                <div class="pc-actions">
                     {% if product.is_available %}
                     <form method="post" action="{% url 'cart:add' %}" class="form-add-to-cart">
                         {% csrf_token %}
                         <input type="hidden" name="product" value="{{ product.id }}">
                         <button type="submit" class="btn-add-cart">
-                            {% lucide "shopping-cart" size=15 class="btn-cart-icon-inline" %}
+                            {% lucide "shopping-cart" size=14 %}
                             <span>Add to Cart</span>
                         </button>
                     </form>
                     {% endif %}
-                    <a href="{{ product.get_absolute_url }}" class="btn-view-details" title="View details for {{ product.name }}">
+                    <a href="{{ product.get_absolute_url }}" class="pc-details-link" title="View details for {{ product.name }}">
                         <span>Details</span>
-                        {% lucide "arrow-right" size=14 %}
+                        {% lucide "arrow-right" size=13 %}
                     </a>
                 </div>
             </div>

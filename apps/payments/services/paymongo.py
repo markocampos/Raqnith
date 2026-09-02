@@ -223,7 +223,7 @@ def verify_webhook_signature(raw_body, signature_header, secret):
 
     if "t" in parts:
         timestamp = parts["t"]
-        payload_to_sign = f"{timestamp}.".encode("utf-8") + raw_body
+        payload_to_sign = f"{timestamp}.".encode() + raw_body
         expected = hmac.new(secret.encode("utf-8"), payload_to_sign, hashlib.sha256).hexdigest()
 
         signatures = [parts[k] for k in ("li", "te") if parts.get(k)]

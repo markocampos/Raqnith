@@ -23,18 +23,14 @@ class PaymentAttempt(models.Model):
         on_delete=models.PROTECT,
     )
     provider = models.CharField(max_length=30, default="paymongo")
-    paymongo_intent_id = models.CharField(
-        max_length=100, unique=True, null=True, blank=True
-    )
+    paymongo_intent_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     paymongo_payment_id = models.CharField(max_length=100, blank=True)
     client_key = models.CharField(max_length=255, blank=True)
     qr_url = models.TextField(blank=True)
     redirect_url = models.TextField(blank=True)
     amount = MoneyField()
     currency = models.CharField(max_length=3, default="PHP")
-    status = models.CharField(
-        max_length=30, choices=Status.choices, default=Status.CREATED
-    )
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.CREATED)
     payment_method = models.CharField(max_length=30, blank=True)
     failure_code = models.CharField(max_length=100, blank=True)
     failure_message = models.TextField(blank=True)
@@ -51,7 +47,9 @@ class PaymentAttempt(models.Model):
     def is_expired(self):
         """Return whether this QR payment attempt has expired (15m window)."""
         from datetime import timedelta
+
         from django.utils import timezone
+
         if self.status in (self.Status.SUCCEEDED, self.Status.CANCELLED):
             return False
         if self.failure_code in ("qr_expired", "qrph_expired"):
@@ -62,12 +60,12 @@ class PaymentAttempt(models.Model):
     def seconds_remaining(self):
         """Return seconds remaining until QR code expiration."""
         from django.utils import timezone
+
         if self.status in (self.Status.SUCCEEDED, self.Status.CANCELLED, self.Status.FAILED):
             return 0
         elapsed = (timezone.now() - self.created_at).total_seconds()
         remaining = max(0, int(900 - elapsed))
         return remaining
-
 
 
 class WebhookEvent(models.Model):
@@ -103,13 +101,9 @@ class Refund(models.Model):
         on_delete=models.PROTECT,
     )
     amount = MoneyField()
-    provider_refund_id = models.CharField(
-        max_length=100, unique=True, null=True, blank=True
-    )
+    provider_refund_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     reason = models.CharField(max_length=100, blank=True)
-    status = models.CharField(
-        max_length=30, choices=Status.choices, default=Status.PENDING
-    )
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING)
     failure_message = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

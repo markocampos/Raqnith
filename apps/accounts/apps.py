@@ -7,7 +7,7 @@ class AccountsConfig(AppConfig):
     name = "apps.accounts"
 
 
-class RaqnithAuthConfig(AuthConfig):
+class VirtusAuthConfig(AuthConfig):
     """Human-readable label for Django's auth app in the admin index.
 
     Same app and models underneath, only the admin section heading changes:

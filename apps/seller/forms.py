@@ -3,7 +3,6 @@ import re
 from django import forms
 from django.utils import timezone
 
-from apps.catalog.models import Category
 from apps.seller.models import SellerApplication
 
 DUPLICATE_WINDOW_DAYS = 14
@@ -41,7 +40,7 @@ class SellerApplicationForm(forms.ModelForm):
                     "rows": 5,
                     "placeholder": (
                         "Tell us what you make, like templates, kits or e-books, "
-                        "and why Raqnith buyers will love it."
+                        "and why Virtus buyers will love it."
                     ),
                 }
             ),

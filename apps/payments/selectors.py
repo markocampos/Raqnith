@@ -26,5 +26,3 @@ def get_attempt_for_checkout(attempt_uuid, user_or_session):
         raise PaymentAttempt.DoesNotExist("Payment attempt not found.")
 
     return attempt
-
-

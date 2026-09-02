@@ -18,7 +18,6 @@ def backwards(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("catalog", "0007_product_membership_duration_days_and_more"),
     ]

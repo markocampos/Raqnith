@@ -27,7 +27,7 @@ else
 fi
 
 SERVICE_NAME="raqnith.service"
-HOST_HEADER="${DJANGO_ALLOWED_HOSTS:-raqnith.duckdns.org}"
+HOST_HEADER="${DJANGO_ALLOWED_HOSTS:-virtus.duckdns.org}"
 PORT="8002"
 
 cd "${PROJECT_DIR}"

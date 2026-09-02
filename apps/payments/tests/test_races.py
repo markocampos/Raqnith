@@ -159,9 +159,7 @@ class ConcurrentInitiateTests(TransactionTestCase):
             try:
                 with patch(
                     "apps.payments.services.payment_service.PayMongoClient",
-                    return_value=make_mock_client(
-                        intent_flow_handler(intent_id="pi_race_1")
-                    ),
+                    return_value=make_mock_client(intent_flow_handler(intent_id="pi_race_1")),
                 ):
                     attempt = PaymentService().initiate_payment(order=self.order)
                 results.append(attempt.id)
@@ -180,9 +178,7 @@ class ConcurrentInitiateTests(TransactionTestCase):
         self.assertEqual(len(errors), 1)
         self.assertIsInstance(errors[0], ActiveAttemptExists)
         self.assertEqual(PaymentAttempt.objects.count(), 1)
-        self.assertEqual(
-            PaymentAttempt.objects.get().status, PaymentAttempt.Status.AWAITING_ACTION
-        )
+        self.assertEqual(PaymentAttempt.objects.get().status, PaymentAttempt.Status.AWAITING_ACTION)
 
 
 class ConcurrentWebhookTests(TransactionTestCase):
@@ -201,9 +197,7 @@ class ConcurrentWebhookTests(TransactionTestCase):
             paymongo_intent_id="pi_test_1",
             status=PaymentAttempt.Status.AWAITING_METHOD,
         )
-        self.payload = payment_event_payload(
-            intent_id="pi_test_1", amount=10000, currency="PHP"
-        )
+        self.payload = payment_event_payload(intent_id="pi_test_1", amount=10000, currency="PHP")
         self.raw_body = json.dumps(self.payload).encode()
         self.signature = sign_payload(self.raw_body, settings.PAYMONGO_WEBHOOK_SECRET)
         self.url = reverse("payments:webhook")

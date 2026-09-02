@@ -1,4 +1,4 @@
-"""Custom admin site for Raqnith with a store-overview dashboard.
+"""Custom admin site for Virtus with a store-overview dashboard.
 
 The admin index is not just a model list: it surfaces the numbers staff
 check every morning (revenue, orders awaiting payment, webhook health,
@@ -23,9 +23,9 @@ def pesos(cents):
     return f"\u20b1{(cents or 0) / 100:,.2f}"
 
 
-class RaqnithAdminSite(admin.AdminSite):
-    site_header = "Raqnith Admin"
-    site_title = "Raqnith Admin"
+class VirtusAdminSite(admin.AdminSite):
+    site_header = "Virtus Admin"
+    site_title = "Virtus Admin"
     index_title = "Store overview"
 
     def index(self, request, extra_context=None):
@@ -47,12 +47,8 @@ class RaqnithAdminSite(admin.AdminSite):
                 filter=Q(paid_at__gte=month_ago, status__in=paid_statuses),
             ),
             paid_orders_today=Count("id", filter=Q(paid_at__gte=today_start)),
-            paid_orders_30d=Count(
-                "id", filter=Q(paid_at__gte=month_ago, status__in=paid_statuses)
-            ),
-            awaiting_payment=Count(
-                "id", filter=Q(status=Order.Status.PENDING_PAYMENT)
-            ),
+            paid_orders_30d=Count("id", filter=Q(paid_at__gte=month_ago, status__in=paid_statuses)),
+            awaiting_payment=Count("id", filter=Q(status=Order.Status.PENDING_PAYMENT)),
         )
 
         failed_payments_24h = PaymentAttempt.objects.filter(
@@ -60,18 +56,12 @@ class RaqnithAdminSite(admin.AdminSite):
             created_at__gte=day_ago,
         ).count()
         webhooks_unprocessed = WebhookEvent.objects.filter(processed=False).count()
-        webhooks_failing = WebhookEvent.objects.filter(
-            processed=False, failure_count__gt=0
-        ).count()
+        webhooks_failing = WebhookEvent.objects.filter(processed=False, failure_count__gt=0).count()
         pending_applications = SellerApplication.objects.filter(
             status=SellerApplication.Status.PENDING
         ).count()
-        active_coupons = (
-            Coupon.objects.filter(active=True).exclude(expires_at__lte=now).count()
-        )
-        downloads_today = DownloadLog.objects.filter(
-            created_at__gte=today_start
-        ).count()
+        active_coupons = Coupon.objects.filter(active=True).exclude(expires_at__lte=now).count()
+        downloads_today = DownloadLog.objects.filter(created_at__gte=today_start).count()
 
         cards = [
             {
@@ -158,9 +148,7 @@ class RaqnithAdminSite(admin.AdminSite):
                 }
             )
 
-        latest = (
-            Order.objects.select_related("user").order_by("-created_at")[:8]
-        )
+        latest = Order.objects.select_related("user").order_by("-created_at")[:8]
         for order in latest:
             order.display_total = pesos(order.total_amount)
 
@@ -171,4 +159,4 @@ class RaqnithAdminSite(admin.AdminSite):
         }
 
 
-admin_site = RaqnithAdminSite(name="admin")
+admin_site = VirtusAdminSite(name="admin")

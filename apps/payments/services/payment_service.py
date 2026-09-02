@@ -124,7 +124,9 @@ class PaymentService:
                 status=PaymentAttempt.Status.CREATED,
             )
 
-        desc = f"Order {order.id} - {order.email}".strip(" -") if order.email else f"Order {order.id}"
+        desc = (
+            f"Order {order.id} - {order.email}".strip(" -") if order.email else f"Order {order.id}"
+        )
         meta = {"order_id": str(order.id)}
         if order.email:
             meta["customer_email"] = order.email
@@ -134,7 +136,7 @@ class PaymentService:
                 amount=order.total_amount,
                 currency=order.currency,
                 description=desc,
-                statement_descriptor="Raqnith",
+                statement_descriptor="Virtus",
                 payment_method_allowed=payment_method_allowed,
                 metadata=meta,
             )
@@ -155,9 +157,7 @@ class PaymentService:
         attempt.client_key = intent.get("client_key", "")
         attempt.qr_url = self._qr_url_from(intent)
         attempt.redirect_url = self._redirect_url_from(intent)
-        attempt.save(
-            update_fields=["paymongo_intent_id", "client_key", "qr_url", "redirect_url"]
-        )
+        attempt.save(update_fields=["paymongo_intent_id", "client_key", "qr_url", "redirect_url"])
         self._transition(attempt, PaymentAttempt.Status.AWAITING_ACTION)
         return attempt
 

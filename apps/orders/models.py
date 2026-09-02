@@ -42,9 +42,7 @@ class Order(models.Model):
         blank=True,
         db_index=True,
     )
-    status = models.CharField(
-        max_length=20, choices=Status.choices, default=Status.DRAFT
-    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
 
     subtotal_amount = MoneyField()
     discount_amount = MoneyField(default=0)
@@ -87,6 +85,7 @@ class Order(models.Model):
         from datetime import timedelta
 
         from apps.orders.constants import ORDER_EXPIRATION_MINUTES
+
         return timezone.now() - self.created_at > timedelta(minutes=ORDER_EXPIRATION_MINUTES)
 
     def expire_if_overdue(self):
@@ -161,10 +160,7 @@ class OrderItem(models.Model):
 
     @property
     def is_membership(self):
-        return (
-            self.product_id
-            and self.product.product_type == Product.ProductType.MEMBERSHIP
-        )
+        return self.product_id and self.product.product_type == Product.ProductType.MEMBERSHIP
 
     @property
     def has_active_access(self):
@@ -175,9 +171,7 @@ class OrderItem(models.Model):
 
     @property
     def requires_license_key(self):
-        return bool(
-            self.product_id and self.product.requires_license_key
-        )
+        return bool(self.product_id and self.product.requires_license_key)
 
 
 class LicenseKey(models.Model):

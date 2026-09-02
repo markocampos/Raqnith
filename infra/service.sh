@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Unified Raqnith Management & Service CLI
+# Unified Virtus Management & Service CLI
 set -euo pipefail
 
 INFRA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -47,12 +47,12 @@ case "$COMMAND" in
         /home/ubuntu/raqnith/.venv/bin/python /home/ubuntu/raqnith/manage.py check --deploy --settings=config.settings.production
         ;;
     help|--help|-h|*)
-        echo "Raqnith Service Management CLI"
+        echo "Virtus Service Management CLI"
         echo ""
         echo "Usage: $0 <command>"
         echo ""
         echo "Commands:"
-        echo "  offline       Put raqnith.duckdns.org in offline mode (503 + block search indexing)"
+        echo "  offline       Put virtus.duckdns.org in offline mode (503 + block search indexing)"
         echo "  deploy        Deploy updates, bring site online, run migrations, collectstatic & restart"
         echo "  online        Alias for deploy (brings site online)"
         echo "  restart       Restart raqnith.service with status and health probe"

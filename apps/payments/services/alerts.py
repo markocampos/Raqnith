@@ -40,7 +40,7 @@ def notify_webhook_failures(webhook_event, threshold):
         )
         return False
 
-    subject = f"[Raqnith] Webhook failing: {webhook_event.event_type}"
+    subject = f"[Virtus] Webhook failing: {webhook_event.event_type}"
     body = (
         f"A PayMongo webhook has failed to process {webhook_event.failure_count} times.\n\n"
         f"Event type:  {webhook_event.event_type}\n"

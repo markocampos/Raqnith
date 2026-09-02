@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Raqnith Offline Mode Switch
-# Switches raqnith.duckdns.org to offline/maintenance mode and stops the backend service.
+# Virtus Offline Mode Switch
+# Switches virtus.duckdns.org to offline/maintenance mode and stops the backend service.
 # Site remains offline and unsearchable until deploy.sh is executed.
 set -euo pipefail
 
@@ -15,10 +15,10 @@ PROJECT_DIR="/home/ubuntu/raqnith"
 DEPLOY_DIR="/home/ubuntu/deploy/docker"
 SERVICE_NAME="raqnith.service"
 NGINX_CONTAINER="portfolio-nginx-1"
-HOST_DOMAIN="raqnith.duckdns.org"
+HOST_DOMAIN="virtus.duckdns.org"
 
 echo -e "${BOLD}==============================================${NC}"
-echo -e "${BOLD}         Raqnith Offline Mode Activation       ${NC}"
+echo -e "${BOLD}         Virtus Offline Mode Activation       ${NC}"
 echo -e "${BOLD}==============================================${NC}"
 
 # 1. Update Nginx configuration to offline mode

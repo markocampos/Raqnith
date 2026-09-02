@@ -263,9 +263,9 @@ components:
     padding: 64px 32px
 ---
 
-## Raqnith Adaptations (read this first)
+## Virtus Adaptations (read this first)
 
-This document analyzes HashiCorp's marketing design as our structural inspiration. Raqnith follows its **layout, surface-lift hierarchy, radii, spacing, and typography rhythm**, but overrides the following. When working on Raqnith UI, these rules win over anything below:
+This document analyzes HashiCorp's marketing design as our structural inspiration. Virtus follows its **layout, surface-lift hierarchy, radii, spacing, and typography rhythm**, but overrides the following. When working on Virtus UI, these rules win over anything below:
 
 1. **Accent color is warm amber, not blue.** `--brand: #f5a623`, `--brand-hover: #ffc14d` (`site.css`). Never introduce blue/purple-blue accents for links, focus rings, CTAs, or highlights. The only blues allowed are official payment-brand logo colors (GCash `#007dfe`, BDO `#003087`, etc.) inside payment strips.
 2. **Typography is Plus Jakarta Sans (display) + Inter (body)**, self-hosted in `static/fonts/`. Headings h1-h4 use `--font-display`; body stays Inter at 500. Do not swap in other families.

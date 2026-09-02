@@ -4,9 +4,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import TemplateView
+from django_ratelimit.decorators import ratelimit
 
 from apps.accounts.forms import (
     ChangePasswordForm,
@@ -27,7 +29,16 @@ class RegisterView(View):
         next_url = request.GET.get("next", "")
         return render(request, "accounts/register.html", {"form": form, "next": next_url})
 
+    @method_decorator(ratelimit(key="ip", rate="5/h", block=False))
     def post(self, request):
+        if getattr(request, "limited", False):
+            messages.error(request, "Too many registration attempts. Please try again later.")
+            form = UserRegistrationForm()
+            next_url = request.POST.get("next") or request.GET.get("next") or ""
+            return render(
+                request, "accounts/register.html", {"form": form, "next": next_url}, status=429
+            )
+
         if request.user.is_authenticated:
             return redirect("accounts:profile")
 
@@ -41,7 +52,7 @@ class RegisterView(View):
             merge_cart_on_login(request, user, old_session_key=old_session_key)
 
             greeting = user.first_name or user.username
-            messages.success(request, f"Welcome to Raqnith, {greeting}! Your account is ready.")
+            messages.success(request, f"Welcome to Virtus, {greeting}! Your account is ready.")
 
             if next_url and url_has_allowed_host_and_scheme(
                 next_url, allowed_hosts={request.get_host()}
@@ -65,7 +76,16 @@ class LoginView(View):
         next_url = request.GET.get("next", "")
         return render(request, "accounts/login.html", {"form": form, "next": next_url})
 
+    @method_decorator(ratelimit(key="ip", rate="10/m", block=False))
     def post(self, request):
+        if getattr(request, "limited", False):
+            messages.error(request, "Too many login attempts. Please try again in a minute.")
+            form = UserLoginForm(request=request)
+            next_url = request.POST.get("next") or request.GET.get("next") or ""
+            return render(
+                request, "accounts/login.html", {"form": form, "next": next_url}, status=429
+            )
+
         if request.user.is_authenticated:
             return redirect("accounts:profile")
 
@@ -144,7 +164,9 @@ class ProfileView(LoginRequiredMixin, View):
         paid_orders = [o for o in orders if o.status in (Order.Status.PAID, Order.Status.FULFILLED)]
         paid_count = len(paid_orders)
         pending_count = len([o for o in orders if o.status == Order.Status.PENDING_PAYMENT])
-        cancelled_count = len([o for o in orders if o.status in (Order.Status.CANCELLED, Order.Status.PAYMENT_FAILED)])
+        cancelled_count = len(
+            [o for o in orders if o.status in (Order.Status.CANCELLED, Order.Status.PAYMENT_FAILED)]
+        )
         total_spent_cents = sum(o.total_amount for o in paid_orders)
 
         # 4. Status Filtering (All, Paid, Pending, Expired)
@@ -154,7 +176,11 @@ class ProfileView(LoginRequiredMixin, View):
         elif status_filter == "pending":
             filtered_orders = [o for o in orders if o.status == Order.Status.PENDING_PAYMENT]
         elif status_filter in ("cancelled", "expired"):
-            filtered_orders = [o for o in orders if o.status in (Order.Status.CANCELLED, Order.Status.PAYMENT_FAILED)]
+            filtered_orders = [
+                o
+                for o in orders
+                if o.status in (Order.Status.CANCELLED, Order.Status.PAYMENT_FAILED)
+            ]
         else:
             status_filter = "all"
             filtered_orders = orders

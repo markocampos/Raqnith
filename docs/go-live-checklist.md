@@ -1,4 +1,4 @@
-# Go-Live Checklist — Raqnith (raqnith.duckdns.org)
+# Go-Live Checklist — Virtus (virtus.duckdns.org)
 
 Follow this order. Do **not** skip ahead; each stage depends on the previous
 one. PayMongo's own guidance is mirrored here: complete account verification,
@@ -9,9 +9,9 @@ live transaction before full launch.
 
 - [ ] Production environment uses `config.settings.production` (`DJANGO_SETTINGS_MODULE`)
 - [ ] `DJANGO_SECRET_KEY` set to a fresh, random value (never the dev default)
-- [ ] `DJANGO_ALLOWED_HOSTS` includes `raqnith.duckdns.org`
-- [ ] `DJANGO_CSRF_TRUSTED_ORIGINS` includes `https://raqnith.duckdns.org`
-- [ ] `DJANGO_BASE_URL` is `https://raqnith.duckdns.org`
+- [ ] `DJANGO_ALLOWED_HOSTS` includes `virtus.duckdns.org`
+- [ ] `DJANGO_CSRF_TRUSTED_ORIGINS` includes `https://virtus.duckdns.org`
+- [ ] `DJANGO_BASE_URL` is `https://virtus.duckdns.org`
 - [ ] PostgreSQL reachable; `migrate` applied (incl. `payments.0005_paymentattempt_redirect_url`)
 - [ ] `manage.py check --deploy` shows no critical warnings
 
@@ -33,7 +33,7 @@ live transaction before full launch.
 - [ ] Deployed behind HTTPS (Nginx/Cloudflare → Gunicorn → Django)
 - [ ] `DEBUG=False`, `SESSION_COOKIE_SECURE`/`CSRF_COOKIE_SECURE`/HSTS active
 - [ ] PayMongo **test** keys set in production env
-- [ ] Webhook endpoint registered: `https://raqnith.duckdns.org/webhooks/paymongo/`
+- [ ] Webhook endpoint registered: `https://virtus.duckdns.org/webhooks/paymongo/`
 
 ## 4. Payment testing (test mode)
 

@@ -18,8 +18,7 @@ GROUP_COUNT = 3
 def generate_license_key(prefix="RAQ"):
     """Return a fresh key like RAQ-K7F2-M9XQ-PT4B."""
     groups = [
-        "".join(secrets.choice(KEY_ALPHABET) for _ in range(GROUP_SIZE))
-        for _ in range(GROUP_COUNT)
+        "".join(secrets.choice(KEY_ALPHABET) for _ in range(GROUP_SIZE)) for _ in range(GROUP_COUNT)
     ]
     return f"{prefix}-" + "-".join(groups)
 

@@ -36,8 +36,8 @@ def build_receipt_pdf(order, items, payment_method="", license_keys=()):
         rightMargin=18 * mm,
         topMargin=16 * mm,
         bottomMargin=16 * mm,
-        title=f"Raqnith Receipt {str(order.id)[:8]}",
-        author="Raqnith",
+        title=f"Virtus Receipt {str(order.id)[:8]}",
+        author="Virtus",
     )
 
     styles = getSampleStyleSheet()
@@ -45,9 +45,7 @@ def build_receipt_pdf(order, items, payment_method="", license_keys=()):
     muted = colors.HexColor("#6b7280")
     brand_bg = colors.HexColor("#0b0b0c")
 
-    title = ParagraphStyle(
-        "Brand", parent=styles["Title"], fontSize=22, textColor=ink, alignment=0
-    )
+    title = ParagraphStyle("Brand", parent=styles["Title"], fontSize=22, textColor=ink, alignment=0)
     subtitle = ParagraphStyle(
         "Sub", parent=styles["Normal"], fontSize=9.5, textColor=muted, spaceAfter=10
     )
@@ -58,7 +56,7 @@ def build_receipt_pdf(order, items, payment_method="", license_keys=()):
     small = ParagraphStyle("Small", parent=styles["Normal"], fontSize=8.5, textColor=muted)
 
     story = [
-        Paragraph("Raqnith", title),
+        Paragraph("Virtus", title),
         Paragraph("Instant digital products · Official Receipt", subtitle),
     ]
 
@@ -90,16 +88,10 @@ def build_receipt_pdf(order, items, payment_method="", license_keys=()):
     )
     story += [meta_table, Spacer(1, 6 * mm)]
 
-    header_style = ParagraphStyle(
-        "CellHead", parent=styles["Normal"], fontSize=9, textColor=muted
-    )
+    header_style = ParagraphStyle("CellHead", parent=styles["Normal"], fontSize=9, textColor=muted)
     item_rows = [[Paragraph("ITEM", header_style), "", Paragraph("PRICE", header_style)]]
     for item in items:
-        ptype = (
-            item.product.get_product_type_display()
-            if item.product_id
-            else "Digital Product"
-        )
+        ptype = item.product.get_product_type_display() if item.product_id else "Digital Product"
         item_rows.append(
             [
                 Paragraph(f"<b>{item.product_name}</b>", body),
@@ -115,9 +107,7 @@ def build_receipt_pdf(order, items, payment_method="", license_keys=()):
     else:
         totals.append(["", "Total paid", _money(order.total_amount)])
 
-    items_table = Table(
-        item_rows + totals, colWidths=[95 * mm, 35 * mm, 30 * mm]
-    )
+    items_table = Table(item_rows + totals, colWidths=[95 * mm, 35 * mm, 30 * mm])
     style = [
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("LINEBELOW", (0, 0), (-1, 0), 0.75, colors.HexColor("#d1d5db")),
@@ -136,9 +126,7 @@ def build_receipt_pdf(order, items, payment_method="", license_keys=()):
         key_data = [
             [
                 Paragraph(f"<font face='Courier-Bold'>{k.key}</font>", body),
-                Paragraph(
-                    k.order_item.product_name if k.order_item.product_id else "", small
-                ),
+                Paragraph(k.order_item.product_name if k.order_item.product_id else "", small),
             ]
             for k in license_keys
         ]
@@ -157,8 +145,7 @@ def build_receipt_pdf(order, items, payment_method="", license_keys=()):
         for i in memberships:
             until = date_format(timezone.localtime(i.access_until), "M j, Y")
             rows.append(
-                [Paragraph(i.product_name, body),
-                 Paragraph(f"Access until {until}", small)]
+                [Paragraph(i.product_name, body), Paragraph(f"Access until {until}", small)]
             )
         mtable = Table(rows, colWidths=[70 * mm, 90 * mm])
         mtable.setStyle(TableStyle([("TOPPADDING", (0, 0), (-1, -1), 3)]))
@@ -167,7 +154,7 @@ def build_receipt_pdf(order, items, payment_method="", license_keys=()):
     story.append(Spacer(1, 10 * mm))
     story.append(
         Paragraph(
-            "Thank you for shopping at Raqnith! This receipt serves as proof of "
+            "Thank you for shopping at Virtus! This receipt serves as proof of "
             "purchase for your records. Questions? Reply to your confirmation "
             "email with your order number.",
             small,

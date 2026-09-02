@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from config.admin import pesos, admin_site
+from config.admin import admin_site, pesos
 
 from .models import PaymentAttempt, Refund, WebhookEvent
 
@@ -90,7 +90,13 @@ class RefundInline(admin.TabularInline):
     model = Refund
     extra = 0
     can_delete = False
-    fields = ["status_badge_display", "amount_display", "reason", "provider_refund_id", "created_at"]
+    fields = [
+        "status_badge_display",
+        "amount_display",
+        "reason",
+        "provider_refund_id",
+        "created_at",
+    ]
     readonly_fields = fields
 
     def has_add_permission(self, request, obj=None):
@@ -142,13 +148,19 @@ class RefundAdmin(admin.ModelAdmin):
     ]
 
     fieldsets = (
-        ("Refund record", {
-            "fields": ("id", "payment", "amount", "provider_refund_id", "created_at"),
-            "description": "Created by the payment service — do not edit by hand.",
-        }),
-        ("Resolution", {
-            "fields": ("status", "reason", "failure_message"),
-        }),
+        (
+            "Refund record",
+            {
+                "fields": ("id", "payment", "amount", "provider_refund_id", "created_at"),
+                "description": "Created by the payment service — do not edit by hand.",
+            },
+        ),
+        (
+            "Resolution",
+            {
+                "fields": ("status", "reason", "failure_message"),
+            },
+        ),
     )
 
     @admin.display(description="Refund")

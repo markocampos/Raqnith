@@ -10,22 +10,16 @@ class UserRegistrationForm(forms.ModelForm):
     first_name = forms.CharField(
         max_length=150,
         required=False,
-        widget=forms.TextInput(
-            attrs={"placeholder": "First name", "autocomplete": "given-name"}
-        ),
+        widget=forms.TextInput(attrs={"placeholder": "First name", "autocomplete": "given-name"}),
     )
     last_name = forms.CharField(
         max_length=150,
         required=False,
-        widget=forms.TextInput(
-            attrs={"placeholder": "Last name", "autocomplete": "family-name"}
-        ),
+        widget=forms.TextInput(attrs={"placeholder": "Last name", "autocomplete": "family-name"}),
     )
     email = forms.EmailField(
         required=True,
-        widget=forms.EmailInput(
-            attrs={"placeholder": "you@example.com", "autocomplete": "email"}
-        ),
+        widget=forms.EmailInput(attrs={"placeholder": "you@example.com", "autocomplete": "email"}),
     )
     username = forms.CharField(
         max_length=150,

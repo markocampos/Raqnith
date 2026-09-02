@@ -73,9 +73,7 @@ class WebhookTests(TestCase):
     def test_missing_signature_returns_401(self):
         payload = payment_event_payload(intent_id="pi_test_1")
         raw_body = json.dumps(payload).encode()
-        resp = self.client.post(
-            self.url, data=raw_body, content_type="application/json"
-        )
+        resp = self.client.post(self.url, data=raw_body, content_type="application/json")
 
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(WebhookEvent.objects.count(), 0)
@@ -169,7 +167,11 @@ class WebhookTests(TestCase):
         self.assertEqual(self.order.status, Order.Status.PAID)
 
     def test_webhook_url_aliases_accepted(self):
-        for alias_url in ("/webhook/paymongo/", "/webhooks/paymongo/", "/payments/webhook/paymongo/"):
+        for alias_url in (
+            "/webhook/paymongo/",
+            "/webhooks/paymongo/",
+            "/payments/webhook/paymongo/",
+        ):
             payload = payment_event_payload(
                 event_id=f"evt_{alias_url.replace('/', '_')}",
                 intent_id="pi_test_1",
@@ -195,5 +197,3 @@ class WebhookTests(TestCase):
         self.attempt.refresh_from_db()
         self.assertEqual(self.attempt.status, PaymentAttempt.Status.FAILED)
         self.assertEqual(self.attempt.failure_code, "qr_expired")
-
-

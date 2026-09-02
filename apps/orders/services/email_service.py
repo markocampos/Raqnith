@@ -76,9 +76,7 @@ def send_payment_recovery(order):
             "pay_url": f"{base}{reverse('orders:resume', args=[order.id])}",
             "track_url": f"{base}{reverse('orders:track')}",
         }
-        subject = render_to_string(
-            "emails/payment_recovery_subject.txt", context
-        ).strip()
+        subject = render_to_string("emails/payment_recovery_subject.txt", context).strip()
         text_body = render_to_string("emails/payment_recovery.txt", context)
         html_body = render_to_string("emails/payment_recovery.html", context)
 
@@ -106,17 +104,15 @@ def send_order_confirmation(order):
         return False
 
     # Atomic claim so concurrent settle paths can't double-send.
-    claimed = Order.objects.filter(
-        pk=order.pk, confirmation_sent_at__isnull=True
-    ).update(confirmation_sent_at=timezone.now())
+    claimed = Order.objects.filter(pk=order.pk, confirmation_sent_at__isnull=True).update(
+        confirmation_sent_at=timezone.now()
+    )
     if not claimed:
         return False
 
     try:
         context = build_confirmation_context(order)
-        subject = render_to_string(
-            "emails/order_confirmation_subject.txt", context
-        ).strip()
+        subject = render_to_string("emails/order_confirmation_subject.txt", context).strip()
         text_body = render_to_string("emails/order_confirmation.txt", context)
         html_body = render_to_string("emails/order_confirmation.html", context)
 

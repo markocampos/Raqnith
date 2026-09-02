@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('catalog', '0004_alter_category_options_category_icon'),
+        ("catalog", "0004_alter_category_options_category_icon"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='product',
-            name='description',
-            field=models.TextField(blank=True, default='Instant digital license with automated receipt confirmation and download access.', help_text='Customizable product description shown on cards and product detail page.'),
+            model_name="product",
+            name="description",
+            field=models.TextField(
+                blank=True,
+                default="Instant digital license with automated receipt confirmation and download access.",
+                help_text="Customizable product description shown on cards and product detail page.",
+            ),
         ),
     ]

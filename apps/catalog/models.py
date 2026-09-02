@@ -93,6 +93,22 @@ class Product(models.Model):
     def get_absolute_url(self):
         return reverse("catalog:product_detail", args=[self.slug])
 
+    @property
+    def primary_image(self):
+        return self.images.first()
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, related_name="images", on_delete=models.CASCADE)
+    image = models.ImageField(upload_to="product_gallery/")
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return f"{self.product.name} Image"
+
 
 def product_file_upload_path(instance, filename):
     """Store deliverables under a per-product private media folder."""

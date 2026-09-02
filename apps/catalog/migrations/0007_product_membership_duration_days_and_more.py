@@ -4,20 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('catalog', '0006_product_product_type_productfile'),
+        ("catalog", "0006_product_product_type_productfile"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='product',
-            name='membership_duration_days',
-            field=models.PositiveIntegerField(blank=True, help_text='Memberships only: days of access from payment. Leave empty for lifetime access. Buyer files/links lock automatically at expiry.', null=True),
+            model_name="product",
+            name="membership_duration_days",
+            field=models.PositiveIntegerField(
+                blank=True,
+                help_text="Memberships only: days of access from payment. Leave empty for lifetime access. Buyer files/links lock automatically at expiry.",
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='product',
-            name='requires_license_key',
-            field=models.BooleanField(default=False, help_text='Auto-generate a unique license/access code per order item on payment (recommended for software, kits, and API products).'),
+            model_name="product",
+            name="requires_license_key",
+            field=models.BooleanField(
+                default=False,
+                help_text="Auto-generate a unique license/access code per order item on payment (recommended for software, kits, and API products).",
+            ),
         ),
     ]

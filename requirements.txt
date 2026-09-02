@@ -7,3 +7,4 @@ django-lucide>=1.3.1
 django-icons>=26.1
 
 reportlab
+django-ratelimit==4.1.0

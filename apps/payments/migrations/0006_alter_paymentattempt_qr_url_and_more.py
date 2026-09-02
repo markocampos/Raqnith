@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('payments', '0005_paymentattempt_redirect_url'),
+        ("payments", "0005_paymentattempt_redirect_url"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='paymentattempt',
-            name='qr_url',
+            model_name="paymentattempt",
+            name="qr_url",
             field=models.TextField(blank=True),
         ),
         migrations.AlterField(
-            model_name='paymentattempt',
-            name='redirect_url',
+            model_name="paymentattempt",
+            name="redirect_url",
             field=models.TextField(blank=True),
         ),
     ]

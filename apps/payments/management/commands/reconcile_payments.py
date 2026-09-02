@@ -75,9 +75,7 @@ class Command(BaseCommand):
                 service.reconcile_payment(attempt)
             except (PayMongoTimeoutError, PayMongoNetworkError, PayMongoAPIError) as exc:
                 errors += 1
-                self.stderr.write(
-                    f"  reconcile error attempt={attempt.id}: {exc}"
-                )
+                self.stderr.write(f"  reconcile error attempt={attempt.id}: {exc}")
                 logger.warning(
                     "reconcile error attempt=%s order=%s intent=%s error=%s",
                     attempt.id,
@@ -88,12 +86,11 @@ class Command(BaseCommand):
                 continue
             attempt.refresh_from_db()
             resolved += 1
-            self.stdout.write(
-                f"  reconciled attempt={attempt.id} -> {attempt.status}"
-            )
+            self.stdout.write(f"  reconciled attempt={attempt.id} -> {attempt.status}")
 
         # 2. Cancel overdue pending orders (> 60 minutes)
         from apps.orders.models import Order
+
         overdue_orders = Order.objects.filter(
             status=Order.Status.PENDING_PAYMENT,
             created_at__lte=now - timezone.timedelta(minutes=60),

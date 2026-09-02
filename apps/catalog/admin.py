@@ -6,7 +6,7 @@ from django.utils.html import format_html
 
 from config.admin import admin_site
 
-from .models import Category, Product, ProductFile
+from .models import Category, Product, ProductFile, ProductImage
 
 PESOS_MAX = 500_000
 
@@ -48,8 +48,25 @@ class ProductAdminForm(forms.ModelForm):
 class ProductFileInline(admin.TabularInline):
     model = ProductFile
     extra = 1
-    fields = ["name", "kind", "file", "external_url", "sort_order", "is_active"]
+    fields = ["name", "kind", "file", "external_url", "file_size", "sort_order", "is_active"]
+    readonly_fields = ["file_size"]
     ordering = ["sort_order", "created_at"]
+
+
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
+    extra = 1
+    fields = ["image", "sort_order", "image_preview"]
+    readonly_fields = ["image_preview"]
+    ordering = ["sort_order", "id"]
+
+    @admin.display(description="Preview")
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="height: 50px; border-radius: 4px;" />', obj.image.url
+            )
+        return ""
 
 
 class ProductInline(admin.TabularInline):
@@ -74,9 +91,7 @@ class DeliverableFilter(admin.SimpleListFilter):
         )
 
     def queryset(self, request, queryset):
-        counted = queryset.annotate(
-            _active_files=Count("files", filter=Q(files__is_active=True))
-        )
+        counted = queryset.annotate(_active_files=Count("files", filter=Q(files__is_active=True)))
         if self.value() == "missing":
             return counted.filter(_active_files=0)
         if self.value() == "ready":
@@ -123,6 +138,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
     list_display = [
+        "image_preview",
         "name",
         "category",
         "product_type",
@@ -145,22 +161,36 @@ class ProductAdmin(admin.ModelAdmin):
     autocomplete_fields = ["category"]
     date_hierarchy = "created_at"
     list_per_page = 25
-    inlines = [ProductFileInline]
+    inlines = [ProductImageInline, ProductFileInline]
     actions = ["mark_as_available", "mark_as_unavailable"]
 
     fieldsets = (
-        ("Product Information", {
-            "fields": ("name", "slug", "category", "product_type", "price", "description", "is_available"),
-            "description": "Select or create a Category, price, and customizable description for this digital product.",
-        }),
-        ("Delivery", {
-            "fields": ("requires_license_key", "membership_duration_days"),
-            "description": (
-                "License key: auto-issues one access code per order at payment. "
-                "Membership duration: days of file/link access from payment. "
-                "Attach the buyer's files or links in the Deliverables section below."
-            ),
-        }),
+        (
+            "Product Information",
+            {
+                "fields": (
+                    "name",
+                    "slug",
+                    "category",
+                    "product_type",
+                    "price",
+                    "description",
+                    "is_available",
+                ),
+                "description": "Select or create a Category, price, and customizable description for this digital product.",
+            },
+        ),
+        (
+            "Delivery",
+            {
+                "fields": ("requires_license_key", "membership_duration_days"),
+                "description": (
+                    "License key: auto-issues one access code per order at payment. "
+                    "Membership duration: days of file/link access from payment. "
+                    "Attach the buyer's files or links in the Deliverables section below."
+                ),
+            },
+        ),
     )
 
     def get_queryset(self, request):
@@ -168,6 +198,20 @@ class ProductAdmin(admin.ModelAdmin):
             super()
             .get_queryset(request)
             .annotate(_active_files=Count("files", filter=Q(files__is_active=True)))
+        )
+
+    @admin.display(description="Image")
+    def image_preview(self, obj):
+        img = obj.primary_image
+        if img and img.image:
+            return format_html(
+                '<img src="{}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px;" />',
+                img.image.url,
+            )
+        from django.utils.safestring import mark_safe
+
+        return mark_safe(
+            '<div style="width: 45px; height: 45px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 10px;">None</div>'
         )
 
     @admin.display(description="Price", ordering="price_cents")

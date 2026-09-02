@@ -4,19 +4,30 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('catalog', '0003_remove_product_stock'),
+        ("catalog", "0003_remove_product_stock"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='category',
-            options={'ordering': ['name'], 'verbose_name_plural': 'Categories'},
+            name="category",
+            options={"ordering": ["name"], "verbose_name_plural": "Categories"},
         ),
         migrations.AddField(
-            model_name='category',
-            name='icon',
-            field=models.CharField(choices=[('zap', '⚡ Zap (Smoke / Test Products)'), ('panels-top-left', '📐 Layout (Templates / Themes)'), ('code-2', '💻 Code (Dev Kits / APIs)'), ('terminal', '⌨️ Terminal (Software / Tools)'), ('book-open', '📚 Book (Guides / Docs)'), ('box', '📦 Box (Digital Assets & Bundles)')], default='box', help_text='Lucide icon for visual card banners.', max_length=50),
+            model_name="category",
+            name="icon",
+            field=models.CharField(
+                choices=[
+                    ("zap", "⚡ Zap (Smoke / Test Products)"),
+                    ("panels-top-left", "📐 Layout (Templates / Themes)"),
+                    ("code-2", "💻 Code (Dev Kits / APIs)"),
+                    ("terminal", "⌨️ Terminal (Software / Tools)"),
+                    ("book-open", "📚 Book (Guides / Docs)"),
+                    ("box", "📦 Box (Digital Assets & Bundles)"),
+                ],
+                default="box",
+                help_text="Lucide icon for visual card banners.",
+                max_length=50,
+            ),
         ),
     ]

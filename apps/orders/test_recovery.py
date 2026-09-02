@@ -1,4 +1,5 @@
 """Pending-payment recovery email tests ("your QR expired — fresh one here")."""
+
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -59,9 +60,7 @@ class RecoveryServiceTests(RecoveryTestBase):
 
     def test_skips_non_pending_orders(self):
         paid = self.make_pending()
-        Order.objects.filter(pk=paid.pk).update(
-            status=Order.Status.PAID, paid_at=timezone.now()
-        )
+        Order.objects.filter(pk=paid.pk).update(status=Order.Status.PAID, paid_at=timezone.now())
         self.assertFalse(send_payment_recovery(Order.objects.get(pk=paid.pk)))
         self.assertEqual(len(mail.outbox), 0)
 

@@ -72,15 +72,11 @@ class CreateIntentView(View):
         try:
             order = get_order_for_checkout(order_id, user_or_session)
         except (Order.DoesNotExist, ValidationError):
-            return JsonResponse(
-                {"error": "not_found", "detail": "Order not found."}, status=404
-            )
+            return JsonResponse({"error": "not_found", "detail": "Order not found."}, status=404)
 
         service = PaymentService()
         try:
-            attempt = service.initiate_payment(
-                order=order, payment_method=payment_method
-            )
+            attempt = service.initiate_payment(order=order, payment_method=payment_method)
         except AlreadyPaid:
             return JsonResponse(
                 {"error": "already_paid", "detail": "This order has already been paid."},
@@ -129,7 +125,6 @@ class CreateIntentView(View):
         )
 
 
-
 class PaymentStatusView(View):
     """Return the current state of a payment attempt to its owner.
 
@@ -170,7 +165,9 @@ class PaymentStatusView(View):
                 attempt.failure_code = "qr_expired"
                 attempt.failure_message = "QR code has expired. Please generate a new one."
                 attempt.status = PaymentAttempt.Status.FAILED
-                attempt.save(update_fields=["status", "failure_code", "failure_message", "updated_at"])
+                attempt.save(
+                    update_fields=["status", "failure_code", "failure_message", "updated_at"]
+                )
             elif attempt.paymongo_intent_id:
                 try:
                     PaymentService().reconcile_payment(attempt)
@@ -188,8 +185,6 @@ class PaymentStatusView(View):
                 "order_id": str(attempt.order_id),
             }
         )
-
-
 
 
 class RetryPaymentView(View):
@@ -274,9 +269,7 @@ class RetryPaymentView(View):
             attempt.refresh_from_db()
             if attempt.status == PaymentAttempt.Status.SUCCEEDED:
                 mark_order_paid(order)
-                return JsonResponse(
-                    {"status": "succeeded", "order_id": str(order.id)}, status=200
-                )
+                return JsonResponse({"status": "succeeded", "order_id": str(order.id)}, status=200)
             if attempt.status == PaymentAttempt.Status.PROCESSING:
                 return JsonResponse({"status": "processing"}, status=202)
 
@@ -333,8 +326,6 @@ class RetryPaymentView(View):
         )
 
 
-
-
 class PaymentReturnView(View):
     """Handle the browser's return from a 3DS / bank authentication flow.
 
@@ -379,9 +370,7 @@ class PaymentReturnView(View):
         try:
             service.reconcile_payment(attempt)
         except (PayMongoTimeoutError, PayMongoNetworkError, PayMongoAPIError):
-            logger.warning(
-                "Payment return reconciliation failed for intent %s", intent_id_hint
-            )
+            logger.warning("Payment return reconciliation failed for intent %s", intent_id_hint)
             return render(
                 request,
                 "payments/return.html",
@@ -431,9 +420,7 @@ class PayMongoWebhookView(View):
         signature = request.headers.get(WEBHOOK_SIGNATURE_HEADER)
 
         try:
-            verify_webhook_signature(
-                raw_body, signature, settings.PAYMONGO_WEBHOOK_SECRET
-            )
+            verify_webhook_signature(raw_body, signature, settings.PAYMONGO_WEBHOOK_SECRET)
         except InvalidWebhookSignature:
             logger.warning("Rejected PayMongo webhook with invalid signature.")
             return JsonResponse({"error": "invalid_signature"}, status=401)

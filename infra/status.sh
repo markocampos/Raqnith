@@ -10,12 +10,12 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 SERVICE_NAME="raqnith.service"
-HOST_HEADER="${DJANGO_ALLOWED_HOSTS:-raqnith.duckdns.org}"
+HOST_HEADER="${DJANGO_ALLOWED_HOSTS:-virtus.duckdns.org}"
 DEPLOY_CONF="/home/ubuntu/deploy/docker/raqnith.conf"
 PORT="8002"
 
 echo -e "${BOLD}==============================================${NC}"
-echo -e "${BOLD}       Raqnith Production Service Status      ${NC}"
+echo -e "${BOLD}       Virtus Production Service Status      ${NC}"
 echo -e "${BOLD}==============================================${NC}"
 
 # Check Online / Offline state
