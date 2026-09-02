@@ -338,6 +338,31 @@
         });
     }
 
+    function initSectionVideoClip() {
+        var video = document.querySelector(".hiw-bg-video");
+        if (!video) return;
+
+        var startTime = 1;
+        var endTime = 6;
+
+        function checkTime() {
+            if (video.currentTime >= endTime || video.currentTime < startTime) {
+                video.currentTime = startTime;
+                video.play().catch(function () {});
+            }
+        }
+
+        video.addEventListener("loadedmetadata", function () {
+            video.currentTime = startTime;
+        });
+
+        video.addEventListener("timeupdate", checkTime);
+
+        if (video.readyState >= 1) {
+            video.currentTime = startTime;
+        }
+    }
+
     // Initialize when DOM is ready
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", function () {
@@ -348,6 +373,7 @@
             initAddToCartLoading();
             initPromoInlineError();
             initScrollIndicator();
+            initSectionVideoClip();
         });
     } else {
         initUserDropdown();
@@ -357,5 +383,6 @@
         initAddToCartLoading();
         initPromoInlineError();
         initScrollIndicator();
+        initSectionVideoClip();
     }
 })();

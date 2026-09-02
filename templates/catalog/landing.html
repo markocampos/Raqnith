@@ -263,7 +263,13 @@
 
 <!-- How It Works Section -->
 <section class="landing-section hiw-section" id="how-it-works">
-    <div class="section-container">
+    <!-- Background Video Texture clipped to 1-6s with dark overlay -->
+    <video class="hiw-bg-video" autoplay muted loop playsinline preload="auto">
+        <source src="{% static 'video/section-design.mp4' %}#t=1,6" type="video/mp4">
+    </video>
+    <div class="hiw-overlay" aria-hidden="true"></div>
+
+    <div class="section-container hiw-container">
 
         <div class="hiw-header">
             <span class="section-tag">How it works</span>

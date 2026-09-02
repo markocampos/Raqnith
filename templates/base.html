@@ -24,28 +24,31 @@
     {% block structured_data %}{% endblock %}
     <link rel="preload" href="{% static 'fonts/PlusJakartaSansVariable.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{% static 'fonts/InterVariable.woff2' %}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20260902_prodimg">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20260902_hdr">
 </head>
 <body>
     <header class="site-header">
         <div class="header-container">
+            <!-- Brand Logo -->
             <div class="header-brand-wrap">
                 <a href="{% url 'catalog:home' %}" class="brand-logo" aria-label="Virtus Home">
-                    <img src="{% static 'image/logo.svg' %}" alt="Virtus Logo" class="brand-logo-img" width="98" height="60">
+                    <img src="{% static 'image/logo.svg' %}" alt="Virtus" class="brand-logo-img" width="34" height="22">
+                    <span class="brand-logo-text">Virtus</span>
                 </a>
             </div>
 
+            <!-- Navigation & Actions -->
             <nav class="main-nav" id="main-nav" aria-label="Main Navigation">
                 <ul class="nav-links">
-                    <li><a href="{% url 'catalog:home' %}" class="nav-link">Home</a></li>
-                    <li><a href="{% url 'catalog:product_list' %}" class="nav-link">Products</a></li>
+                    <li><a href="{% url 'catalog:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a></li>
+                    <li><a href="{% url 'catalog:product_list' %}" class="nav-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">Products</a></li>
                 </ul>
 
                 <div class="nav-actions">
-                    <!-- Revised Cart Button -->
+                    <!-- Cart Button -->
                     <a href="{% url 'cart:detail' %}" class="header-cart-btn" id="header-cart-button" role="button" aria-label="Shopping Cart, {{ cart_item_count|default:0 }} items">
                         <span class="cart-btn-icon-wrapper">
-                            {% lucide "shopping-bag" size=18 class="cart-btn-icon" %}
+                            {% lucide "shopping-bag" size=16 class="cart-btn-icon" %}
                         </span>
                         <span class="cart-btn-text">Cart</span>
                         {% if cart_item_count and cart_item_count > 0 %}
@@ -62,17 +65,23 @@
                             <button type="button" class="user-profile-btn" id="user-menu-toggle" aria-expanded="false" aria-haspopup="true" aria-label="User account menu">
                                 <span class="user-avatar-mini">{{ user.username|slice:":1"|upper }}</span>
                                 <span class="user-name">{{ user.first_name|default:user.username }}</span>
-                                {% lucide "chevron-down" size=14 class="user-menu-chevron" %}
+                                {% lucide "chevron-down" size=13 class="user-menu-chevron" %}
                             </button>
                             <div class="user-dropdown-actions" id="user-dropdown-panel" role="menu">
+                                <div class="user-dropdown-header">
+                                    <span class="user-dropdown-label">Signed in as</span>
+                                    <strong class="user-dropdown-email">{{ user.email|default:user.username }}</strong>
+                                </div>
+                                <div class="user-dropdown-divider"></div>
                                 <a href="{% url 'accounts:profile' %}" class="dropdown-item" role="menuitem">
                                     {% lucide "user" size=15 class="dropdown-item-icon" %}
-                                    <span>My Profile & Orders</span>
+                                    <span>My Profile &amp; Orders</span>
                                 </a>
                                 <a href="{% url 'accounts:settings' %}" class="dropdown-item" role="menuitem">
                                     {% lucide "settings" size=15 class="dropdown-item-icon" %}
                                     <span>Settings</span>
                                 </a>
+                                <div class="user-dropdown-divider"></div>
                                 <a href="{% url 'accounts:logout' %}" class="dropdown-item logout-link" role="menuitem">
                                     {% lucide "log-out" size=15 class="dropdown-item-icon" %}
                                     <span>Log out</span>
@@ -86,7 +95,7 @@
                         </div>
                         <!-- Compact single-tap account entry for small screens -->
                         <a href="{% url 'accounts:login' %}" class="auth-mobile-icon" aria-label="Sign in or create an account" title="Sign in or create an account">
-                            {% lucide "circle-user" size=21 %}
+                            {% lucide "circle-user" size=20 %}
                         </a>
                         {% endif %}
                     </div>
@@ -186,7 +195,7 @@
         </div>
     </footer>
 
-    <script src="{% static 'js/site.js' %}?v=20260824_08" defer></script>
+    <script src="{% static 'js/site.js' %}?v=20260902_hiwvid" defer></script>
     <script src="{% static 'js/checkout.js' %}?v=20260825_01" defer></script>
 </body>
 </html>

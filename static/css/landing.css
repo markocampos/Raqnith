@@ -1486,8 +1486,41 @@
    ========================================= */
 
 .hiw-section {
-    padding-top: 5rem;
-    padding-bottom: 5rem;
+    position: relative;
+    overflow: hidden;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+    background: #080a0e;
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+}
+
+/* ── How It Works Background Video — darkened like hero ── */
+.hiw-bg-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    opacity: 0.16;
+    pointer-events: none;
+}
+
+/* ── Dark gradient overlay for readability ── */
+.hiw-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 85% 40%, rgba(245, 166, 35, 0.05) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(8, 10, 14, 0.9) 0%, rgba(8, 10, 14, 0.68) 50%, rgba(8, 10, 14, 0.94) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.hiw-container {
+    position: relative;
+    z-index: 2;
 }
 
 .hiw-header {
